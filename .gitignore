@@ -157,3 +157,6 @@ wandb
 dump.py
 
 docs/sources/source/test_build/
+
+*.swp
+outputs/

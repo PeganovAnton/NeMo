@@ -1,0 +1,21 @@
+python -m torch.distributed.launch --nproc_per_node $1 machine_translation_tutorial.py \
+    --data_dir ../../../tests/data/en_de \
+    --dataset_name wmt14 \
+    --src_lang en \
+    --tgt_lang de \
+    --num_layers 6 \
+    --embedding_dropout 0.1 \
+    --ffn_dropout 0.1 \
+    --attn_score_dropout 0.1 \
+    --attn_layer_dropout 0.1 \
+    --warmup_steps 4000 \
+    --tgt_tokenizer_model bpe8k_yttm.model \
+    --src_tokenizer_model bpe8k_yttm.model \
+    --optimizer adam \
+    --max_steps 100000 \
+    --batch_size 1024 \
+    --lr 0.005 \
+    --batch_size 4096 \
+    --eval_batch_size 4096 \
+    --optimizer novograd 
+ 

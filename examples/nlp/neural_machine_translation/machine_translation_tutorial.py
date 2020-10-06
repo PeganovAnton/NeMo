@@ -19,6 +19,8 @@ See the tutorial and download the data here:
 https://nvidia.github.io/NeMo/nlp/
 neural-machine-translation.html#translation-with-pretrained-model
 """
+import os
+
 import torch
 
 import nemo
@@ -43,8 +45,8 @@ parser.set_defaults(
     iter_per_step=1,
     eval_freq=1000,
 )
-parser.add_argument("--data_dir", default="../../../tests/data/en_de", type=str)
-parser.add_argument("--dataset_name", default="wmt16", type=str)
+parser.add_argument("--data_dir", default="~/data/wmt14_en_de", type=str)
+parser.add_argument("--dataset_name", default="wmt14", type=str)
 parser.add_argument("--src_lang", default="en", type=str)
 parser.add_argument("--tgt_lang", default="de", choices=['de', 'zh'], type=str)
 parser.add_argument("--d_model", default=512, type=int)
@@ -60,16 +62,18 @@ parser.add_argument("--max_seq_length", default=256, type=int)
 parser.add_argument("--label_smoothing", default=0.1, type=float)
 parser.add_argument("--beam_size", default=4, type=int)
 # pass a YouTokenToMe model to YouTokenToMeTokenizer for en
-parser.add_argument("--src_tokenizer_model", default="bpe8k_yttm.model", type=str)
+parser.add_argument("--src_tokenizer_model", default="bpe_32k_ende_yttm.model", type=str)
 # pass a YouTokenToMe model to YouTokenToMeTokenizer for de
 # if the target is zh, we should pass a vocabulary file, e.g. zh_vocab.txt
-parser.add_argument("--tgt_tokenizer_model", default="bpe8k_yttm.model", type=str)
+parser.add_argument("--tgt_tokenizer_model", default="bpe_32k_ende_yttm.model", type=str)
 parser.add_argument("--interactive", action="store_true")
 parser.add_argument("--save_epoch_freq", default=5, type=int)
 parser.add_argument("--save_step_freq", default=-1, type=int)
 parser.add_argument("--restore_checkpoint_from", default=None, type=str)
 
 args = parser.parse_args()
+args.data_dir = os.path.expanduser(args.data_dir)
+
 
 work_dir = f'{args.work_dir}/{args.dataset_name.upper()}'
 nf = nemo.core.NeuralModuleFactory(
