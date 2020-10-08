@@ -13,5 +13,6 @@ python -m torch.distributed.launch --nproc_per_node $1 machine_translation_tutor
     --src_tokenizer_model bpe_32k_ende_yttm.model \
     --optimizer adam \
     --max_steps 100000 \
-    --batch_size 1024 
- 
+    --batch_size 1024 \
+    --lr_policy InverseSquareRootAnnealing \
+    --lr 3.5e-4
