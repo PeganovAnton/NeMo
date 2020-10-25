@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -238,7 +239,104 @@ class BeamSearchSequenceGenerator(GreedySequenceGenerator):
         """Returns length penalty according to https://arxiv.org/pdf/1609.08144.pdf"""
         return ((5 + lengths) / 6).pow(alpha)
 
-    def forward(self, decoder_input_ids=None, encoder_hidden_states=None, encoder_input_mask=None):
+    def forward(self, decoder_input_ids=None, encoder_hidden_states=None, encoder_input_mask=None, src_len=None):
+        tgt, batch_size, max_generation_length = self._prepare_for_search(decoder_input_ids, encoder_hidden_states)
+        if src_len is None:
+            src_len = torch.full([batch_size], 512, dtype=torch.int32, device=encoder_hidden_states.device)
+        # generate initial buffer of beam_size prefixes-hypotheses
+        log_probs_init, decoder_mem_by_layers = self._forward(tgt, encoder_hidden_states, encoder_input_mask, None, 0)
+        scores, prefixes = torch.topk(log_probs_init.permute(0, 2, 1), self.beam_size, dim=1)
+        scores, prefixes = scores.view(-1, 1), prefixes.view(-1, 1)
+
+        # repeat init target prefixes and cached memory states beam_size times
+        prefixes = torch.cat((tgt.repeat(1, self.beam_size).view(-1, 1), prefixes), dim=1)
+        for j in range(len(decoder_mem_by_layers)):
+            decoder_mem_by_layers[j] = decoder_mem_by_layers[j].repeat(self.beam_size, 1, 1)
+
+        # repeat source sequence beam_size times for beam search
+        if encoder_hidden_states is not None:
+            _, src_length, hidden_size = encoder_hidden_states.size()
+            encoder_input_mask = encoder_input_mask.repeat(1, self.beam_size).view(-1, src_length)
+            encoder_hidden_states = encoder_hidden_states.repeat(1, self.beam_size, 1).view(
+                -1, src_length, hidden_size
+            )
+        else:
+            hidden_size = decoder_mem_by_layers[0].size(2)
+
+        best_scores = [scores.new_tensor(NEG_INF)] * batch_size
+        best_prefixes = [None] * batch_size
+        num_remaining_rays = np.full([batch_size], self.beam_size)
+        ray_prefixes = torch.split(prefixes, num_remaining_rays)
+        ray_scores = torch.split(scores, num_remaining_rays)
+        # ray_decoder_mem_by_layers = list(
+        #     zip(*[torch.split(layer_decoder_mem, num_remaining_rays) for layer_decoder_mem in decoder_mem_by_layers]))
+        num_generated_tokens = 1
+        while num_remaining_rays.any():
+            tgt = torch.cat([p[:, -1:] for p in ray_prefixes])
+            # decoder_mem_by_layers_cat = [torch.cat(z) for z in zip(*ray_decoder_mem_by_layers)]
+            log_probs_cat, decoder_mem_by_layers_cat = self._forward(
+                tgt, encoder_hidden_states, encoder_input_mask, decoder_mem_by_layers, num_generated_tokens)
+            num_generated_tokens += 1
+            ray_log_probs = torch.split(log_probs_cat, num_remaining_rays)
+            assert decoder_mem_by_layers
+            global_living_rays_indices = decoder_mem_by_layers[0].new_tensor(shape=[0], dtype=torch.int32)
+            old_num_rays = 0
+            for idx_in_batch in num_remaining_rays.nonzero()[0]:
+                token_log_probs, best_tokens_by_ray = torch.topk(
+                    ray_log_probs[idx_in_batch], num_remaining_rays[idx_in_batch])
+                scores_for_batch_elem = (ray_scores[idx_in_batch] + token_log_probs)\
+                    .view(num_remaining_rays[idx_in_batch]**2)
+                best_scores_for_batch_elem, best_indices = torch.topk(
+                    scores_for_batch_elem, num_remaining_rays[idx_in_batch])
+                best_ray_indices = best_indices // num_remaining_rays[idx_in_batch]
+
+                assert best_ray_indices.dtype == global_living_rays_indices.dtype \
+                    and best_ray_indices.device == global_living_rays_indices.device
+                global_living_rays_indices = torch.cat(
+                    [global_living_rays_indices, best_ray_indices + old_num_rays])
+                old_num_rays += num_remaining_rays[idx_in_batch]
+
+                best_order_indices = best_indices % num_remaining_rays[idx_in_batch]
+                best_tokens_for_batch = best_tokens_by_ray[best_ray_indices, best_order_indices]\
+                    .view(num_remaining_rays[idx_in_batch], 1)
+                if num_generated_tokens >= max_generation_length \
+                        or num_generated_tokens >= src_len[idx_in_batch] + self.max_delta_len:
+                    assert num_generated_tokens <= max_generation_length \
+                        and num_generated_tokens <= src_len[idx_in_batch] + self.max_delta_len
+
+                    # Add penalty for not finished translation. If translation finished because of length limitation
+                    # Add log prob of eos.
+                    best_scores_for_batch_elem += ray_log_probs[idx_in_batch][best_ray_indices][self.eos] \
+                        * (best_tokens_for_batch.ne(self.eos) & best_tokens_for_batch.ne(self.pad))
+                    terminated = list(range(num_remaining_rays[idx_in_batch]))
+                    living = list()
+                else:
+                    terminated_mask = best_tokens_for_batch.eq(self.eos) | best_tokens_for_batch.eq(self.pad)
+                    terminated = terminated_mask.nonzero()
+                    living = (~terminated_mask).nonzero()
+                new_best_ray_index = None
+                best_token_i = None
+                len_penalty = self.compute_len_penalty(num_generated_tokens, self.len_pen)
+                for ti in terminated:
+                    candidate_score = best_scores_for_batch_elem[idx_in_batch] / len_penalty
+                    if candidate_score > best_scores[idx_in_batch]:
+                        best_scores[idx_in_batch] = candidate_score
+                        new_best_ray_index = best_ray_indices[ti]
+                        best_token_i = ti
+                if best_token_i is not None:
+                    best_prefixes[idx_in_batch] = torch.cat(
+                        ray_prefixes[idx_in_batch][new_best_ray_index],
+                        best_tokens_for_batch[best_token_i:best_token_i+1])
+                ray_scores[idx_in_batch] = best_scores_for_batch_elem[living].view(len(living), 1)
+                ray_prefixes[idx_in_batch] = torch.cat(
+                    [ray_prefixes[idx_in_batch][living], best_tokens_for_batch[living].view(len(living), 1)], dim=1)
+                num_remaining_rays[idx_in_batch] = len(living)
+            decoder_mem_by_layers = [m[global_living_rays_indices] for m in decoder_mem_by_layers]
+            encoder_hidden_states = encoder_hidden_states[global_living_rays_indices]
+            encoder_input_mask = encoder_input_mask[global_living_rays_indices]
+        return torch.stack(best_prefixes)
+
+    def forward_bak(self, decoder_input_ids=None, encoder_hidden_states=None, encoder_input_mask=None):
         tgt, batch_size, max_generation_length = self._prepare_for_search(decoder_input_ids, encoder_hidden_states)
 
         # generate initial buffer of beam_size prefixes-hypotheses
