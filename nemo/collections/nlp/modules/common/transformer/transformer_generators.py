@@ -266,8 +266,8 @@ class BeamSearchSequenceGenerator(GreedySequenceGenerator):
         best_scores = [scores.new_tensor(NEG_INF)] * batch_size
         best_prefixes = [None] * batch_size
         num_remaining_rays = np.full([batch_size], self.beam_size)
-        ray_prefixes = torch.split(prefixes, tuple(num_remaining_rays))
-        ray_scores = torch.split(scores, tuple(num_remaining_rays))
+        ray_prefixes = list(torch.split(prefixes, tuple(num_remaining_rays)))
+        ray_scores = list(torch.split(scores, tuple(num_remaining_rays)))
         # ray_decoder_mem_by_layers = list(
         #     zip(*[torch.split(layer_decoder_mem, num_remaining_rays) for layer_decoder_mem in decoder_mem_by_layers]))
         num_generated_tokens = 1
@@ -315,14 +315,17 @@ class BeamSearchSequenceGenerator(GreedySequenceGenerator):
 
                     # Add penalty for not finished translation. If translation finished because of length limitation
                     # Add log prob of eos.
-                    best_scores_for_batch_elem += ray_log_probs[idx_in_batch][best_ray_indices][self.eos] \
+                    print("(BeamSesrchSequenceGenerator.forward)best_scores_for_batch_elem.shape:", best_scores_for_batch_elem.shape)
+                    print("(BeamSesrchSequenceGenerator.forward)best_tokens_for_batch.shape:", best_tokens_for_batch.shape)
+                    best_scores_for_batch_elem += ray_log_probs[idx_in_batch][best_ray_indices, self.eos:self.eos+1] \
                         * (best_tokens_for_batch.ne(self.eos) & best_tokens_for_batch.ne(self.pad))
                     terminated = list(range(num_remaining_rays[idx_in_batch]))
                     living = list()
                 else:
                     terminated_mask = best_tokens_for_batch.eq(self.eos) | best_tokens_for_batch.eq(self.pad)
-                    terminated = terminated_mask.nonzero()
-                    living = (~terminated_mask).nonzero()
+                    print("(BeamSesrchSequenceGenerator.forward)terminated_mask.shape:", terminated_mask.shape)
+                    terminated = torch.nonzero(terminated_mask, as_tuple=True)[0]
+                    living = torch.nonzero(~terminated_mask, as_tuple=True)[0]
                 new_best_ray_index = None
                 best_token_i = None
                 len_penalty = self.compute_len_penalty(num_generated_tokens, self.len_pen)
@@ -334,9 +337,11 @@ class BeamSearchSequenceGenerator(GreedySequenceGenerator):
                         best_token_i = ti
                 if best_token_i is not None:
                     best_prefixes[idx_in_batch] = torch.cat(
-                        ray_prefixes[idx_in_batch][new_best_ray_index],
-                        best_tokens_for_batch[best_token_i:best_token_i+1])
+                        [ray_prefixes[idx_in_batch][new_best_ray_index], best_tokens_for_batch[best_token_i]])
+                print("(BeamSesrchSequenceGenerator.forward)living:", living)
+                print("(BeamSesrchSequenceGenerator.forward)best_scores_for_batch_elem.shape:", best_scores_for_batch_elem.shape)
                 ray_scores[idx_in_batch] = best_scores_for_batch_elem[living].view(len(living), 1)
+                print("(BeamSesrchSequenceGenerator.forward)best_tokens_for_batch.shape:", best_tokens_for_batch.shape)
                 ray_prefixes[idx_in_batch] = torch.cat(
                     [ray_prefixes[idx_in_batch][living], best_tokens_for_batch[living].view(len(living), 1)], dim=1)
                 num_remaining_rays[idx_in_batch] = len(living)
