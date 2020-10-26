@@ -159,7 +159,7 @@ class TransformerMTModel(ModelPT):
         log_probs = self.log_softmax(hidden_states=tgt_hiddens)
         beam_results = None
         if not self.training:
-            src_len = (src.ne(self.src_tokenizer.eos) & src.ne(self.src_tokenizer.pad)).int().sum(dim=-1)
+            src_len = (src.ne(self.src_tokenizer.eos_id) & src.ne(self.src_tokenizer.pad_id)).int().sum(dim=-1)
             beam_results = self.beam_search(
                 encoder_hidden_states=src_hiddens,
                 encoder_input_mask=src_mask,
