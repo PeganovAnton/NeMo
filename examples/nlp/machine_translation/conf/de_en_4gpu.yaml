@@ -4,14 +4,14 @@ name: &name TransformerMT
 trainer:
   gpus: 4
   num_nodes: 1
-  max_epochs: 50
+  max_epochs: 200
   amp_level: O2 # O1/O2 for mixed precision
   precision: 16 # Should be set to 16 for O1 and O2, default is 16 as PT ignores it when am_level is O0
   distributed_backend: ddp
   checkpoint_callback: False
   logger: False
   log_every_n_steps: 50  # Interval of logging.
-  val_check_interval: 0.25  # Set to 0.25 to check 4 times per epoch, or an int for number of iterations
+  check_val_every_n_epoch: 5
 
 model:
   test_checkpoint_path: null
@@ -23,7 +23,7 @@ model:
     num_layers: 6
     num_attn_heads: 8
     inner_size: 2048
-    max_seq_length: 600  # maximum allowed length in embedding layer
+    max_seq_length: 512  # maximum allowed length in embedding layer
     embedding_dropout: 0.1
     ffn_dropout: 0.1
     attn_score_dropout: 0.1
@@ -36,7 +36,7 @@ model:
   train_ds:
     src_file_name: /raid2/NMT/wmt16_de_en/train.clean.de.shuffled
     tgt_file_name: /raid2/NMT/wmt16_de_en/train.clean.en.shuffled
-    tokens_in_batch: 12500  # This is limit per gpu. Total limit is 50000
+    tokens_in_batch: 16000  # This is limit per gpu. Total limit is 50000
     clean: true
     max_seq_length: 512
     shuffle: true
@@ -48,6 +48,7 @@ model:
   validation_ds:
     src_file_name: /raid2/NMT/wmt16_de_en/wmt14-en-de.ref # path to file with validation data
     tgt_file_name: /raid2/NMT/wmt16_de_en/wmt14-en-de.src
+    clean: true
     tokens_in_batch: 512
     shuffle: false
     num_samples: -1 # number of samples to be considered, -1 means all the dataset
@@ -58,14 +59,14 @@ model:
 
   optim:
     name: adam
-    lr: 7e-4
+    lr: 0.001
     betas: [0.9, 0.98]
     weight_decay: 0
 
     sched:
       name: InverseSquareRootAnnealing
       warmup_steps: null
-      warmup_ratio: 0.04
+      warmup_ratio: 0.1
       last_epoch: -1
 
       # pytorch lightning args
