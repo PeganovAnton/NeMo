@@ -42,7 +42,7 @@ model:
     label_smoothing: 0.1
     beam_size: 4
     len_pen: 0.6
-    max_generation_delta: 50
+    max_generation_delta: 20
 
   train_ds:
     src_file_name: /data/train.en
