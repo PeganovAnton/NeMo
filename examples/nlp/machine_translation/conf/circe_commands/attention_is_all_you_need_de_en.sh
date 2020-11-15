@@ -1,4 +1,4 @@
-git clone https://gitlab-master.nvidia.com/apeganov/nemonmt.git \
+git clone https://gitlab-master.nvidia.com/apeganov/nemonmt.git NeMo \
   && cd NeMo \
   && git checkout nmt \
   && pip install -r requirements/requirements.txt \
