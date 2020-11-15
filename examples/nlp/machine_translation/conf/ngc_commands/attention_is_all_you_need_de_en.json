@@ -17,5 +17,11 @@
            "id": "nemo_peganov",
            "mountMode": "RW"
        }
+   ],
+   "datasetMounts": [
+       {
+           "containerMountPoint": "/data",
+           "id": 69050
+       }
    ]
 }
