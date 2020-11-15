@@ -21,7 +21,7 @@
    "datasetMounts": [
        {
            "containerMountPoint": "/data",
-           "id": "/wmt14_en_de_standford_nlp"
+           "id": 69048
        }
    ]
 }
