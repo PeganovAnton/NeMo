@@ -17,5 +17,11 @@
            "id": "nemo_peganov",
            "mountMode": "RW"
        }
+   ],
+   "datasetMounts": [
+       {
+           "containerMountPoint": "/data",
+           "id": "/wmt14_en_de_standford_nlp"
+       }
    ]
 }
