@@ -10,7 +10,7 @@
    "resultContainerMountPoint": "/result",
    "runPolicy": {
        "preemptClass": "RUNONCE"
-   }
+   },
    "workspaceMounts": [
        {
            "containerMountPoint": "/nemo_peganov",
