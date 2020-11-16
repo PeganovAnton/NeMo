@@ -1,4 +1,6 @@
-export nemo_path=$(pwd) \
+pip install -r requirements/requirements.txt \
+  && pip install -r requirements/requirements_nlp.txt \
+  && export nemo_path=$(pwd) \
   && export HYDRA_FULL_ERROR=1 \
   && echo "NeMo path: ${nemo_path}" \
   && export PYTHONPATH="${nemo_path}" \
