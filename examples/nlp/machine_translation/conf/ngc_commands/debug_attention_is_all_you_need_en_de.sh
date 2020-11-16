@@ -1,4 +1,4 @@
-pip install -r export nemo_path=$(pwd) \
+export nemo_path=$(pwd) \
   && export HYDRA_FULL_ERROR=1 \
   && echo "NeMo path: ${nemo_path}" \
   && export PYTHONPATH="${nemo_path}" \
