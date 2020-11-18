@@ -35,6 +35,7 @@ def main(cfg: DictConfig) -> None:
     if is_global_rank_zero():
         if os.path.exists('best.ckpt'):
             os.remove('best.ckpt')
+        print(os.listdir())
         os.symlink(trainer.checkpoint_callback.best_model_path, 'best.ckpt')
 
 

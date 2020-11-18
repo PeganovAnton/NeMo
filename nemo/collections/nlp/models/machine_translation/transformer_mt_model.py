@@ -20,6 +20,7 @@ from typing import Dict, List, Optional
 
 import numpy as np
 import torch
+import torch.autograd.profiler as profiler
 import torch.utils.data as pt_data
 from omegaconf import DictConfig
 from pytorch_lightning import Trainer
@@ -179,8 +180,12 @@ class TransformerMTModel(ModelPT):
         log_probs = self.log_softmax(hidden_states=tgt_hiddens)
         beam_results = None
         if not self.training:
-            beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
+            with profiler.profile(record_shapes=True, profile_memory=True, use_cuda=True, with_stack=True) as prof:
+                beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
+            prof.export_chrome_trace("/result/trace_beam_search.json")
             beam_results = self.filter_predicted_ids(beam_results)
+            with open('result/table.txt', 'w') as f:
+                f.write(prof.key_averages().table(sort_by='cuda_memory_usage', row_limit=100000))
         return log_probs, beam_results
 
     def training_step(self, batch, batch_idx):
