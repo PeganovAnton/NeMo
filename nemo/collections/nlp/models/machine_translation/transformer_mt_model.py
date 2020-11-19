@@ -151,7 +151,7 @@ class TransformerMTModel(ModelPT):
         self.training_perplexity = Perplexity(dist_sync_on_step=True)
         self.eval_perplexity = Perplexity(compute_on_step=False)
 
-        self.tensor_sizes = {}
+        self.tensor_types_and_sizes = []
         self.beam_search_calls_counter = 0
         # These attributes are added to bypass Illegal memory access error in PT1.6
         # https://github.com/pytorch/pytorch/issues/21819
@@ -161,27 +161,28 @@ class TransformerMTModel(ModelPT):
         return ids
 
     def log_tensor_sizes(self):
-        import gc, copy
-        tensor_sizes = copy.deepcopy(self.tensor_sizes)
+        import gc
+        new_tensor_type_sizes = []
         with open("/result/tensor_sizes_log_during beam_search.txt", 'a') as f:
             for obj in gc.get_objects():
                 try:
                     if torch.is_tensor(obj) and obj.is_cuda or (hasattr(obj, 'data') and torch.is_tensor(obj.data)) and obj.data.is_cuda:
-                        if str(id(obj)) not in self.tensor_sizes:
-                            f.write(('\t' * 3).join(["new", str(self.beam_search_calls_counter), str(id(obj)), str(obj.size())]))
-                            self.tensor_sizes[str(id(obj))] = obj.size()
-                        elif obj.size() != self.tensor_sizes[str(id(obj))]:
-                            f.write(('\t' * 3).join(["changed size", str(self.beam_search_calls_counter), str(id(obj)), str(obj.size())]))
-                            self.tensor_sizes[str(id(obj))] = obj.size()
-                            del tensor_sizes[str(id(obj))]
+                        type_size = (obj.size(), type(obj))
+                        if type_size in self.tensor_types_and_sizes:
+                            self.tensor_types_and_sizes.remove(type_size)
                         else:
-                            del tensor_sizes[str(id(obj))]
-                        f.write('\n')
+                            new_tensor_type_sizes.append(type_size)
                 except:
                     pass
-            for tensor_name, tensor_size in tensor_sizes.items():
-                del self.tensor_sizes[tensor_name]
-                f.write(('\t' * 3).join(["removed", str(self.beam_search_calls_counter), tensor_name, str(tensor_size)]) + '\n')
+            f.write(f"\n\n\nNew tensor shapes for global rank {self.global_rank} and beam search call "
+                  f"{self.beam_search_calls_counter}:\n")
+            for ts in new_tensor_type_sizes:
+                f.write(str(ts) + '\n')
+            f.write(f"Removed tensor shapes for global rank {self.global_rank} and beam search call "
+                  f"{self.beam_search_calls_counter}:\n")
+            for ts in self.tensor_types_and_sizes:
+                f.write(str(ts) + '\n')
+            self.tensor_types_and_sizes += new_tensor_type_sizes
             f.write('\n'*2)
 
     @typecheck()
