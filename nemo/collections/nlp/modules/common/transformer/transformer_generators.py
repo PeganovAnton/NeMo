@@ -105,6 +105,7 @@ class GreedySequenceGenerator(nn.Module):
             decoder_mems_list = self.decoder.forward(
                 decoder_hidden_states, decoder_input_mask, decoder_mems_list, return_mems=True
             )
+        print("(GreedySequenceGenerator._forward)decoder_mems_list[-1].shape:", decoder_mems_list[-1].shape)
         log_probs = self.log_softmax.forward(hidden_states=decoder_mems_list[-1])
         return log_probs, decoder_mems_list
 
