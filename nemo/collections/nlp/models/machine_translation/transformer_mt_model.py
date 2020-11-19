@@ -166,16 +166,16 @@ class TransformerMTModel(ModelPT):
         with open("/result/tensor_sizes_log_during beam_search.txt", 'a') as f:
             for obj in gc.get_objects():
                 try:
-                    if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
-                        if str(obj) not in self.tensor_sizes:
-                            f.write(('\t' * 3).join(["new", str(self.beam_search_calls_counter), str(obj), str(obj.size())]))
-                            self.tensor_sizes[str(obj)] = obj.size()
-                        elif obj.size() != self.tensor_sizes[str(obj)]:
-                            f.write(('\t' * 3).join(["changed size", str(self.beam_search_calls_counter), str(obj), str(obj.size())]))
-                            self.tensor_sizes[str(obj)] = obj.size()
-                            del tensor_sizes[str(obj)]
+                    if torch.is_tensor(obj) and obj.is_cuda or (hasattr(obj, 'data') and torch.is_tensor(obj.data)) and obj.data.is_cuda:
+                        if str(id(obj)) not in self.tensor_sizes:
+                            f.write(('\t' * 3).join(["new", str(self.beam_search_calls_counter), str(id(obj)), str(obj.size())]))
+                            self.tensor_sizes[str(id(obj))] = obj.size()
+                        elif obj.size() != self.tensor_sizes[str(id(obj))]:
+                            f.write(('\t' * 3).join(["changed size", str(self.beam_search_calls_counter), str(id(obj)), str(obj.size())]))
+                            self.tensor_sizes[str(id(obj))] = obj.size()
+                            del tensor_sizes[str(id(obj))]
                         else:
-                            del tensor_sizes[str(obj)]
+                            del tensor_sizes[str(id(obj))]
                 except:
                     pass
             for tensor_name, tensor_size in tensor_sizes.items():
