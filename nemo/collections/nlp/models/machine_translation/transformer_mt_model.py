@@ -181,7 +181,7 @@ class TransformerMTModel(ModelPT):
         beam_results = None
         if not self.training:
             try:
-                with profiler.profile(record_shapes=True, profile_memory=True, use_cuda=True) as prof:
+                with profiler.profile(record_shapes=True, profile_memory=True, use_cuda=True, with_stack=True) as prof:
                     beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
             except RuntimeError:
                 prof.export_chrome_trace("/result/trace_beam_search.json")
