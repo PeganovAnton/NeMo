@@ -167,7 +167,7 @@ class TransformerMTModel(ModelPT):
             for obj in gc.get_objects():
                 try:
                     if torch.is_tensor(obj) and obj.is_cuda or (hasattr(obj, 'data') and torch.is_tensor(obj.data)) and obj.data.is_cuda:
-                        type_size = (obj.size(), type(obj))
+                        type_size = (obj.size(), type(obj), obj.dtype)
                         if type_size in self.tensor_types_and_sizes:
                             self.tensor_types_and_sizes.remove(type_size)
                         else:
