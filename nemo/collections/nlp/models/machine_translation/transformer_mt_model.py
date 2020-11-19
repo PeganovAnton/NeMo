@@ -185,7 +185,7 @@ class TransformerMTModel(ModelPT):
                     beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
             except RuntimeError:
                 prof.export_chrome_trace("/result/trace_beam_search.json")
-                with open('result/table.txt', 'w') as f:
+                with open('/result/table.txt', 'w') as f:
                     f.write(prof.key_averages().table(sort_by='cuda_memory_usage', row_limit=100000))
                 raise
             beam_results = self.filter_predicted_ids(beam_results)
