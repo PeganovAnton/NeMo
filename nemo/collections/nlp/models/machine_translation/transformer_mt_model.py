@@ -181,7 +181,7 @@ class TransformerMTModel(ModelPT):
             for tensor_name, tensor_size in tensor_sizes.items():
                 del self.tensor_sizes[tensor_name]
                 f.write(('\t' * 3).join(["removed", str(self.beam_search_calls_counter), tensor_name, tensor_size]))
-        f.write('\n'*2)
+            f.write('\n'*2)
 
     @typecheck()
     def forward(self, src, src_mask, tgt, tgt_mask):
