@@ -151,12 +151,37 @@ class TransformerMTModel(ModelPT):
         self.training_perplexity = Perplexity(dist_sync_on_step=True)
         self.eval_perplexity = Perplexity(compute_on_step=False)
 
+        self.tensor_sizes = {}
+        self.beam_search_calls_counter = 0
         # These attributes are added to bypass Illegal memory access error in PT1.6
         # https://github.com/pytorch/pytorch/issues/21819
 
     def filter_predicted_ids(self, ids):
         ids[ids >= self.tgt_tokenizer.vocab_size] = self.tgt_tokenizer.unk_id
         return ids
+
+    def log_tensor_sizes(self):
+        import gc, copy
+        tensor_sizes = copy.deepcopy(self.tensor_sizes)
+        with open("/result/tensor_sizes_log_during beam_search.txt", 'a') as f:
+            for obj in gc.get_objects():
+                try:
+                    if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
+                        if str(obj) not in self.tensor_sizes:
+                            f.write(('\t' * 3).join(["new", str(self.beam_search_calls_counter), str(obj), str(obj.size())]))
+                            self.tensor_sizes[str(obj)] = obj.size()
+                        elif obj.size() != self.tensor_sizes[str(obj)]:
+                            f.write(('\t' * 3).join(["changed size", str(self.beam_search_calls_counter), str(obj), str(obj.size())]))
+                            self.tensor_sizes[str(obj)] = obj.size()
+                            del tensor_sizes[str(obj)]
+                        else:
+                            del tensor_sizes[str(obj)]
+                except:
+                    pass
+            for tensor_name, tensor_size in tensor_sizes.items():
+                del self.tensor_sizes[tensor_name]
+                f.write(('\t' * 3).join(["removed", str(self.beam_search_calls_counter), tensor_name, tensor_size]))
+        f.write('\n'*2)
 
     @typecheck()
     def forward(self, src, src_mask, tgt, tgt_mask):
@@ -189,6 +214,8 @@ class TransformerMTModel(ModelPT):
                     f.write(prof.key_averages().table(sort_by='cuda_memory_usage', row_limit=100000))
                 raise
             beam_results = self.filter_predicted_ids(beam_results)
+            self.log_tensor_sizes()
+            self.beam_search_calls_counter += 1
         return log_probs, beam_results
 
     def training_step(self, batch, batch_idx):
