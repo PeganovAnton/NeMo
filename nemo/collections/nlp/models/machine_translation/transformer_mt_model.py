@@ -176,11 +176,12 @@ class TransformerMTModel(ModelPT):
                             del tensor_sizes[str(id(obj))]
                         else:
                             del tensor_sizes[str(id(obj))]
+                        f.write('\n')
                 except:
                     pass
             for tensor_name, tensor_size in tensor_sizes.items():
                 del self.tensor_sizes[tensor_name]
-                f.write(('\t' * 3).join(["removed", str(self.beam_search_calls_counter), tensor_name, str(tensor_size)]))
+                f.write(('\t' * 3).join(["removed", str(self.beam_search_calls_counter), tensor_name, str(tensor_size)]) + '\n')
             f.write('\n'*2)
 
     @typecheck()
