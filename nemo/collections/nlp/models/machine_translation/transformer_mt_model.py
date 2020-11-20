@@ -152,6 +152,7 @@ class TransformerMTModel(ModelPT):
         self.eval_perplexity = Perplexity(compute_on_step=False)
 
         self.tensor_types_and_sizes = []
+        self.num_taken_cuda_bytes = 0
         self.beam_search_calls_counter = 0
         # These attributes are added to bypass Illegal memory access error in PT1.6
         # https://github.com/pytorch/pytorch/issues/21819
@@ -160,9 +161,29 @@ class TransformerMTModel(ModelPT):
         ids[ids >= self.tgt_tokenizer.vocab_size] = self.tgt_tokenizer.unk_id
         return ids
 
+    @staticmethod
+    def get_tensor_size(shape, type_):
+        import warnings
+        n = 1
+        for d in shape:
+            n *= d
+        if '8' in str(type_):
+            n *= 1
+        elif '16' in str(type_):
+            n *= 2
+        elif '32' in str(type_):
+            n *= 4
+        elif '64' in str(type_):
+            n *= 8
+        else:
+            warnings.warn(f"Cannot calculate tensor size for dtype {type_}")
+        return n
+
     def log_tensor_sizes(self):
         import gc
         new_tensor_type_sizes = []
+        new_tensors_num_cuda_bytes = 0
+        removed_tensors_num_cuda_bytes = 0
         with open("/result/tensor_sizes_log_during beam_search.txt", 'a') as f:
             for obj in gc.get_objects():
                 try:
@@ -170,8 +191,10 @@ class TransformerMTModel(ModelPT):
                         type_size = (obj.size(), type(obj), obj.dtype)
                         if type_size in self.tensor_types_and_sizes:
                             self.tensor_types_and_sizes.remove(type_size)
+                            removed_tensors_num_cuda_bytes += self.get_tensor_size(type_size[0], type_size[2])
                         else:
                             new_tensor_type_sizes.append(type_size)
+                            new_tensors_num_cuda_bytes += self.get_tensor_size(type_size[0], type_size[2])
                 except:
                     pass
             f.write(f"\n\n\nNew tensor shapes for global rank {self.global_rank} and beam search call "
@@ -182,7 +205,9 @@ class TransformerMTModel(ModelPT):
                   f"{self.beam_search_calls_counter}:\n")
             for ts in self.tensor_types_and_sizes:
                 f.write(str(ts) + '\n')
-            self.tensor_types_and_sizes += new_tensor_type_sizes
+            f.write(f"number of taken cuda bytes before change: {self.num_taken_cuda_bytes}\n")
+            f.write(f"change in number of taken cuda bytes: {new_tensors_num_cuda_bytes - removed_tensors_num_cuda_bytes}\n")
+            self.num_taken_cuda_bytes += new_tensors_num_cuda_bytes - removed_tensors_num_cuda_bytes
             f.write('\n'*2)
 
     @typecheck()
