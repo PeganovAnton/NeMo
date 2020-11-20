@@ -6,5 +6,5 @@ pip install -r requirements/requirements.txt \
   && export PYTHONPATH="${nemo_path}" \
   && cd  "${nemo_path}/examples/nlp/machine_translation" \
   && python train.py -cn debug_on_ngc \
-  && python test.py model.test_checkpoint_path=best.ckpt -cn debug_on_ngc
+  && python test.py model.test_checkpoint_path=/result/best.ckpt -cn debug_on_ngc
 
