@@ -208,6 +208,7 @@ class TransformerMTModel(ModelPT):
             f.write(f"number of taken cuda bytes before change: {self.num_taken_cuda_bytes}\n")
             f.write(f"change in number of taken cuda bytes: {new_tensors_num_cuda_bytes - removed_tensors_num_cuda_bytes}\n")
             self.num_taken_cuda_bytes += new_tensors_num_cuda_bytes - removed_tensors_num_cuda_bytes
+            self.tensor_types_and_sizes += new_tensor_type_sizes
             f.write('\n'*2)
 
     @typecheck()
