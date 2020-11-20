@@ -184,7 +184,7 @@ class TransformerMTModel(ModelPT):
         new_tensor_type_sizes = []
         new_tensors_num_cuda_bytes = 0
         removed_tensors_num_cuda_bytes = 0
-        with open("/result/tensor_sizes_log_during beam_search.txt", 'a') as f:
+        with open(f"/result/tensor_sizes_log_during_beam_search_global_rank_{self.global_rank}.txt", 'a') as f:
             for obj in gc.get_objects():
                 try:
                     if torch.is_tensor(obj) and obj.is_cuda or (hasattr(obj, 'data') and torch.is_tensor(obj.data)) and obj.data.is_cuda:
