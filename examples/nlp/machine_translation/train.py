@@ -36,7 +36,6 @@ def main(cfg: DictConfig) -> None:
         best_ckpt_path = os.path.join(cfg.exp_manager.exp_dir, 'best.ckpt')
         if os.path.exists(best_ckpt_path):
             os.remove(best_ckpt_path)
-        print(os.listdir())
         os.symlink(trainer.checkpoint_callback.best_model_path, best_ckpt_path)
 
 
