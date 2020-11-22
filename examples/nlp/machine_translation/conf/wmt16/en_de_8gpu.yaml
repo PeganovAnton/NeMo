@@ -34,8 +34,8 @@ model:
     max_generation_delta: 50
 
   train_ds:
-    src_file_name: /raid2/NMT/wmt16_de_en/train.clean.en.shuffled
-    tgt_file_name: /raid2/NMT/wmt16_de_en/train.clean.de.shuffled
+    src_file_name: /data/train.clean.en.shuffled
+    tgt_file_name: /data/train.clean.de.shuffled
     tokens_in_batch: 12000  # This is limit per gpu. Total limit is 50000
     clean: true
     max_seq_length: 512
@@ -46,8 +46,8 @@ model:
     num_workers: 8 # number of workers for data loaders
 
   validation_ds:
-    src_file_name: /raid2/NMT/wmt16_de_en/wmt14-en-de.src # path to file with validation data
-    tgt_file_name: /raid2/NMT/wmt16_de_en/wmt14-en-de.ref
+    src_file_name: /data/wmt14-en-de.src # path to file with validation data
+    tgt_file_name: /data/wmt14-en-de.ref
     clean: true
     tokens_in_batch: 512
     shuffle: false
