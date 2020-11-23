@@ -6,4 +6,5 @@ pip install -r requirements/requirements.txt \
   && export PYTHONPATH="${nemo_path}" \
   && cd  "${nemo_path}/examples/nlp/machine_translation" \
   && yttm bpe --data /data/train.clean.en-de.shuffled.common --model bpe_16k_en_de_yttm.model --vocab_size 16000 \
-  && python train.py -cn wmt16/de_en_8gpu
+  && python train.py -cn wmt16/de_en_8gpu \
+  && python test.py -cn wmt16/de_en_8gpu
