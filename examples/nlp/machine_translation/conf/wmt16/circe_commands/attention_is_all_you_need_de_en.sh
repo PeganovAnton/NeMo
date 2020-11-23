@@ -5,7 +5,7 @@ pip install -r requirements/requirements.txt \
   && echo "NeMo path: ${nemo_path}" \
   && export PYTHONPATH="${nemo_path}" \
   && cd  "${nemo_path}/examples/nlp/machine_translation" \
-  && data_path=/raid/datasets/sandeepsub/wmt18 \
+  && data_path=/workspace/mydatasets/sandeepsub/wmt18 \
   && bi_path=${data_path}/wmt18_en_de \
   && mono_en_path=${data_path}/wmt18_en_mono \
   && mono_de_path=${data_path}/wmt18_de_mono \
