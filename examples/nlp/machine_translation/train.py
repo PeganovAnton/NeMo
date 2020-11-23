@@ -16,6 +16,7 @@
 import os
 
 import pytorch_lightning as pl
+print(pl.__version__)
 from omegaconf import DictConfig
 
 from nemo.collections.nlp.models.machine_translation import TransformerMTModel
