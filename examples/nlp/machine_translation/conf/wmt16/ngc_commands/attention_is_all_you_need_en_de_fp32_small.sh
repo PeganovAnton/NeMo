@@ -15,7 +15,7 @@ pip install -r requirements/requirements.txt \
       model.machine_translation.num_layers=1 \
       +trainer.check_val_every_n_step=10 \
       trainer.val_check_interval=10 \
-      trainer.max_steps=100 \
+      +trainer.max_steps=100 \
   && python test.py -cn wmt16/en_de_8gpu \
       trainer.precision=32 \
       model.train_ds.tokens_in_batch=1024 \
