@@ -234,6 +234,7 @@ class TransformerMTModel(ModelPT):
         log_probs = self.log_softmax(hidden_states=tgt_hiddens)
         beam_results = None
         if not self.training:
+            print("(TransformerMTModel.forward)self.training:", self.training)
             if self.profile:
                 try:
                     with profiler.profile(record_shapes=True, profile_memory=True, use_cuda=True) as prof:

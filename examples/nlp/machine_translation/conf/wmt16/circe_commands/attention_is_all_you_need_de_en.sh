@@ -1,0 +1,26 @@
+pip install -r requirements/requirements.txt \
+  && pip install -r requirements/requirements_nlp.txt \
+  && export nemo_path=$(pwd) \
+  && export HYDRA_FULL_ERROR=1 \
+  && echo "NeMo path: ${nemo_path}" \
+  && export PYTHONPATH="${nemo_path}" \
+  && cd  "${nemo_path}/examples/nlp/machine_translation" \
+  && data_path=/raid/datasets/sandeepsub/wmt18 \
+  && bi_path=${data_path}/wmt18_en_de \
+  && mono_en_path=${data_path}/wmt18_en_mono \
+  && mono_de_path=${data_path}/wmt18_de_mono \
+  && cat ${data_path}/train.clean.* /raid
+  && yttm bpe --data /data/train.clean.en-de.shuffled.common --model bpe_16k_en_de_yttm.model --vocab_size 16000 \
+  && python train.py -cn wmt16/de_en_8gpu \
+      trainer.gpus=16 \
+      model.train_ds.tokens_in_batch=10000 \
+      model.train_ds.src_file_name=${bi_path}/train.clean.de \
+      model.train_ds.tgt_file_name=${bi_path}/train.clean.en \
+      model.validation_ds.src_file_name=${bi_path}/wmt13-de-en.src \
+      model.validation_ds.tgt_file_name=${bi_path}/wmt13-de-en.ref \
+      exp_manager.exp_dir=/raid/peganov_results \
+  && python test.py -cn wmt16/de_en_8gpu \
+      trainer.gpus=16 \
+      model.test_ds.src_file_name=${bi_path}/wmt14-en-de.src \
+      model.test_ds.tgt_file_name=${bi_path}/wmt14-en-de.tgt \
+      exp_manager.exp_dir=/raid/peganov_results
