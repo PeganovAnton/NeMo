@@ -51,7 +51,7 @@ model:
     src_file_name: /data/wmt14-en-de.src # path to file with validation data
     tgt_file_name: /data/wmt14-en-de.ref
     clean: true
-    tokens_in_batch: 512
+    tokens_in_batch: 256
     shuffle: false
     num_samples: -1 # number of samples to be considered, -1 means all the dataset
     predict_last_k: 0
@@ -62,7 +62,7 @@ model:
   test_ds:
     src_file_name: /data/wmt14-en-de.src # path to file with validation data
     tgt_file_name: /data/wmt14-en-de.ref
-    tokens_in_batch: 512
+    tokens_in_batch: 256
     shuffle: false
     num_samples: -1 # number of samples to be considered, -1 means all the dataset
     predict_last_k: 0
