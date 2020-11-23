@@ -18,6 +18,7 @@ trainer:
 model:
   test_checkpoint_path: null
   machine_translation:
+    profile: false
     tokenizer:
       tokenizer_name: yttm
       tokenizer_model: bpe_16k_en_de_yttm.model

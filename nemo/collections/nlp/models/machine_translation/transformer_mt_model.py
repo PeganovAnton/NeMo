@@ -156,6 +156,7 @@ class TransformerMTModel(ModelPT):
         self.beam_search_calls_counter = 0
         # These attributes are added to bypass Illegal memory access error in PT1.6
         # https://github.com/pytorch/pytorch/issues/21819
+        self.profile = cfg.machine_translation.profile
 
     def filter_predicted_ids(self, ids):
         ids[ids >= self.tgt_tokenizer.vocab_size] = self.tgt_tokenizer.unk_id
@@ -233,14 +234,17 @@ class TransformerMTModel(ModelPT):
         log_probs = self.log_softmax(hidden_states=tgt_hiddens)
         beam_results = None
         if not self.training:
-            try:
-                with profiler.profile(record_shapes=True, profile_memory=True, use_cuda=True) as prof:
-                    beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
-            except RuntimeError:
-                prof.export_chrome_trace("/result/trace_beam_search.json")
-                with open('/result/table.txt', 'w') as f:
-                    f.write(prof.key_averages().table(sort_by='cuda_memory_usage', row_limit=100000))
-                raise
+            if self.profile:
+                try:
+                    with profiler.profile(record_shapes=True, profile_memory=True, use_cuda=True) as prof:
+                        beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
+                except RuntimeError:
+                    prof.export_chrome_trace("/result/trace_beam_search.json")
+                    with open('/result/table.txt', 'w') as f:
+                        f.write(prof.key_averages().table(sort_by='cuda_memory_usage', row_limit=100000))
+                    raise
+            else:
+                beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
             beam_results = self.filter_predicted_ids(beam_results)
             self.log_tensor_sizes()
             self.beam_search_calls_counter += 1
