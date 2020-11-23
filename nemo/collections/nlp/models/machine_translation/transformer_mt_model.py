@@ -319,8 +319,8 @@ class TransformerMTModel(ModelPT):
         sacre_bleu = corpus_bleu(translations, [ground_truths], tokenize="13a")
         dataset_name = "Validation" if mode == 'val' else "Test"
         if mode == 'val':
-            logging.info(f"step: {self.global_step}")
-        logging.info(f"\n\n\n\n{dataset_name} set size: {len(translations)}")
+            logging.info(f"\n\nstep: {self.global_step}")
+        logging.info(f"\n\n{dataset_name} set size: {len(translations)}")
         logging.info(f"{dataset_name} Sacre BLEU = {sacre_bleu.score}")
         logging.info(f"{dataset_name} TRANSLATION EXAMPLES:".upper())
         for i in range(0, 3):
