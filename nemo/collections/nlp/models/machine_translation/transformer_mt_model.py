@@ -284,14 +284,8 @@ class TransformerMTModel(ModelPT):
         np_tgt = tgt_ids.cpu().numpy()
         ground_truths = [self.tgt_tokenizer.ids_to_text(tgt) for tgt in np_tgt]
         num_non_pad_tokens = np.not_equal(np_tgt, self.tgt_tokenizer.pad_id).sum().item()
-        self.log_dict(
-            {
-                f'{mode}_loss': eval_loss,
-                'translations': translations,
-                'ground_truths': ground_truths,
-                'num_non_pad_tokens': num_non_pad_tokens,
-            }
-        )
+        self.log(f'{mode}_loss', eval_loss)
+        return {'translations': translations, 'ground_truths': ground_truths, 'num_non_pad_tokens': num_non_pad_tokens}
 
     def test_step(self, batch, batch_idx):
         return self.eval_step(batch, batch_idx, 'test')
@@ -318,6 +312,7 @@ class TransformerMTModel(ModelPT):
         counts = np.array([x['num_non_pad_tokens'] for x in outputs])
         eval_loss = np.sum(np.array([x[f'{mode}_loss'] for x in outputs]) * counts) / counts.sum()
         eval_perplexity = self.eval_perplexity.compute()
+        self.log_dict({f"{mode}_loss": eval_loss, f"{mode}_ppl": eval_perplexity})
         translations = list(itertools.chain(*[x['translations'] for x in outputs]))
         ground_truths = list(itertools.chain(*[x['ground_truths'] for x in outputs]))
         assert len(translations) == len(ground_truths)
