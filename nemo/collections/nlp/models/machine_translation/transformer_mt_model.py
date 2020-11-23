@@ -234,7 +234,6 @@ class TransformerMTModel(ModelPT):
         log_probs = self.log_softmax(hidden_states=tgt_hiddens)
         beam_results = None
         if not self.training:
-            print("(TransformerMTModel.forward)self.training:", self.training)
             if self.profile:
                 try:
                     with profiler.profile(record_shapes=True, profile_memory=True, use_cuda=True) as prof:
@@ -269,6 +268,7 @@ class TransformerMTModel(ModelPT):
         training_perplexity = self.training_perplexity(logits=log_probs)
         self.log_dict(
             {"train_loss": train_loss, "lr": self._optimizer.param_groups[0]['lr'], "train_ppl": training_perplexity})
+        return train_loss
 
     def eval_step(self, batch, batch_idx, mode):
         for i in range(len(batch)):
