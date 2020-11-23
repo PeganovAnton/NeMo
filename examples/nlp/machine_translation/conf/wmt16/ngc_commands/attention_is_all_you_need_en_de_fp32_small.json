@@ -3,7 +3,7 @@
    "aceName": "nv-us-west-2",
    "command": "git clone https://github.com/PeganovAnton/NeMo.git && cd NeMo && git checkout nmt && source examples/nlp/machine_translation/conf/wmt16/ngc_commands/attention_is_all_you_need_en_de_fp32_small.sh",
    "dockerImageName": "nvidia/pytorch:20.09-py3",
-   "name": "fp32_en_de_attention_is_all_you_need",
+   "name": "small_fp32_en_de_attention_is_all_you_need",
    "publishedContainerPorts": [
      6006
    ],
