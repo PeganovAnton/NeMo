@@ -12,6 +12,8 @@ trainer:
   logger: False
   log_every_n_steps: 50  # Interval of logging.
   check_val_every_n_epoch: 5
+  val_check_interval: 1000  # Set to 0.25 to check 4 times per epoch, or an int for number of iterations
+  progress_bar_refresh_rate: 0
 
 model:
   test_checkpoint_path: null
@@ -49,6 +51,17 @@ model:
     src_file_name: /data/wmt14-en-de.src # path to file with validation data
     tgt_file_name: /data/wmt14-en-de.ref
     clean: true
+    tokens_in_batch: 512
+    shuffle: false
+    num_samples: -1 # number of samples to be considered, -1 means all the dataset
+    predict_last_k: 0
+    drop_last: false # drops the last last batch if it is smaller than the batch size
+    pin_memory: true # enables pin_memory feature of the data loaders
+    num_workers: 8 # number of workers for data loaders
+
+  test_ds:
+    src_file_name: /data/wmt14-en-de.src # path to file with validation data
+    tgt_file_name: /data/wmt14-en-de.ref
     tokens_in_batch: 512
     shuffle: false
     num_samples: -1 # number of samples to be considered, -1 means all the dataset
