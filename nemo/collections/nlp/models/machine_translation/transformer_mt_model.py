@@ -156,7 +156,7 @@ class TransformerMTModel(ModelPT):
         self.beam_search_calls_counter = 0
         # These attributes are added to bypass Illegal memory access error in PT1.6
         # https://github.com/pytorch/pytorch/issues/21819
-        self.profile = cfg.machine_translation.profile
+        self.profile = cfg.machine_translation.get('profile', False)
 
     def filter_predicted_ids(self, ids):
         ids[ids >= self.tgt_tokenizer.vocab_size] = self.tgt_tokenizer.unk_id
