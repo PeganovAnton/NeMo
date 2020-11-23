@@ -34,7 +34,7 @@ model:
     num_layers: 6
     num_attn_heads: 8
     inner_size: 2048
-    max_seq_length: 512  # maximum allowed length in embedding layer
+    max_seq_length: 532  # maximum allowed length in embedding layer
     embedding_dropout: 0.1
     ffn_dropout: 0.1
     attn_score_dropout: 0.1
