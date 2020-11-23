@@ -18,9 +18,15 @@ pip install -r requirements/requirements.txt \
       model.train_ds.tgt_file_name=${bi_path}/train.clean.en \
       model.validation_ds.src_file_name=${bi_path}/wmt13-de-en.src \
       model.validation_ds.tgt_file_name=${bi_path}/wmt13-de-en.ref \
+      model.test_ds.src_file_name=${bi_path}/wmt14-en-de.src \
+      model.test_ds.tgt_file_name=${bi_path}/wmt14-en-de.tgt \
       exp_manager.exp_dir=/workspace/result \
   && python test.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
+      model.train_ds.src_file_name=${bi_path}/train.clean.de \
+      model.train_ds.tgt_file_name=${bi_path}/train.clean.en \
+      model.validation_ds.src_file_name=${bi_path}/wmt13-de-en.src \
+      model.validation_ds.tgt_file_name=${bi_path}/wmt13-de-en.ref \
       model.test_ds.src_file_name=${bi_path}/wmt14-en-de.src \
       model.test_ds.tgt_file_name=${bi_path}/wmt14-en-de.tgt \
       exp_manager.exp_dir=/workspace/result
