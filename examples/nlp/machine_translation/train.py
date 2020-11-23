@@ -13,10 +13,11 @@
 # limitations under the License.
 
 
+import os
+
 import pytorch_lightning as pl
 from omegaconf import DictConfig
 
-from nemo.collections.common.callbacks import MachineTranslationLogEvalCallback
 from nemo.collections.nlp.models.machine_translation import TransformerMTModel
 from nemo.core.config import hydra_runner
 from nemo.utils import logging
@@ -24,16 +25,18 @@ from nemo.utils.exp_manager import exp_manager
 from nemo.utils.get_rank import is_global_rank_zero
 
 
-@hydra_runner(config_path="conf", config_name="transformer_mt_config")
+@hydra_runner(config_path="conf", config_name="en_de_8gpu")
 def main(cfg: DictConfig) -> None:
     logging.info(f'Config: {cfg.pretty()}')
-    trainer = pl.Trainer(**cfg.trainer, callbacks=[MachineTranslationLogEvalCallback()])
+    trainer = pl.Trainer(**cfg.trainer)
     exp_manager(trainer, cfg.get("exp_manager", None))
     transformer_mt = TransformerMTModel(cfg.model, trainer=trainer)
     trainer.fit(transformer_mt)
     if is_global_rank_zero():
-        with open("best_checkpoint_path.txt", 'w') as f:
-            f.write(trainer.checkpoint_callback.best_model_path)
+        best_ckpt_path = os.path.join(cfg.exp_manager.exp_dir, 'best.ckpt')
+        if os.path.exists(best_ckpt_path):
+            os.remove(best_ckpt_path)
+        os.symlink(trainer.checkpoint_callback.best_model_path, best_ckpt_path)
 
 
 if __name__ == '__main__':

@@ -14,20 +14,23 @@
 
 import itertools
 import math
+import random
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 import torch
+import torch.autograd.profiler as profiler
 import torch.utils.data as pt_data
 from omegaconf import DictConfig
 from pytorch_lightning import Trainer
 from pytorch_lightning.utilities import rank_zero_only
+from sacrebleu import corpus_bleu
 
 from nemo.collections.common.losses import SmoothedCrossEntropyLoss
+from nemo.collections.common.metrics import Perplexity
 from nemo.collections.common.parts import transformer_weights_init
 from nemo.collections.nlp.data import TranslationDataset
-from nemo.collections.nlp.metrics.sacrebleu import corpus_bleu
 from nemo.collections.nlp.modules.common import TokenClassifier
 from nemo.collections.nlp.modules.common.tokenizer_utils import get_tokenizer
 from nemo.collections.nlp.modules.common.transformer import (
@@ -38,6 +41,7 @@ from nemo.collections.nlp.modules.common.transformer import (
 )
 from nemo.core.classes.common import typecheck
 from nemo.core.classes.modelPT import ModelPT
+from nemo.utils import logging
 
 __all__ = ['TransformerMTModel']
 
@@ -49,6 +53,11 @@ class TransformerMTModel(ModelPT):
 
     def __init__(self, cfg: DictConfig, trainer: Trainer = None):
         # shared params for dataset and data loaders
+        self.num_examples = {
+            "test": 3,
+            "val": 3,
+        }
+
         if "tokenizer" in cfg.machine_translation:
             if "src_tokenizer" in cfg.machine_translation or "tgt_tokenizer" in cfg.machine_translation:
                 raise ValueError(
@@ -139,30 +148,106 @@ class TransformerMTModel(ModelPT):
         # Optimizer setup needs to happen after all model weights are ready
         self.setup_optimization(cfg.optim)
 
-        self.num_examples = {
-            "test": cfg.test_ds.get("num_examples", 3),
-            "val": cfg.validation_ds.get("num_examples", 3),
-        }
+        self.training_perplexity = Perplexity(dist_sync_on_step=True)
+        self.eval_perplexity = Perplexity(compute_on_step=False)
 
+        self.tensor_types_and_sizes = []
+        self.num_taken_cuda_bytes = 0
+        self.beam_search_calls_counter = 0
         # These attributes are added to bypass Illegal memory access error in PT1.6
         # https://github.com/pytorch/pytorch/issues/21819
+        self.profile = cfg.machine_translation.profile
+
+    def filter_predicted_ids(self, ids):
+        ids[ids >= self.tgt_tokenizer.vocab_size] = self.tgt_tokenizer.unk_id
+        return ids
+
+    @staticmethod
+    def get_tensor_size(shape, type_):
+        import warnings
+        n = 1
+        for d in shape:
+            n *= d
+        if '8' in str(type_):
+            n *= 1
+        elif '16' in str(type_):
+            n *= 2
+        elif '32' in str(type_):
+            n *= 4
+        elif '64' in str(type_):
+            n *= 8
+        else:
+            warnings.warn(f"Cannot calculate tensor size for dtype {type_}")
+        return n
+
+    def log_tensor_sizes(self):
+        import gc
+        new_tensor_type_sizes = []
+        new_tensors_num_cuda_bytes = 0
+        removed_tensors_num_cuda_bytes = 0
+        with open(f"/result/tensor_sizes_log_during_beam_search_global_rank_{self.global_rank}.txt", 'a') as f:
+            for obj in gc.get_objects():
+                try:
+                    if torch.is_tensor(obj) and obj.is_cuda or (hasattr(obj, 'data') and torch.is_tensor(obj.data)) and obj.data.is_cuda:
+                        type_size = (obj.size(), type(obj), obj.dtype)
+                        if type_size in self.tensor_types_and_sizes:
+                            self.tensor_types_and_sizes.remove(type_size)
+                            removed_tensors_num_cuda_bytes += self.get_tensor_size(type_size[0], type_size[2])
+                        else:
+                            new_tensor_type_sizes.append(type_size)
+                            new_tensors_num_cuda_bytes += self.get_tensor_size(type_size[0], type_size[2])
+                except:
+                    pass
+            f.write(f"\n\n\nNew tensor shapes for global rank {self.global_rank} and beam search call "
+                  f"{self.beam_search_calls_counter}:\n")
+            for ts in new_tensor_type_sizes:
+                f.write(str(ts) + '\n')
+            f.write(f"Removed tensor shapes for global rank {self.global_rank} and beam search call "
+                  f"{self.beam_search_calls_counter}:\n")
+            for ts in self.tensor_types_and_sizes:
+                f.write(str(ts) + '\n')
+            f.write(f"number of taken cuda bytes before change: {self.num_taken_cuda_bytes}\n")
+            f.write(f"change in number of taken cuda bytes: {new_tensors_num_cuda_bytes - removed_tensors_num_cuda_bytes}\n")
+            self.num_taken_cuda_bytes += new_tensors_num_cuda_bytes - removed_tensors_num_cuda_bytes
+            self.tensor_types_and_sizes += new_tensor_type_sizes
+            f.write('\n'*2)
 
     @typecheck()
     def forward(self, src, src_mask, tgt, tgt_mask):
         """
-        No special modification required for Lightning, define it as you normally would
-        in the `nn.Module` in vanilla PyTorch.
+        torch.nn.Module.forward method.
+        Args:
+            src: source ids
+            src_mask: src mask (mask padding)
+            tgt: target ids
+            tgt_mask: target mask
+
+        Returns:
+
         """
         src_embeddings = self.src_embedding_layer(input_ids=src)
-        src_embeddings *= src_embeddings.new_tensor(self.emb_scale)
+        # src_embeddings *= src_embeddings.new_tensor(self.emb_scale)
         src_hiddens = self.encoder(src_embeddings, src_mask)
         tgt_embeddings = self.tgt_embedding_layer(input_ids=tgt)
-        tgt_embeddings *= tgt_embeddings.new_tensor(self.emb_scale)
+        # tgt_embeddings *= tgt_embeddings.new_tensor(self.emb_scale)
         tgt_hiddens = self.decoder(tgt_embeddings, tgt_mask, src_hiddens, src_mask)
         log_probs = self.log_softmax(hidden_states=tgt_hiddens)
         beam_results = None
         if not self.training:
-            beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
+            if self.profile:
+                try:
+                    with profiler.profile(record_shapes=True, profile_memory=True, use_cuda=True) as prof:
+                        beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
+                except RuntimeError:
+                    prof.export_chrome_trace("/result/trace_beam_search.json")
+                    with open('/result/table.txt', 'w') as f:
+                        f.write(prof.key_averages().table(sort_by='cuda_memory_usage', row_limit=100000))
+                    raise
+            else:
+                beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
+            beam_results = self.filter_predicted_ids(beam_results)
+            self.log_tensor_sizes()
+            self.beam_search_calls_counter += 1
         return log_probs, beam_results
 
     def training_step(self, batch, batch_idx):
@@ -179,8 +264,12 @@ class TransformerMTModel(ModelPT):
         src_ids, src_mask, tgt_ids, tgt_mask, labels, _ = batch
         log_probs, _ = self(src_ids, src_mask, tgt_ids, tgt_mask)
         train_loss = self.loss_fn(log_probs=log_probs, labels=labels)
-
-        tensorboard_logs = {'train_loss': train_loss, 'lr': self._optimizer.param_groups[0]['lr']}
+        training_perplexity = self.training_perplexity(logits=log_probs)
+        tensorboard_logs = {
+            'train_loss': train_loss,
+            'lr': self._optimizer.param_groups[0]['lr'],
+            "train_ppl": training_perplexity,
+        }
         return {'loss': train_loss, 'log': tensorboard_logs}
 
     def eval_step(self, batch, batch_idx, mode):
@@ -192,6 +281,7 @@ class TransformerMTModel(ModelPT):
         src_ids, src_mask, tgt_ids, tgt_mask, labels, sent_ids = batch
         log_probs, beam_results = self(src_ids, src_mask, tgt_ids, tgt_mask)
         eval_loss = self.loss_fn(log_probs=log_probs, labels=labels).cpu().numpy()
+        self.eval_perplexity(logits=log_probs)
         translations = [self.tgt_tokenizer.ids_to_text(tr) for tr in beam_results.cpu().numpy()]
         np_tgt = tgt_ids.cpu().numpy()
         ground_truths = [self.tgt_tokenizer.ids_to_text(tgt) for tgt in np_tgt]
@@ -229,12 +319,24 @@ class TransformerMTModel(ModelPT):
     def eval_epoch_end(self, outputs, mode):
         counts = np.array([x['num_non_pad_tokens'] for x in outputs])
         eval_loss = np.sum(np.array([x[f'{mode}_loss'] for x in outputs]) * counts) / counts.sum()
+        eval_perplexity = self.eval_perplexity.compute()
         translations = list(itertools.chain(*[x['translations'] for x in outputs]))
         ground_truths = list(itertools.chain(*[x['ground_truths'] for x in outputs]))
         assert len(translations) == len(ground_truths)
-        token_bleu = corpus_bleu(translations, [ground_truths], tokenize="fairseq")
         sacre_bleu = corpus_bleu(translations, [ground_truths], tokenize="13a")
-        ans = {f"{mode}_loss": eval_loss, f"{mode}_tokenBLEU": token_bleu.score, f"{mode}_sacreBLEU": sacre_bleu.score}
+        dataset_name = "Validation" if mode == 'val' else "Test"
+        if mode == 'val':
+            logging.info(f"step: {self.global_step}")
+        logging.info(f"\n\n\n\n{dataset_name} set size: {len(translations)}")
+        logging.info(f"{dataset_name} Sacre BLEU = {sacre_bleu.score}")
+        logging.info(f"{dataset_name} TRANSLATION EXAMPLES:".upper())
+        for i in range(0, 3):
+            ind = random.randint(0, len(translations) - 1)
+            logging.info("    " + '\u0332'.join(f"EXAMPLE {i}:"))
+            logging.info(f"    Prediction:   {translations[ind]}")
+            logging.info(f"    Ground Truth: {ground_truths[ind]}")
+
+        ans = {f"{mode}_loss": eval_loss, f"{mode}_sacreBLEU": sacre_bleu.score, f"{mode}_ppl": eval_perplexity}
         ans['log'] = dict(ans)
         return ans
 
@@ -243,8 +345,8 @@ class TransformerMTModel(ModelPT):
         Called at the end of validation to aggregate outputs.
         :param outputs: list of individual outputs of each validation step.
         """
-        # self.log_param_stats()
-        return self.eval_epoch_end(outputs, 'val')
+        self.log_dict(self.eval_epoch_end(outputs, 'val'))
+        # return self.eval_epoch_end(outputs, 'val')
 
     def test_epoch_end(self, outputs):
         return self.eval_epoch_end(outputs, 'test')
@@ -254,9 +356,11 @@ class TransformerMTModel(ModelPT):
 
     def setup_validation_data(self, val_data_config: Optional[DictConfig]):
         self._validation_dl = self._setup_dataloader_from_config(cfg=val_data_config)
+        self.num_examples['val'] = val_data_config.get('num_examples', self.num_examples['val'])
 
     def setup_test_data(self, test_data_config: Optional[DictConfig]):
         self._test_dl = self._setup_dataloader_from_config(cfg=test_data_config)
+        self.num_examples['test'] = test_data_config.get('num_examples', self.num_examples['test'])
 
     def _setup_dataloader_from_config(self, cfg: DictConfig):
         dataset = TranslationDataset(
@@ -265,6 +369,11 @@ class TransformerMTModel(ModelPT):
             dataset_src=str(Path(cfg.src_file_name).expanduser()),
             dataset_tgt=str(Path(cfg.tgt_file_name).expanduser()),
             tokens_in_batch=cfg.tokens_in_batch,
+            clean=cfg.get("clean", False),
+            max_seq_length=cfg.get("max_seq_length", 512),
+            min_seq_length=cfg.get("min_seq_length", 1),
+            max_seq_length_diff=cfg.get("max_seq_length_diff", 512),
+            max_seq_length_ratio=cfg.get("max_seq_length_ratio", 512),
         )
         if cfg.shuffle:
             sampler = pt_data.RandomSampler(dataset)
@@ -278,6 +387,37 @@ class TransformerMTModel(ModelPT):
             pin_memory=cfg.get("pin_memory", False),
             drop_last=cfg.get("drop_last", False),
         )
+
+    @torch.no_grad()
+    def translate(self, text: List[str]) -> List[str]:
+        """
+        Translates list of sentences from source language to target language.
+        Should be regular text, this method performs its own tokenization/de-tokenization
+        Args:
+            text: list of strings to translate
+
+        Returns:
+            list of translated strings
+        """
+        mode = self.training
+        try:
+            self.eval()
+            res = []
+            for txt in text:
+                ids = self.src_tokenizer.text_to_ids(txt)
+                ids = [self.src_tokenizer.bos_id] + ids + [self.src_tokenizer.eos_id]
+                src = torch.Tensor(ids).long().to(self._device).unsqueeze(0)
+                src_mask = torch.ones_like(src)
+                src_embeddings = self.src_embedding_layer(input_ids=src)
+                # src_embeddings *= src_embeddings.new_tensor(self.emb_scale)
+                src_hiddens = self.encoder(src_embeddings, src_mask)
+                beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
+                beam_results = self.filter_predicted_ids(beam_results)
+                translation_ids = beam_results.cpu()[0].numpy()
+                res.append(self.tgt_tokenizer.ids_to_text(translation_ids))
+        finally:
+            self.train(mode=mode)
+        return res
 
     @classmethod
     def list_available_models(cls) -> Optional[Dict[str, str]]:

@@ -22,7 +22,7 @@ model:
   machine_translation:
     tokenizer:
       tokenizer_name: yttm
-      tokenizer_model: ~/data/wmt14_en_de2/bpe_32k_en_de_yttm.model
+      tokenizer_model: ~/data/wmt14_en_de2/bpe_37k_en_de_yttm.model
 # 2 following fields are mutually exclusive with `tokenizer`
 #    src_tokenizer:
 #      tokenizer_name: yttm
@@ -66,6 +66,7 @@ model:
     drop_last: false # drops the last last batch if it is smaller than the batch size
     pin_memory: false # enables pin_memory feature of the data loaders
     num_workers: 8 # number of workers for data loaders
+    num_examples: 4
 
   test_ds:
     src_file_name: ~/data/wmt14_en_de2/test.de # path to file with validation data
@@ -77,6 +78,7 @@ model:
     drop_last: false # drops the last last batch if it is smaller than the batch size
     pin_memory: false # enables pin_memory feature of the data loaders
     num_workers: 8 # number of workers for data loaders
+    num_examples: 5
 
   optim:
     name: adam

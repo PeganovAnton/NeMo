@@ -17,9 +17,9 @@
 from collections import OrderedDict
 
 import numpy as np
-from torch.utils.data import Dataset
 
 from nemo.collections.nlp.data.data_utils.data_preprocessing import dataset_to_ids
+from nemo.core import Dataset
 
 __all__ = ['TranslationDataset']
 
@@ -100,7 +100,7 @@ class TranslationDataset(Dataset):
         buckets = {}
         for i, src_id in enumerate(src_ids):
             src_len, tgt_len = len(src_id), len(tgt_ids[i])
-            if src_len not in buckets.keys():
+            if src_len not in buckets:
                 buckets[src_len] = [(tgt_len, i)]
             else:
                 buckets[src_len].append((tgt_len, i))
