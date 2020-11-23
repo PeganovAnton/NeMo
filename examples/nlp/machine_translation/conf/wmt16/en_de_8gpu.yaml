@@ -22,6 +22,7 @@ model:
       tokenizer_name: yttm
       tokenizer_model: bpe_16k_en_de_yttm.model
     hidden_size: 512
+    num_mem_tokens: 20
     num_layers: 6
     num_attn_heads: 8
     inner_size: 2048

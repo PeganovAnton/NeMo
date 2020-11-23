@@ -1,7 +1,7 @@
 {
    "aceInstance": "dgx1v.32g.8.norm",
    "aceName": "nv-us-west-2",
-   "command": "cd /nemo_peganov/NeMo && git checkout nmt && source examples/nlp/machine_translation/conf/wmt16/ngc_commands/attention_is_all_you_need_en_de.sh",
+   "command": "cd /nemo_peganov/NeMo && git checkout mem_tokens && source examples/nlp/machine_translation/conf/wmt16/ngc_commands/attention_is_all_you_need_en_de.sh",
    "dockerImageName": "nvidia/pytorch:20.09-py3",
    "name": "en_de_attention_is_all_you_need",
    "publishedContainerPorts": [

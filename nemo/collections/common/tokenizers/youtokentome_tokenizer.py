@@ -26,7 +26,7 @@ class YouTokenToMeTokenizer(TokenizerSpec):
         model_path = Path(model_path).expanduser()
         self.tokenizer = yttm.BPE(model=str(model_path))
         self.vocab_size = len(self.tokenizer.vocab())
-        self.special_tokens = self.tokens_to_ids(["<PAD>", "<UNK>", "<BOS>", "<EOS>"])
+        self.special_tokens = self.tokens_to_ids(["<PAD>", "<UNK>", "<BOS>", "<EOS>", "<MEM>"])
 
     def text_to_tokens(self, text):
         return self.tokenizer.encode(text, output_type=yttm.OutputType.SUBWORD)
@@ -63,3 +63,7 @@ class YouTokenToMeTokenizer(TokenizerSpec):
     @property
     def unk_id(self):
         return self.tokenizer.subword_to_id("<UNK>")
+
+    @property
+    def mem_id(self):
+        return self.tokenizer.subword_to_id("<MEM>")

@@ -156,6 +156,7 @@ class TransformerMTModel(ModelPT):
         self.beam_search_calls_counter = 0
         # These attributes are added to bypass Illegal memory access error in PT1.6
         # https://github.com/pytorch/pytorch/issues/21819
+        self.num_mem_tokens = cfg.machine_translation.num_mem_tokens
 
     def filter_predicted_ids(self, ids):
         ids[ids >= self.tgt_tokenizer.vocab_size] = self.tgt_tokenizer.unk_id
@@ -224,6 +225,9 @@ class TransformerMTModel(ModelPT):
         Returns:
 
         """
+        bsz = src.shape[0]
+        mem_tokens = src.new_tensor(np.fill((bsz, self.num_mem_tokens), self.src_tokenizer.mem_id))
+        src = torch.cat((mem_tokens, src))
         src_embeddings = self.src_embedding_layer(input_ids=src)
         # src_embeddings *= src_embeddings.new_tensor(self.emb_scale)
         src_hiddens = self.encoder(src_embeddings, src_mask)
