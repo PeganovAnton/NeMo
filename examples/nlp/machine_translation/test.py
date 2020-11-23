@@ -13,6 +13,8 @@
 # limitations under the License.
 
 
+import os
+
 import pytorch_lightning as pl
 from omegaconf import DictConfig
 
@@ -25,7 +27,9 @@ from nemo.utils.exp_manager import exp_manager
 @hydra_runner(config_path="conf", config_name="en_de_8gpu")
 def main(cfg: DictConfig) -> None:
     if cfg.model.test_checkpoint_path is None:
-        raise ValueError("Not checkpoint for testing was provided")
+        cfg.model.test_checkpoint_path = os.path.join(cfg.exp_manager.exp_dir, 'best.ckpt')
+        if not os.path.exists(cfg.model.test_checkpoint_path):
+            raise ValueError("Nor checkpoint for testing was provided, neither file best.ckpt is present in exp dir")
     logging.info(f'Config: {cfg.pretty()}')
     trainer = pl.Trainer(**cfg.trainer)
     exp_manager(trainer, cfg.get("exp_manager", None))
