@@ -28,5 +28,5 @@ pip install -r requirements/requirements.txt \
       model.validation_ds.src_file_name=${bi_path}/wmt13-de-en.src \
       model.validation_ds.tgt_file_name=${bi_path}/wmt13-de-en.ref \
       model.test_ds.src_file_name=${bi_path}/wmt14-de-en.src \
-      model.test_ds.tgt_file_name=${bi_path}/wmt14-de-en.tgt \
+      model.test_ds.tgt_file_name=${bi_path}/wmt14-de-en.ref \
       exp_manager.exp_dir=/workspace/result
