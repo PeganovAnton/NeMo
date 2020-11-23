@@ -2,10 +2,10 @@
 name: &name TransformerMT
 
 trainer:
-  gpus: 8
-  num_nodes: 1
+  gpus: 1
+  num_nodes: 2
   max_epochs: 1
-  max_steps: 20 # precedence over max_epochs
+  max_steps: 30 # precedence over max_epochs
   accumulate_grad_batches: 1 # accumulates grads every k batches
   amp_level: O2 # O1/O2 for mixed precision
   precision: 16 # Should be set to 16 for O1 and O2, default is 16 as PT ignores it when am_level is O0
@@ -20,6 +20,7 @@ trainer:
 model:
   test_checkpoint_path: null
   machine_translation:
+    profile: false
     tokenizer:
       tokenizer_name: yttm
       tokenizer_model: /data/bpe_37k_en_de_yttm.model
