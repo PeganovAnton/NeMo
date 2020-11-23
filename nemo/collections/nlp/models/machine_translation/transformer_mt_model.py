@@ -227,7 +227,7 @@ class TransformerMTModel(ModelPT):
 
         """
         bsz = src.shape[0]
-        mem_tokens = src.new_tensor(np.fill((bsz, self.num_mem_tokens), self.src_tokenizer.mem_id))
+        mem_tokens = src.new_tensor(np.full((bsz, self.num_mem_tokens), self.src_tokenizer.mem_id))
         src = torch.cat((mem_tokens, src))
         src_embeddings = self.src_embedding_layer(input_ids=src)
         # src_embeddings *= src_embeddings.new_tensor(self.emb_scale)
