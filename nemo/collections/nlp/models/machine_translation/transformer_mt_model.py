@@ -247,7 +247,8 @@ class TransformerMTModel(ModelPT):
             else:
                 beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
             beam_results = self.filter_predicted_ids(beam_results)
-            self.log_tensor_sizes()
+            if self.profile:
+                self.log_tensor_sizes()
             self.beam_search_calls_counter += 1
         return log_probs, beam_results
 
