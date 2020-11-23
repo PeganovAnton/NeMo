@@ -284,8 +284,8 @@ class TransformerMTModel(ModelPT):
         np_tgt = tgt_ids.cpu().numpy()
         ground_truths = [self.tgt_tokenizer.ids_to_text(tgt) for tgt in np_tgt]
         num_non_pad_tokens = np.not_equal(np_tgt, self.tgt_tokenizer.pad_id).sum().item()
-        self.log(f'{mode}_loss', eval_loss)
-        return {'translations': translations, 'ground_truths': ground_truths, 'num_non_pad_tokens': num_non_pad_tokens}
+        # self.log(f'{mode}_loss', eval_loss)
+        return {'translations': translations, 'ground_truths': ground_truths, 'num_non_pad_tokens': num_non_pad_tokens, f'{mode}_loss': eval_loss}
 
     def test_step(self, batch, batch_idx):
         return self.eval_step(batch, batch_idx, 'test')
