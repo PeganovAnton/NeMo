@@ -5,7 +5,7 @@ trainer:
   gpus: 2
   num_nodes: 1
   max_epochs: 1000
-  max_steps: 20 # precedence over max_epochs
+  max_steps: 200 # precedence over max_epochs
   accumulate_grad_batches: 1 # accumulates grads every k batches
   amp_level: O2 # O1/O2 for mixed precision
   precision: 16 # Should be set to 16 for O1 and O2, default is 16 as PT ignores it when am_level is O0
@@ -22,7 +22,7 @@ model:
   machine_translation:
     tokenizer:
       tokenizer_name: yttm
-      tokenizer_model: ~/data/wmt14_en_de2/bpe_37k_en_de_yttm.model
+      tokenizer_model: ~/data/wmt14_en_de2/bpe_32k_en_de_yttm.model
 # 2 following fields are mutually exclusive with `tokenizer`
 #    src_tokenizer:
 #      tokenizer_name: yttm
