@@ -9,7 +9,7 @@ pip install -r requirements/requirements.txt \
   && bi_path=${data_path}/wmt18_en_de \
   && mono_en_path=${data_path}/wmt18_en_mono \
   && mono_de_path=${data_path}/wmt18_de_mono \
-  && cat ${bi_path}/train.clean.* ${mono_en_path}/monoligual.25* ${monolingual_de_path}/monolingual.25* > all_text.txt \
+  && cat ${bi_path}/train.clean.* ${mono_en_path}/monoligual.25* ${mono_de_path}/monolingual.25* > all_text.txt \
   && yttm bpe --data all_text.txt --model bpe_16k_en_de_yttm.model --vocab_size 16000 \
   && python train.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
