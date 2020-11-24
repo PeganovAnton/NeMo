@@ -13,7 +13,7 @@ pip install -r requirements/requirements.txt \
   && yttm bpe --data all_text.txt --model bpe_16k_en_de_yttm.model --vocab_size 16000 \
   && python train.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
-      model.train_ds.tokens_in_batch=8000 \
+      model.train_ds.tokens_in_batch=7000 \
       model.train_ds.src_file_name=${bi_path}/train.clean.de \
       model.train_ds.tgt_file_name=${bi_path}/train.clean.en \
       model.validation_ds.src_file_name=${bi_path}/wmt13-de-en.src \
