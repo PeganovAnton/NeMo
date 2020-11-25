@@ -28,7 +28,7 @@ from nemo.utils.get_rank import is_global_rank_zero
 @hydra_runner(config_path="conf", config_name="en_de_8gpu")
 def main(cfg: DictConfig) -> None:
     logging.info(f'Config: {cfg.pretty()}')
-    trainer = pl.Trainer(cfg.model.train_checkpoint_path)
+    trainer = pl.Trainer(resume_from_checkpoint=cfg.model.train_checkpoint_path)
     exp_manager(trainer, cfg.get("exp_manager", None))
     transformer_mt = TransformerMTModel.load_from_checkpoint(cfg.model.train_checkpoint_path)
     trainer.fit(transformer_mt)
