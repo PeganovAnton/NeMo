@@ -26,7 +26,6 @@ pip install -r requirements/requirements.txt \
       exp_manager.name=null \
       exp_manager.exp_dir=null \
       exp_manager.create_tensorboard_logger=false \
-      exp_manager.create_checkpoint_callback=false \
   && python test.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
       model.train_ds.src_file_name=${bi_path}/train.clean.de \
