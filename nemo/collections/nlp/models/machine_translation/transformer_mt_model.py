@@ -312,11 +312,17 @@ class TransformerMTModel(ModelPT):
         counts = np.array([x['num_non_pad_tokens'] for x in outputs])
         eval_loss = np.sum(np.array([x[f'{mode}_loss'] for x in outputs]) * counts) / counts.sum()
         eval_perplexity = self.eval_perplexity.compute()
-        self.log_dict({f"{mode}_loss": eval_loss, f"{mode}_ppl": eval_perplexity})
         translations = list(itertools.chain(*[x['translations'] for x in outputs]))
         ground_truths = list(itertools.chain(*[x['ground_truths'] for x in outputs]))
         assert len(translations) == len(ground_truths)
         sacre_bleu = corpus_bleu(translations, [ground_truths], tokenize="13a")
+        self.log_dict(
+            {
+                f"{mode}_loss": eval_loss,
+                f"{mode}_ppl": eval_perplexity.cpu().numpy().item(),
+                f"{mode}_sacreBLEU": sacre_bleu.score,
+            },
+        )
         dataset_name = "Validation" if mode == 'val' else "Test"
         if mode == 'val':
             logging.info(f"\n\nstep: {self.global_step}")
