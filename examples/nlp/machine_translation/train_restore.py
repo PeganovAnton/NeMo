@@ -33,7 +33,7 @@ def main(cfg: DictConfig) -> None:
     cfg.exp_manager.create_checkpoint_callback = False
     logging.info(f'Config: {cfg.pretty()}')
     trainer = pl.Trainer(resume_from_checkpoint=cfg.model.train_checkpoint_path)
-    exp_manager(trainer, cfg.get("exp_manager", None))
+    # exp_manager(trainer, cfg.get("exp_manager", None))
     transformer_mt = TransformerMTModel(cfg.model, trainer=trainer)
     trainer.fit(transformer_mt)
     if is_global_rank_zero():
