@@ -40,7 +40,7 @@ model:
   train_ds:
     src_file_name: /data/train.clean.de.shuffled
     tgt_file_name: /data/train.clean.en.shuffled
-    tokens_in_batch: 6000  # This is limit per gpu. Total limit is 50000
+    tokens_in_batch: 2000  # This is limit per gpu. Total limit is 50000
     clean: true
     max_seq_length: 512
     shuffle: true
