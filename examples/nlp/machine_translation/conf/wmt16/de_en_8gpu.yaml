@@ -17,7 +17,6 @@ trainer:
 
 model:
   test_checkpoint_path: null
-  train_checkpoint_path: /workspace/mem_tokens_result/TransformerMT/2020-11-24_11-04-42/checkpoints/TransformerMT-last.ckpt
   machine_translation:
     profile: false
     tokenizer:
