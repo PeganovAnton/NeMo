@@ -30,7 +30,7 @@ def main(cfg: DictConfig) -> None:
     logging.info(f'Config: {cfg.pretty()}')
     trainer = pl.Trainer(resume_from_checkpoint=cfg.model.train_checkpoint_path)
     exp_manager(trainer, cfg.get("exp_manager", None))
-    transformer_mt = TransformerMTModel.load_from_checkpoint(cfg.model.train_checkpoint_path)
+    transformer_mt = TransformerMTModel(cfg.model, trainer=trainer)
     trainer.fit(transformer_mt)
     if is_global_rank_zero():
         best_ckpt_path = os.path.join(cfg.exp_manager.exp_dir, 'best.ckpt')
