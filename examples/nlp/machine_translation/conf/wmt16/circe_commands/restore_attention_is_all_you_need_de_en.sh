@@ -25,7 +25,7 @@ pip install -r requirements/requirements.txt \
       +trainer.resume_from_checkpoint=/workspace/mem_tokens_result/TransformerMT/2020-11-24_11-04-42/checkpoints/TransformerMT-last.ckpt \
       exp_manager.name=null \
       exp_manager.exp_dir=null \
-      exp_manager.create_tensor_board_logger=fasle \
+      exp_manager.create_tensorboard_logger=false \
       exp_manager.create_checkpoint_callback=false \
   && python test.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
