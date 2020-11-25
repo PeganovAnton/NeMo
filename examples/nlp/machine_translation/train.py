@@ -14,6 +14,7 @@
 
 
 import os
+from pathlib import Path
 
 import pytorch_lightning as pl
 from omegaconf import DictConfig
@@ -33,7 +34,14 @@ def main(cfg: DictConfig) -> None:
     transformer_mt = TransformerMTModel(cfg.model, trainer=trainer)
     trainer.fit(transformer_mt)
     if is_global_rank_zero():
-        best_ckpt_path = os.path.join(cfg.exp_manager.exp_dir, 'best.ckpt')
+        if cfg.exp_manager.exp_dir is None:
+            best_ckpt_path = os.path.join(
+                str(Path(trainer.checkpoint_callback.best_model_path).parents[3]),
+                'best.ckpt'
+            )
+        else:
+            best_ckpt_path = os.path.join(cfg.exp_manager.exp_dir, 'best.ckpt')
+        print(f"saving link to the best checkpoint into '{best_ckpt_path}'")
         if os.path.exists(best_ckpt_path):
             os.remove(best_ckpt_path)
         os.symlink(trainer.checkpoint_callback.best_model_path, best_ckpt_path)
