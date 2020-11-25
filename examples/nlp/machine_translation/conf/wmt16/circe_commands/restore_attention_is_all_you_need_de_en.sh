@@ -11,7 +11,7 @@ pip install -r requirements/requirements.txt \
   && mono_de_path=${data_path}/wmt18_de_mono \
   && cat ${bi_path}/train.clean.* ${mono_en_path}/monolingual.2* ${mono_de_path}/monolingual.2* > all_text.txt \
   && yttm bpe --data all_text.txt --model bpe_16k_en_de_yttm.model --vocab_size 16000 \
-  && python train_restore.py -cn wmt16/de_en_8gpu \
+  && python train.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
       model.train_ds.tokens_in_batch=6000 \
       model.train_ds.src_file_name=${bi_path}/train.clean.de \
@@ -22,6 +22,11 @@ pip install -r requirements/requirements.txt \
       model.test_ds.tgt_file_name=${bi_path}/wmt14-de-en.ref \
       exp_manager.exp_dir=/workspace/mem_tokens_result \
       trainer.max_epochs=50 \
+      trainer.resume_from_checkpoint=/workspace/mem_tokens_result/TransformerMT/2020-11-24_11-04-42/checkpoints/TransformerMT-last.ckpt \
+      exp_manager.name=null \
+      exp_manager.exp_dir=null \
+      exp_manager.create_tensor_board_logger=fasle \
+      exp_manager.create_checkpoint_callback=false \
   && python test.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
       model.train_ds.src_file_name=${bi_path}/train.clean.de \
