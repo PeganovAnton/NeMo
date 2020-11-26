@@ -30,12 +30,12 @@ from nemo.utils.get_rank import is_global_rank_zero
 def main(cfg: DictConfig) -> None:
     logging.info(f'Config: {cfg.pretty()}')
     trainer = pl.Trainer(**cfg.trainer)
-    if cfg.get("exp_manager", None) is not None:
+    if cfg.get("exp_manager") is not None:
         exp_manager(trainer, cfg.get("exp_manager", None))
     transformer_mt = TransformerMTModel(cfg.model, trainer=trainer)
     trainer.fit(transformer_mt)
     if is_global_rank_zero():
-        if cfg.exp_manager.exp_dir is None:
+        if cfg.get("exp_manager") is not None and cfg.exp_manager.get('exp_dir') is None:
             best_ckpt_path = os.path.join(
                 str(Path(trainer.checkpoint_callback.best_model_path).parents[3]),
                 'best.ckpt'
