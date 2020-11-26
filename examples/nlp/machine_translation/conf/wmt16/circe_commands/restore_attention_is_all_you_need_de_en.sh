@@ -22,8 +22,6 @@ pip install -r requirements/requirements.txt \
       model.test_ds.tgt_file_name=${bi_path}/wmt14-de-en.ref \
       exp_manager.exp_dir=/workspace/result \
       trainer.max_epochs=50 \
-      +trainer.resume_from_checkpoint=/workspace/result/TransformerMT/2020-11-24_11-04-17/checkpoints/TransformerMT-last.ckpt \
-      ~exp_manager \
   && python test.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
       model.train_ds.src_file_name=${bi_path}/train.clean.de \

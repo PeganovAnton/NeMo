@@ -92,4 +92,5 @@ exp_manager:
   name: *name  # name of experiment
   create_tensorboard_logger: True
   create_checkpoint_callback: True
+  resume_if_exists: True
 
