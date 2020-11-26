@@ -335,3 +335,4 @@ class BeamSearchSequenceGenerator(GreedySequenceGenerator):
         except RuntimeError as e:
             print(f"The function fell on {i}th iteration")
             raise
+
