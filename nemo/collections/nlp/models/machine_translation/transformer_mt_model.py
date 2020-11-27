@@ -14,6 +14,7 @@
 
 import itertools
 import math
+import os
 import random
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -157,6 +158,8 @@ class TransformerMTModel(ModelPT):
         # These attributes are added to bypass Illegal memory access error in PT1.6
         # https://github.com/pytorch/pytorch/issues/21819
         self.profile = cfg.machine_translation.get('profile', False)
+        self.eval_epoch_step = 0
+        self.exp_dir = cfg.exp_manager.exp_dir
 
     def filter_predicted_ids(self, ids):
         ids[ids >= self.tgt_tokenizer.vocab_size] = self.tgt_tokenizer.unk_id
@@ -185,7 +188,12 @@ class TransformerMTModel(ModelPT):
         new_tensor_type_sizes = []
         new_tensors_num_cuda_bytes = 0
         removed_tensors_num_cuda_bytes = 0
-        with open(f"/result/tensor_sizes_log_during_beam_search_global_rank_{self.global_rank}.txt", 'a') as f:
+        with open(
+                os.path.join(
+                    self.exp_dir,
+                    f"tensor_sizes_log_during_beam_search_global_rank_{self.global_rank}.txt", 'a'
+                )
+        ) as f:
             for obj in gc.get_objects():
                 try:
                     if torch.is_tensor(obj) and obj.is_cuda or (hasattr(obj, 'data') and torch.is_tensor(obj.data)) and obj.data.is_cuda:
@@ -239,8 +247,8 @@ class TransformerMTModel(ModelPT):
                     with profiler.profile(record_shapes=True, profile_memory=True, use_cuda=True) as prof:
                         beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
                 except RuntimeError:
-                    prof.export_chrome_trace("/result/trace_beam_search.json")
-                    with open('/result/table.txt', 'w') as f:
+                    prof.export_chrome_trace(os.path.join(self.exp_dir, "trace_beam_search.json"))
+                    with open(os.path.join(self.exp_dir, 'table.txt'), 'w') as f:
                         f.write(prof.key_averages().table(sort_by='cuda_memory_usage', row_limit=100000))
                     raise
             else:
@@ -265,7 +273,22 @@ class TransformerMTModel(ModelPT):
         src_ids, src_mask, tgt_ids, tgt_mask, labels, _ = batch
         log_probs, _ = self(src_ids, src_mask, tgt_ids, tgt_mask)
         train_loss = self.loss_fn(log_probs=log_probs, labels=labels)
-        training_perplexity = self.training_perplexity(logits=log_probs).cpu().numpy().item()
+        try:
+            training_perplexity = self.training_perplexity(logits=log_probs).cpu().numpy().item()
+        except ValueError as e:
+            ckpt_path = "invalid_value.ckpt"
+            torch.save(
+                {
+                    "invalid_log_probs": log_probs,
+                    "model_state_dice": self.state_dict()
+                },
+                ckpt_path
+            )
+            import warnings
+            invalid_indices = torch.nonzero(~log_probs).cpu().numpy()
+            warnings.warn(f"Invalid values of log probabilities. The model is saved to {ckpt_path}. "
+                          f"The indices of NaNs are {invalid_indices}")
+            raise e
         self.log_dict(
             {"train_loss": train_loss, "lr": self._optimizer.param_groups[0]['lr'], "train_ppl": training_perplexity})
         return train_loss
@@ -313,6 +336,7 @@ class TransformerMTModel(ModelPT):
         return self.eval_step(batch, batch_idx, 'val')
 
     def eval_epoch_end(self, outputs, mode):
+        self.eval_epoch_step = 0
         counts = np.array([x['num_non_pad_tokens'] for x in outputs])
         eval_loss = np.sum(np.array([x[f'{mode}_loss'] for x in outputs]) * counts) / counts.sum()
         eval_perplexity = self.eval_perplexity.compute()
