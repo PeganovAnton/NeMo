@@ -25,6 +25,7 @@ import torch.autograd.profiler as profiler
 import torch.utils.data as pt_data
 from omegaconf import DictConfig
 from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.utilities import rank_zero_only
 from sacrebleu import corpus_bleu
 
@@ -159,7 +160,14 @@ class TransformerMTModel(ModelPT):
         # https://github.com/pytorch/pytorch/issues/21819
         self.profile = cfg.machine_translation.get('profile', False)
         self.eval_epoch_step = 0
-        self.exp_dir = cfg.exp_manager.exp_dir
+
+    def get_exp_dir(self):
+        exp_dir = None
+        for cb in self.trainer.callbacks:
+            if isinstance(cb, ModelCheckpoint):
+                exp_dir = None if cb.dirpath is None else cb.dirpath
+        print("(TransformerMTModel.__init__)exp_dir:", exp_dir)
+        return exp_dir
 
     def filter_predicted_ids(self, ids):
         ids[ids >= self.tgt_tokenizer.vocab_size] = self.tgt_tokenizer.unk_id
@@ -184,13 +192,16 @@ class TransformerMTModel(ModelPT):
         return n
 
     def log_tensor_sizes(self):
+        exp_dir = self.get_exp_dir()
+        if exp_dir is None:
+            return
         import gc
         new_tensor_type_sizes = []
         new_tensors_num_cuda_bytes = 0
         removed_tensors_num_cuda_bytes = 0
         with open(
                 os.path.join(
-                    self.exp_dir,
+                    exp_dir,
                     f"tensor_sizes_log_during_beam_search_global_rank_{self.global_rank}.txt", 'a'
                 )
         ) as f:
@@ -243,13 +254,15 @@ class TransformerMTModel(ModelPT):
         beam_results = None
         if not self.training:
             if self.profile:
+                exp_dir = self.get_exp_dir()
                 try:
                     with profiler.profile(record_shapes=True, profile_memory=True, use_cuda=True) as prof:
                         beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
                 except RuntimeError:
-                    prof.export_chrome_trace(os.path.join(self.exp_dir, "trace_beam_search.json"))
-                    with open(os.path.join(self.exp_dir, 'table.txt'), 'w') as f:
-                        f.write(prof.key_averages().table(sort_by='cuda_memory_usage', row_limit=100000))
+                    if exp_dir is not None:
+                        prof.export_chrome_trace(os.path.join(exp_dir, "trace_beam_search.json"))
+                        with open(os.path.join(exp_dir, 'table.txt'), 'w') as f:
+                            f.write(prof.key_averages().table(sort_by='cuda_memory_usage', row_limit=100000))
                     raise
             else:
                 beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
