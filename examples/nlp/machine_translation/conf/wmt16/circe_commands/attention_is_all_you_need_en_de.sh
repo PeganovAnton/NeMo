@@ -22,7 +22,7 @@ pip install -r requirements/requirements.txt \
       model.validation_ds.tgt_file_name=${bi_path}/wmt13-en-de.ref \
       model.test_ds.src_file_name=${bi_path}/wmt14-en-de.src \
       model.test_ds.tgt_file_name=${bi_path}/wmt14-en-de.ref \
-      exp_manager.exp_dir=/workspace/result \
+      exp_manager.exp_dir=/workspace/result_en_de \
       trainer.max_epochs=50 \
   && python test.py -cn wmt16/en_de_8gpu \
       trainer.gpus=16 \
@@ -32,4 +32,4 @@ pip install -r requirements/requirements.txt \
       model.validation_ds.tgt_file_name=${bi_path}/wmt13-en-de.ref \
       model.test_ds.src_file_name=${bi_path}/wmt14-en-de.src \
       model.test_ds.tgt_file_name=${bi_path}/wmt14-en-de.ref \
-      exp_manager.exp_dir=/workspace/result
+      exp_manager.exp_dir=/workspace/result_en_de
