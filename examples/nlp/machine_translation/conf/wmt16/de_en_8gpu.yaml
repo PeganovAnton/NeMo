@@ -44,8 +44,8 @@ model:
     max_seq_length: 512
     shuffle: true
     num_samples: -1 # number of samples to be considered, -1 means all the dataset
-    drop_last: false # drops the last last batch if it is smaller than the batch size
-    pin_memory: true # enables pin_memory feature of the data loaders
+    drop_last: true # drops the last last batch if it is smaller than the batch size
+    pin_memory: false # enables pin_memory feature of the data loaders
     num_workers: 8 # number of workers for data loaders
 
   validation_ds:
@@ -56,8 +56,8 @@ model:
     shuffle: false
     num_samples: -1 # number of samples to be considered, -1 means all the dataset
     predict_last_k: 0
-    drop_last: false # drops the last last batch if it is smaller than the batch size
-    pin_memory: true # enables pin_memory feature of the data loaders
+    drop_last: true # drops the last last batch if it is smaller than the batch size
+    pin_memory: false # enables pin_memory feature of the data loaders
     num_workers: 8 # number of workers for data loaders
 
   test_ds:
@@ -67,8 +67,8 @@ model:
     shuffle: false
     num_samples: -1 # number of samples to be considered, -1 means all the dataset
     predict_last_k: 0
-    drop_last: false # drops the last last batch if it is smaller than the batch size
-    pin_memory: true # enables pin_memory feature of the data loaders
+    drop_last: true # drops the last last batch if it is smaller than the batch size
+    pin_memory: false # enables pin_memory feature of the data loaders
     num_workers: 8 # number of workers for data loaders
 
   optim:
