@@ -6,10 +6,10 @@ pip install -r requirements/requirements.txt \
   && echo "NeMo path: ${nemo_path}" \
   && export PYTHONPATH="${nemo_path}" \
   && cd  "${nemo_path}/examples/nlp/machine_translation" \
-  && data_path=/workspace/mydatasets/sandeepsub/wmt18 \
-  && bi_path=${data_path}/parallel \
-  && mono_en_path=${data_path}/wmt18_en_mono \
-  && mono_de_path=${data_path}/wmt18_de_mono \
+  && mono_data_path=/workspace/mydatasets/sandeepsub/wmt18 \
+  && bi_path=/workspace/mydatasets/sandeepsub/wmt/wmt18_en_de/parallel \
+  && mono_en_path=${mono_data_path}/wmt18_en_mono \
+  && mono_de_path=${mono_data_path}/wmt18_de_mono \
   && cat ${bi_path}/train.clean.* ${mono_en_path}/monolingual.2* ${mono_de_path}/monolingual.2* > all_text.txt \
   && yttm bpe --data all_text.txt --model bpe_16k_en_de_yttm.model --vocab_size 16000 \
   && python train.py -cn wmt16/de_en_8gpu \
