@@ -1,12 +1,13 @@
 pip install -r requirements/requirements.txt \
   && pip install -r requirements/requirements_nlp.txt \
+  && pip install webdataset \
   && export nemo_path=$(pwd) \
   && export HYDRA_FULL_ERROR=1 \
   && echo "NeMo path: ${nemo_path}" \
   && export PYTHONPATH="${nemo_path}" \
   && cd  "${nemo_path}/examples/nlp/machine_translation" \
   && data_path=/workspace/mydatasets/sandeepsub/wmt18 \
-  && bi_path=${data_path}/wmt18_en_de \
+  && bi_path=${data_path}/parallel \
   && mono_en_path=${data_path}/wmt18_en_mono \
   && mono_de_path=${data_path}/wmt18_de_mono \
   && cat ${bi_path}/train.clean.* ${mono_en_path}/monolingual.2* ${mono_de_path}/monolingual.2* > all_text.txt \
