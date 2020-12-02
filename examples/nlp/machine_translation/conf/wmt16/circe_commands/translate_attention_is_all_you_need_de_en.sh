@@ -19,5 +19,4 @@ pip install -r requirements/requirements.txt \
   && python nmt_transformer_infer.py \
       --model ${best_ckpt} \
       --text2translate ${mono_de_path}/monolingual.2* \
-      --output ${output} \
-      model.machine_translation.max_seq_length=2048
+      --output ${output}

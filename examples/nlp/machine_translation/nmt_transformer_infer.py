@@ -34,6 +34,8 @@ def main():
     elif args.model.endswith(".ckpt"):
         logging.info("Attempting to initialize from .ckpt file")
         model = nemo_nlp.models.TransformerMTModel.load_from_checkpoint(checkpoint_path=args.model)
+    model.src_embedding_layer.max_sequence_length = 2048
+    model.tgt_embedding_layer.max_sequence_length = 2048
     if torch.cuda.is_available():
         model = model.cuda()
 
