@@ -298,7 +298,7 @@ class TransformerMTModel(ModelPT):
                 ckpt_path
             )
             import warnings
-            invalid_indices = torch.nonzero(~log_probs).cpu().numpy()
+            invalid_indices = torch.nonzero(~torch.isnan(log_probs)).cpu().numpy()
             warnings.warn(f"Invalid values of log probabilities. The model is saved to {ckpt_path}. "
                           f"The indices of NaNs are {invalid_indices}")
             raise e
