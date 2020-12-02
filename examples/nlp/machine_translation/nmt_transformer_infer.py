@@ -38,15 +38,11 @@ def main():
         model = model.cuda()
 
     logging.info(f"Translating: {args.text2translate}")
-    txt_to_translate = []
-    with open(args.text2translate, 'r') as fin:
-        for line in fin:
-            txt_to_translate.append(line.strip())
-    print(txt_to_translate)
-    translation = model.translate(text=txt_to_translate)
-    with open(args.output, 'w') as fout:
-        for txt in translation:
-            fout.write(txt + "\n")
+    with open(args.text2translate, 'r') as fin, open(args.output, 'w') as fout:
+        for i, line in enumerate(fin):
+            if i % 1000 == 0:
+                logging.info(f"{i} translated")
+            fout.write(model.translate(text=[line.strip()])[0])
     logging.info("all done")
 
 
