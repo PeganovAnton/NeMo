@@ -13,9 +13,9 @@
 # limitations under the License.
 
 import torch
-import torch.nn as nn
 
 from nemo.collections.common.parts import NEG_INF, mask_padded_tokens
+from nemo.core.classes import NeuralModule
 
 __all__ = [
     "GreedySequenceGenerator",
@@ -24,10 +24,9 @@ __all__ = [
 ]
 
 
-class GreedySequenceGenerator(nn.Module):
+class GreedySequenceGenerator(NeuralModule):
     """
     Greedy sequence generator based on the decoder followed by log_softmax.
-
     Args:
         embedding: nn.Module, transforms input_ids into vector embeddings
         decoder: nn.Module, takes embeddings and produces hidden_states
@@ -66,7 +65,7 @@ class GreedySequenceGenerator(nn.Module):
         self.batch_size = batch_size
 
     @torch.no_grad()
-    def _forward(
+    def _one_step_forward(
         self,
         decoder_input_ids=None,
         encoder_hidden_states=None,
@@ -76,7 +75,6 @@ class GreedySequenceGenerator(nn.Module):
     ):
         """
         One step of autoregressive output generation.
-
         Args:
             decoder_input_ids: starting sequence of tokens to generate from;
                 if None, generation will start from a batch of <bos> tokens
@@ -136,7 +134,7 @@ class GreedySequenceGenerator(nn.Module):
 
         return tgt, batch_size, max_generation_length
 
-    def forward(self, decoder_input_ids=None, encoder_hidden_states=None, encoder_input_mask=None):
+    def _forward(self, decoder_input_ids=None, encoder_hidden_states=None, encoder_input_mask=None):
 
         tgt, batch_size, max_generation_length = self._prepare_for_search(decoder_input_ids, encoder_hidden_states)
 
@@ -148,7 +146,7 @@ class GreedySequenceGenerator(nn.Module):
         decoder_mems_list = None
         for i in range(max_generation_length):
 
-            log_probs, decoder_mems_list = self._forward(
+            log_probs, decoder_mems_list = self._one_step_forward(
                 tgt[:, -1:], encoder_hidden_states, encoder_input_mask, decoder_mems_list, i
             )
 
@@ -163,11 +161,15 @@ class GreedySequenceGenerator(nn.Module):
 
         return tgt
 
+    # TODO: add Neural Types
+    def forward(self, decoder_input_ids=None, encoder_hidden_states=None, encoder_input_mask=None):
+        with self.as_frozen():
+            return self._forward(decoder_input_ids, encoder_hidden_states, encoder_input_mask)
+
 
 class TopKSequenceGenerator(GreedySequenceGenerator):
     """
     Top-k sequence generator based on the decoder followed by log_softmax.
-
     Args:
         *all args of GreedySequenceGenerator class
         beam_size: size of the beam (parameter k in top-k)
@@ -184,7 +186,7 @@ class TopKSequenceGenerator(GreedySequenceGenerator):
         self.temp = temperature
 
     @torch.no_grad()
-    def _forward(
+    def _one_step_forward(
         self,
         decoder_input_ids=None,
         encoder_hidden_states=None,
@@ -192,7 +194,7 @@ class TopKSequenceGenerator(GreedySequenceGenerator):
         decoder_mems_list=None,
         pos=0,
     ):
-        log_probs, decoder_mems_list = super()._forward(
+        log_probs, decoder_mems_list = super()._one_step_forward(
             decoder_input_ids, encoder_hidden_states, encoder_input_mask, decoder_mems_list, pos
         )
 
@@ -218,7 +220,6 @@ class BeamSearchSequenceGenerator(GreedySequenceGenerator):
         """
         Beam Search sequence generator based on the decoder followed by
         log_softmax.
-
         Args:
             *all args of GreedySequenceGenerator class
             beam_size: size of the beam
@@ -237,103 +238,98 @@ class BeamSearchSequenceGenerator(GreedySequenceGenerator):
         return ((5 + lengths) / 6).pow(alpha)
 
     @torch.no_grad()
-    def forward(self, decoder_input_ids=None, encoder_hidden_states=None, encoder_input_mask=None):
-        try:
-            tgt, batch_size, max_generation_length = self._prepare_for_search(decoder_input_ids, encoder_hidden_states)
+    def _forward(self, decoder_input_ids=None, encoder_hidden_states=None, encoder_input_mask=None):
+        tgt, batch_size, max_generation_length = self._prepare_for_search(decoder_input_ids, encoder_hidden_states)
 
-            # generate initial buffer of beam_size prefixes-hypotheses
-            log_probs, decoder_mems_list = self._forward(tgt, encoder_hidden_states, encoder_input_mask, None, 0)
-            scores, prefixes = torch.topk(log_probs.permute(0, 2, 1), self.beam_size, dim=1)
-            scores, prefixes = scores.view(-1, 1), prefixes.view(-1, 1)
+        # generate initial buffer of beam_size prefixes-hypotheses
+        log_probs, decoder_mems_list = self._one_step_forward(tgt, encoder_hidden_states, encoder_input_mask, None, 0)
+        scores, prefixes = torch.topk(log_probs.permute(0, 2, 1), self.beam_size, dim=1)
+        scores, prefixes = scores.view(-1, 1), prefixes.view(-1, 1)
 
-            # repeat init target prefixes and cached memory states beam_size times
-            prefixes = torch.cat((tgt.repeat(1, self.beam_size).view(-1, 1), prefixes), dim=1)
-            for j in range(len(decoder_mems_list)):
-                decoder_mems_list[j] = decoder_mems_list[j].repeat(self.beam_size, 1, 1)
+        # repeat init target prefixes and cached memory states beam_size times
+        prefixes = torch.cat((tgt.repeat(1, self.beam_size).view(-1, 1), prefixes), dim=1)
+        for j in range(len(decoder_mems_list)):
+            decoder_mems_list[j] = decoder_mems_list[j].repeat(self.beam_size, 1, 1)
 
-            # repeat source sequence beam_size times for beam search
-            if encoder_hidden_states is not None:
-                _, src_length, hidden_size = encoder_hidden_states.size()
-                encoder_input_mask = encoder_input_mask.repeat(1, self.beam_size).view(-1, src_length)
-                encoder_hidden_states = encoder_hidden_states.repeat(1, self.beam_size, 1).view(
-                    -1, src_length, hidden_size
-                )
-            else:
-                hidden_size = decoder_mems_list[0].size(2)
+        # repeat source sequence beam_size times for beam search
+        if encoder_hidden_states is not None:
+            _, src_length, hidden_size = encoder_hidden_states.size()
+            encoder_input_mask = encoder_input_mask.repeat(1, self.beam_size).view(-1, src_length)
+            encoder_hidden_states = encoder_hidden_states.repeat(1, self.beam_size, 1).view(
+                -1, src_length, hidden_size
+            )
+        else:
+            hidden_size = decoder_mems_list[0].size(2)
 
-            # pad_profile tracks finished hypotheses to generate only <pad> tokens
-            # if <eos> or <pad> has been generated
-            pad_profile = torch.zeros_like(scores).long()
+        # pad_profile tracks finished hypotheses to generate only <pad> tokens
+        # if <eos> or <pad> has been generated
+        pad_profile = torch.zeros_like(scores).long()
 
-            # prefixes_len tracks lengths of generated hypotheses to perform
-            # length penalty correction
-            prefixes_len = torch.zeros_like(scores).fill_(prefixes.size(1) + 1)
+        # prefixes_len tracks lengths of generated hypotheses to perform
+        # length penalty correction
+        prefixes_len = torch.zeros_like(scores).fill_(prefixes.size(1) + 1)
 
-            for i in range(max_generation_length):
+        for i in range(max_generation_length):
 
-                # mask all finished hypotheses to exclude them from beam
-                pad_mask = pad_profile.repeat(1, self.beam_size)
+            # mask all finished hypotheses to exclude them from beam
+            pad_mask = pad_profile.repeat(1, self.beam_size)
 
-                # generate and score candidates for prefixes continuation
-                log_probs, decoder_mems_list = self._forward(
-                    prefixes[:, -1:], encoder_hidden_states, encoder_input_mask, decoder_mems_list, i + 1
-                )
-                scores_i, prefixes_i = torch.topk(log_probs[:, -1, :], self.beam_size, dim=-1)
+            # generate and score candidates for prefixes continuation
+            log_probs, decoder_mems_list = self._one_step_forward(
+                prefixes[:, -1:], encoder_hidden_states, encoder_input_mask, decoder_mems_list, i + 1
+            )
+            scores_i, prefixes_i = torch.topk(log_probs[:, -1, :], self.beam_size, dim=-1)
 
-                # for all prefixes ending with <eos> or <pad> replace generated
-                # continuations with <pad>
-                prefixes_i = self.pad * pad_mask + prefixes_i * (1 - pad_mask)
+            # for all prefixes ending with <eos> or <pad> replace generated
+            # continuations with <pad>
+            prefixes_i = self.pad * pad_mask + prefixes_i * (1 - pad_mask)
 
-                # force all hypotheses but one generated from already finished
-                # hypotheses to have extremely low score, so they will not be
-                # considered during beam re-ranking
-                pad_mask[:, 1:] = pad_mask[:, 1:] * NEG_INF
-                scores = scores + scores_i * (1 - pad_mask).to(scores.dtype)
+            # force all hypotheses but one generated from already finished
+            # hypotheses to have extremely low score, so they will not be
+            # considered during beam re-ranking
+            pad_mask[:, 1:] = pad_mask[:, 1:] * NEG_INF
+            scores = scores + scores_i * (1 - pad_mask).to(scores.dtype)
 
-                # choose top-k hypotheses with length penalty applied
-                len_penalties = self.compute_len_penalty(prefixes_len, self.len_pen)
-                scores = scores / len_penalties
-                scores, indices_i = torch.topk(scores.view(-1, self.beam_size ** 2), self.beam_size, dim=1)
-                scores = scores.view(-1, 1) * len_penalties
-
-                # select prefixes which correspond to the chosen hypotheses
-                prefixes = prefixes.unsqueeze(1).repeat(1, self.beam_size, 1)
-                prefixes = torch.cat((prefixes, prefixes_i.unsqueeze(2)), dim=2)
-                prefixes = prefixes.view(batch_size, self.beam_size ** 2, -1)
-                p_len = prefixes.size(2)
-                prefixes_ids = indices_i.unsqueeze(2).repeat(1, 1, p_len)
-                prefixes = prefixes.gather(1, prefixes_ids).view(-1, p_len)
-
-                # reshuffle cached decoder memory states to restore the order
-                # of hypotheses broken after top-k selection
-                mems_ids = indices_i.unsqueeze(2).unsqueeze(3).repeat(1, 1, p_len - 1, hidden_size) // self.beam_size
-                for j in range(len(decoder_mems_list)):
-                    decoder_mems_list[j] = (
-                        decoder_mems_list[j]
-                        .view(-1, self.beam_size, p_len - 1, hidden_size)
-                        .gather(1, mems_ids)
-                        .view(-1, p_len - 1, hidden_size)
-                    )
-
-                # update prefixes_len and pad_profile
-                not_eos_pad = prefixes.ne(self.eos) & prefixes.ne(self.pad)
-                prefixes_len = 1 + not_eos_pad.sum(dim=1, keepdim=True).to(scores.dtype)
-                pad_profile = (~not_eos_pad[:, -1:]).long()
-
-                # if all hypotheses end with <eos> or <pad>, interrupt search
-                if pad_profile.sum() == batch_size * self.beam_size:
-                    break
-
-            # select best performing hypotheses in each element of the batch
+            # choose top-k hypotheses with length penalty applied
             len_penalties = self.compute_len_penalty(prefixes_len, self.len_pen)
             scores = scores / len_penalties
-            best_guesses = (
-                torch.argmax(scores.view(-1, self.beam_size), dim=1, keepdim=True).repeat(1, prefixes.size(1)).unsqueeze(1)
-            )
-            tgt = prefixes.view(batch_size, self.beam_size, -1).gather(1, best_guesses)
+            scores, indices_i = torch.topk(scores.view(-1, self.beam_size ** 2), self.beam_size, dim=1)
+            scores = scores.view(-1, 1) * len_penalties
 
-            return tgt.squeeze(1)
-        except RuntimeError as e:
-            print(f"The function fell on {i}th iteration")
-            raise
+            # select prefixes which correspond to the chosen hypotheses
+            prefixes = prefixes.unsqueeze(1).repeat(1, self.beam_size, 1)
+            prefixes = torch.cat((prefixes, prefixes_i.unsqueeze(2)), dim=2)
+            prefixes = prefixes.view(batch_size, self.beam_size ** 2, -1)
+            p_len = prefixes.size(2)
+            prefixes_ids = indices_i.unsqueeze(2).repeat(1, 1, p_len)
+            prefixes = prefixes.gather(1, prefixes_ids).view(-1, p_len)
 
+            # reshuffle cached decoder memory states to restore the order
+            # of hypotheses broken after top-k selection
+            mems_ids = indices_i.unsqueeze(2).unsqueeze(3).repeat(1, 1, p_len - 1, hidden_size) // self.beam_size
+            for j in range(len(decoder_mems_list)):
+                decoder_mems_list[j] = (
+                    decoder_mems_list[j]
+                    .view(-1, self.beam_size, p_len - 1, hidden_size)
+                    .gather(1, mems_ids)
+                    .view(-1, p_len - 1, hidden_size)
+                )
+
+            # update prefixes_len and pad_profile
+            not_eos_pad = prefixes.ne(self.eos) & prefixes.ne(self.pad)
+            prefixes_len = 1 + not_eos_pad.sum(dim=1, keepdim=True).to(scores.dtype)
+            pad_profile = (~not_eos_pad[:, -1:]).long()
+
+            # if all hypotheses end with <eos> or <pad>, interrupt search
+            if pad_profile.sum() == batch_size * self.beam_size:
+                break
+
+        # select best performing hypotheses in each element of the batch
+        len_penalties = self.compute_len_penalty(prefixes_len, self.len_pen)
+        scores = scores / len_penalties
+        best_guesses = (
+            torch.argmax(scores.view(-1, self.beam_size), dim=1, keepdim=True).repeat(1, prefixes.size(1)).unsqueeze(1)
+        )
+        tgt = prefixes.view(batch_size, self.beam_size, -1).gather(1, best_guesses)
+
+        return tgt.squeeze(1)
