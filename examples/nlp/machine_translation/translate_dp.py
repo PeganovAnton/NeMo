@@ -57,6 +57,7 @@ def main() -> None:
     parallel_model.eval()
     with open(args.output, 'w') as f:
         for batch_idx, batch in enumerate(loader):
+            print("(translate_dp)batch_idx:", batch_idx)
             for i in range(len(batch)):
                 if batch[i].ndim == 3:
                     batch[i] = batch[i].squeeze(dim=0)
