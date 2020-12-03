@@ -15,7 +15,7 @@ pip install -r requirements/requirements.txt \
   && export output=${train_results_path}/mono_en_translated.txt \
   && export best_ckpt=${train_results_path}/best.ckpt \
   && export yttm_model=bpe_16k_en_de_yttm.model \
-  && if [ ! -f ${yttm_model} ]; then cat ${bi_path}/train.clean.* ${mono_en_path}/monolingual.2* ${mono_de_path}/monolingual.2* > all_text.txt && yttm bpe --data all_text.txt --model bpe_16k_en_de_yttm.model --vocab_size 16000; fi \
+  && if [ ! -f ${yttm_model} ]; then cat ${bi_path}/train.clean.en ${bi_path}/train.clean.de ${mono_en_path}/monolingual.25000000 ${mono_de_path}/monolingual.25000000 > all_text.txt && yttm bpe --data all_text.txt --model bpe_16k_en_de_yttm.model --vocab_size 16000; fi \
   && python translate_dp.py \
       --model ${best_ckpt} \
       --text2translate ${mono_en_path}/monolingual.2* \
