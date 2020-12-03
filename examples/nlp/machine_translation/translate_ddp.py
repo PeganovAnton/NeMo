@@ -61,6 +61,7 @@ def translate(rank, world_size, args):
     ddp_model = TransformerMTModel.load_from_checkpoint(args.model)
     ddp_model.teacher_forcing_forward = False
     ddp_model = DDP(ddp_model.to(rank), device_ids=[rank])
+    ddp_model.eval()
     src_tokenizer = get_tokenizer(tokenizer_name='yttm', tokenizer_model=args.tokenizer_model)
     tgt_tokenizer = src_tokenizer
     dataset = TranslationOneSideDataset(
@@ -86,7 +87,9 @@ def translate(rank, world_size, args):
                 batch[i] = batch[i].to(rank)
             src_ids, src_mask, sent_ids = batch
             if batch_idx % 100 == 0:
-                logging.info(f"{batch_idx} batches and {num_translated_sentences} sentences were translated")
+                logging.info(
+                    f"{batch_idx} batches and {num_translated_sentences} sentences were translated by process with "
+                    f"rank {rank}")
             num_translated_sentences += len(src_ids)
             _, translations = ddp_model(src_ids, src_mask)
             translations = translations.cpu().numpy()
