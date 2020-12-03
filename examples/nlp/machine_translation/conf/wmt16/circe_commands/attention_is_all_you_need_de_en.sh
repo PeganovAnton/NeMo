@@ -7,8 +7,8 @@ pip install -r requirements/requirements.txt \
   && echo "NeMo path: ${nemo_path}" \
   && export PYTHONPATH="${nemo_path}" \
   && cd  "${nemo_path}/examples/nlp/machine_translation" \
-  && export mono_data_path=/workspace/mydatasets/sandeepsub/wmt18 \
-  && export bi_path=/workspace/mydatasets/sandeepsub/wmt/wmt18_en_de/parallel \
+  && export mono_data_path=/workspace/mydatasets/apeganov/wmt18 \
+  && export bi_path=/workspace/mydatasets/apeganov/wmt/wmt18_en_de/parallel \
   && export mono_en_path=${mono_data_path}/wmt18_en_mono \
   && export mono_de_path=${mono_data_path}/wmt18_de_mono \
   && cat ${bi_path}/train.clean.* ${mono_en_path}/monolingual.2* ${mono_de_path}/monolingual.2* > all_text.txt \
