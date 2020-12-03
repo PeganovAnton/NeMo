@@ -54,6 +54,7 @@ def main() -> None:
     )
     loader = DataLoader(dataset, batch_size=1, pin_memory=False)
     num_translated_sentences = 0
+    parallel_model.eval()
     with open(args.output, 'w') as f:
         for batch_idx, batch in enumerate(loader):
             for i in range(len(batch)):
