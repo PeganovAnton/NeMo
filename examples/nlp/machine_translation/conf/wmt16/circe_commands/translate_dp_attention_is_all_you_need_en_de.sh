@@ -17,7 +17,7 @@ pip install -r requirements/requirements.txt \
   && export yttm_model=bpe_16k_en_de_yttm.model \
   && if [ ! -f ${yttm_model} ]; them
       cat ${bi_path}/train.clean.* ${mono_en_path}/monolingual.2* ${mono_de_path}/monolingual.2* > all_text.txt \
-      yttm bpe --data all_text.txt --model bpe_16k_en_de_yttm.model --vocab_size 16000
+      && yttm bpe --data all_text.txt --model bpe_16k_en_de_yttm.model --vocab_size 16000
      fi \
   && python translate_dp.py \
       --model ${best_ckpt} \
