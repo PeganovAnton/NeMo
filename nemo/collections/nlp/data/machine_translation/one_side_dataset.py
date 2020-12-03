@@ -31,6 +31,7 @@ class TranslationOneSideDataset(Dataset):
         dataset,
         tokens_in_batch=1024,
         clean=False,
+        cache_ids=False,
         max_seq_length=512,
         min_seq_length=1,
     ):
@@ -38,7 +39,7 @@ class TranslationOneSideDataset(Dataset):
         self.tokenizer = tokenizer
         self.tokens_in_batch = tokens_in_batch
 
-        ids = dataset_to_ids(dataset, tokenizer)
+        ids = dataset_to_ids(dataset, tokenizer, cache_ids=cache_ids)
         if clean:
             ids = self.clean(ids, max_tokens=max_seq_length, min_tokens=min_seq_length)
         self.batch_sent_ids, self.batch_elem_lengths = self.pack_data_into_batches(ids)

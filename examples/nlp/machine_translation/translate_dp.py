@@ -46,14 +46,22 @@ def main() -> None:
     src_tokenizer = get_tokenizer(tokenizer_name='yttm', tokenizer_model=args.tokenizer_model)
     tgt_tokenizer = src_tokenizer
     dataset = TranslationOneSideDataset(
-        src_tokenizer, args.text2translate, tokens_in_batch=args.max_num_tokens_in_batch, max_seq_length=2048
+        src_tokenizer,
+        args.text2translate,
+        tokens_in_batch=args.max_num_tokens_in_batch,
+        max_seq_length=2048,
+        cache_ids=True,
     )
     loader = DataLoader(dataset, batch_size=1, pin_memory=False)
     num_translated_sentences = 0
     with open(args.output, 'w') as f:
-        for batch_idx, (src_ids, src_mask, sent_ids) in enumerate(loader):
+        for batch_idx, batch in enumerate(loader):
+            for i in range(len(batch)):
+                if batch[i].ndim == 3:
+                    batch[i] = batch[i].squeeze(dim=0)
+            src_ids, src_mask, sent_ids = batch
             if batch_idx % 100 == 0:
-                logging.info(f"{batch_idx} batches and {num_translated_sentences} were processed")
+                logging.info(f"{batch_idx} batches and {num_translated_sentences} sentences were translated")
             num_translated_sentences += len(src_ids)
             _, translations = parallel_model(src_ids, src_mask).cpu().numpy()
             for t in translations:
