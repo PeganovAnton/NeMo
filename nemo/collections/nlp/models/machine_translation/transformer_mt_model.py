@@ -277,7 +277,8 @@ class TransformerMTModel(ModelPT):
                 paddings = torch.full(
                     (beam_results.shape[0], self.beam_search.max_seq_length),
                     self.tgt_tokenizer.pad_id,
-                    dtype=beam_results.dtype
+                    dtype=beam_results.dtype,
+                    device=beam_results.device,
                 )
                 paddings[:, :beam_results.shape[1]] = beam_results
                 beam_results = paddings
