@@ -36,7 +36,8 @@ def main() -> None:
     parser.add_argument("--text2translate", type=str, required=True, help="")
     parser.add_argument("--tokenizer_model", type=str, required=True, help="")
     parser.add_argument("--max_num_tokens_in_batch", type=int, required=True, help="")
-    parser.add_argument("--output", type=str, required=True, help="")
+    parser.add_argument("--translations", type=str, required=True, help="")
+    parser.add_argument("--originals", type=str, required=True, help="")
     args = parser.parse_args()
     transformer_mt = TransformerMTModel.load_from_checkpoint(args.model)
     transformer_mt.teacher_forcing_forward = False
@@ -56,7 +57,7 @@ def main() -> None:
     loader = DataLoader(dataset, batch_size=1, pin_memory=False)
     num_translated_sentences = 0
     parallel_model.eval()
-    with open(args.output, 'w') as f:
+    with open(args.translations, 'w') as tf, open(args.originals, 'w') as of:
         for batch_idx, batch in enumerate(loader):
             for i in range(len(batch)):
                 if batch[i].ndim == 3:
@@ -69,7 +70,9 @@ def main() -> None:
             _, translations = parallel_model(src_ids, src_mask)
             translations = translations.cpu().numpy()
             for t in translations:
-                f.write(tgt_tokenizer.ids_to_text(t) + '\n')
+                tf.write(tgt_tokenizer.ids_to_text(t) + '\n')
+            for o in src_ids:
+                of.write(src_tokenizer.ids_to_text(o) + '\n')
     logging.info("done")
 
 
