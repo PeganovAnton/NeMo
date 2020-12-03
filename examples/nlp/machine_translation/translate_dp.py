@@ -57,15 +57,16 @@ def main() -> None:
     parallel_model.eval()
     with open(args.output, 'w') as f:
         for batch_idx, batch in enumerate(loader):
-            print("(translate_dp)batch_idx:", batch_idx)
             for i in range(len(batch)):
                 if batch[i].ndim == 3:
                     batch[i] = batch[i].squeeze(dim=0)
+                batch[i] = batch[i].to(device)
             src_ids, src_mask, sent_ids = batch
             if batch_idx % 100 == 0:
                 logging.info(f"{batch_idx} batches and {num_translated_sentences} sentences were translated")
             num_translated_sentences += len(src_ids)
-            _, translations = parallel_model(src_ids, src_mask).cpu().numpy()
+            _, translations = parallel_model(src_ids, src_mask)
+            translations = translations.cpu().numpy()
             for t in translations:
                 f.write(tgt_tokenizer.ids_to_text(t) + '\n')
     logging.info("done")

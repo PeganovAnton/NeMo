@@ -63,6 +63,7 @@ class GreedySequenceGenerator(NeuralModule):
         self.max_seq_length = max_sequence_length
         self.max_delta_len = max_delta_length
         self.batch_size = batch_size
+        self.device = None
 
     @torch.no_grad()
     def _one_step_forward(
@@ -111,8 +112,7 @@ class GreedySequenceGenerator(NeuralModule):
         Helper function which defines starting sequence to begin generating
         with and maximum allowed number of tokens to be generated.
         """
-
-        decoder_parameter = next(self.decoder.parameters())
+        #decoder_parameter = next(self.decoder.parameters())
         batch_size = self.batch_size
 
         # for encoder-decoder generation, maximum length of generated sequence
@@ -128,11 +128,11 @@ class GreedySequenceGenerator(NeuralModule):
             tgt = decoder_input_ids
             batch_size, tgt_len = decoder_input_ids.size()
         else:
-            tgt = torch.zeros(batch_size, 1).long().fill_(self.bos).to(decoder_parameter.device)
+            tgt = torch.zeros(batch_size, 1).long().fill_(self.bos)
             tgt_len = 1
         max_generation_length = max_seq_length - tgt_len
 
-        return tgt, batch_size, max_generation_length
+        return tgt.to(self.device), batch_size, max_generation_length
 
     def _forward(self, decoder_input_ids=None, encoder_hidden_states=None, encoder_input_mask=None):
 
@@ -140,8 +140,8 @@ class GreedySequenceGenerator(NeuralModule):
 
         # pad profile tracks sequences ending with <eos> token to replace
         # everything after <eos> with <pad> token
-        decoder_parameter = next(self.decoder.parameters())
-        pad_profile = torch.zeros(batch_size, 1).long().to(decoder_parameter.device)
+        # decoder_parameter = next(self.decoder.parameters())
+        pad_profile = torch.zeros(batch_size, 1).long().to(self.device)
 
         decoder_mems_list = None
         for i in range(max_generation_length):
@@ -163,6 +163,7 @@ class GreedySequenceGenerator(NeuralModule):
 
     # TODO: add Neural Types
     def forward(self, decoder_input_ids=None, encoder_hidden_states=None, encoder_input_mask=None):
+        self.device = encoder_hidden_states.device
         with self.as_frozen():
             return self._forward(decoder_input_ids, encoder_hidden_states, encoder_input_mask)
 
@@ -240,7 +241,6 @@ class BeamSearchSequenceGenerator(GreedySequenceGenerator):
     @torch.no_grad()
     def _forward(self, decoder_input_ids=None, encoder_hidden_states=None, encoder_input_mask=None):
         tgt, batch_size, max_generation_length = self._prepare_for_search(decoder_input_ids, encoder_hidden_states)
-
         # generate initial buffer of beam_size prefixes-hypotheses
         log_probs, decoder_mems_list = self._one_step_forward(tgt, encoder_hidden_states, encoder_input_mask, None, 0)
         scores, prefixes = torch.topk(log_probs.permute(0, 2, 1), self.beam_size, dim=1)
