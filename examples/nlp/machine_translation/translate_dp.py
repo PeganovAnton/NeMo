@@ -17,6 +17,7 @@ import os
 from argparse import ArgumentParser
 
 import pytorch_lightning as pl
+import torch
 from omegaconf import DictConfig
 from torch.nn import DataParallel
 from torch.utils.data import DataLoader
@@ -39,6 +40,8 @@ def main() -> None:
     args = parser.parse_args()
     transformer_mt = TransformerMTModel.load_from_checkpoint(args.model)
     transformer_mt.teacher_forcing_forward = False
+    device = torch.device('cuda:0')
+    transformer_mt.to(device)
     parallel_model = DataParallel(transformer_mt)
     src_tokenizer = get_tokenizer(tokenizer_name='yttm', tokenizer_model=args.tokenizer_model)
     tgt_tokenizer = src_tokenizer
