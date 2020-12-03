@@ -40,6 +40,7 @@ def main() -> None:
     args = parser.parse_args()
     transformer_mt = TransformerMTModel.load_from_checkpoint(args.model)
     transformer_mt.teacher_forcing_forward = False
+    transformer_mt.pad_beam_search_results_to_max_seq_len = True
     device = torch.device('cuda:0')
     transformer_mt.to(device)
     parallel_model = DataParallel(transformer_mt)
