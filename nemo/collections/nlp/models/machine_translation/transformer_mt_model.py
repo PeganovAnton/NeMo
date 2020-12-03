@@ -160,6 +160,7 @@ class TransformerMTModel(ModelPT):
         # https://github.com/pytorch/pytorch/issues/21819
         self.profile = cfg.machine_translation.get('profile', False)
         self.eval_epoch_step = 0
+        self.teacher_forcing_forward = cfg.machine_translation.get("teacher_forcing_forward", True)
 
     def get_exp_dir(self):
         exp_dir = None
@@ -232,7 +233,7 @@ class TransformerMTModel(ModelPT):
             f.write('\n'*2)
 
     @typecheck()
-    def forward(self, src, src_mask, tgt, tgt_mask):
+    def forward(self, src, src_mask, tgt=None, tgt_mask=None):
         """
         torch.nn.Module.forward method.
         Args:
@@ -247,10 +248,13 @@ class TransformerMTModel(ModelPT):
         src_embeddings = self.src_embedding_layer(input_ids=src)
         # src_embeddings *= src_embeddings.new_tensor(self.emb_scale)
         src_hiddens = self.encoder(src_embeddings, src_mask)
-        tgt_embeddings = self.tgt_embedding_layer(input_ids=tgt)
-        # tgt_embeddings *= tgt_embeddings.new_tensor(self.emb_scale)
-        tgt_hiddens = self.decoder(tgt_embeddings, tgt_mask, src_hiddens, src_mask)
-        log_probs = self.log_softmax(hidden_states=tgt_hiddens)
+        if self.training or self.teacher_forcing_forward:
+            tgt_embeddings = self.tgt_embedding_layer(input_ids=tgt)
+            # tgt_embeddings *= tgt_embeddings.new_tensor(self.emb_scale)
+            tgt_hiddens = self.decoder(tgt_embeddings, tgt_mask, src_hiddens, src_mask)
+            log_probs = self.log_softmax(hidden_states=tgt_hiddens)
+        else:
+            log_probs = None
         beam_results = None
         if not self.training:
             if self.profile:
