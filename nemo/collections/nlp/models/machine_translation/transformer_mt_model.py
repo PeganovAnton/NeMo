@@ -274,7 +274,11 @@ class TransformerMTModel(ModelPT):
                 beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
             beam_results = self.filter_predicted_ids(beam_results)
             if self.pad_beam_search_results_to_max_seq_len:
-                paddings = torch.full((beam_results.shape[0], self.beam_search.max_seq_length), self.tgt_tokenizer.pad_id)
+                paddings = torch.full(
+                    (beam_results.shape[0], self.beam_search.max_seq_length),
+                    self.tgt_tokenizer.pad_id,
+                    dtype=beam_results.dtype
+                )
                 paddings[:, :beam_results.shape[1]] = beam_results
                 beam_results = paddings
             if self.profile:
