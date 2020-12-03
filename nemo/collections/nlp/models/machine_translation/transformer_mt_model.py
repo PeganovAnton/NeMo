@@ -24,7 +24,6 @@ import torch
 import torch.autograd.profiler as profiler
 import torch.utils.data as pt_data
 from omegaconf import DictConfig
-from torch.nn.utils.rnn import pad_packed_sequence
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.utilities import rank_zero_only
@@ -275,12 +274,9 @@ class TransformerMTModel(ModelPT):
                 beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
             beam_results = self.filter_predicted_ids(beam_results)
             if self.pad_beam_search_results_to_max_seq_len:
-                beam_results = pad_packed_sequence(
-                    beam_results,
-                    batch_first=True,
-                    padding_value=self.tgt_tokenizer.pad_id,
-                    total_length=self.beam_search.max_seq_length,
-                )
+                paddings = torch.full((beam_results.shape[0], self.beam_search.max_seq_length), self.tgt_tokenizer.pad_id)
+                paddings[:, :beam_results.shape[1]] = beam_results
+                beam_results = paddings
             if self.profile:
                 self.log_tensor_sizes()
             self.beam_search_calls_counter += 1
