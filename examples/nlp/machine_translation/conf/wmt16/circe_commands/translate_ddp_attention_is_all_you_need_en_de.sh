@@ -21,5 +21,5 @@ pip install -r requirements/requirements.txt \
       --model ${best_ckpt} \
       --text2translate ${mono_en_path}/monolingual.25000000.en \
       --tokenizer_model bpe_16k_en_de_yttm.model \
-      --max_num_tokens_in_batch 8000 \
+      --max_num_tokens_in_batch 6000 \
       --result_dir ${result_dir}
