@@ -10,7 +10,7 @@ trainer:
   distributed_backend: ddp
   checkpoint_callback: False
   logger: False
-  log_every_n_steps: 50  # Interval of logging.
+  log_every_n_steps: 200  # Interval of logging.
   check_val_every_n_epoch: 5
   val_check_interval: 1000  # Set to 0.25 to check 4 times per epoch, or an int for number of iterations
   progress_bar_refresh_rate: 0
@@ -52,7 +52,7 @@ model:
     src_file_name: /data/wmt13-en-de.ref # path to file with validation data
     tgt_file_name: /data/wmt13-en-de.src
     clean: true
-    tokens_in_batch: 512
+    tokens_in_batch: 4096
     shuffle: false
     num_samples: -1 # number of samples to be considered, -1 means all the dataset
     predict_last_k: 0
@@ -63,7 +63,7 @@ model:
   test_ds:
     src_file_name: /data/wmt14-en-de.ref # path to file with validation data
     tgt_file_name: /data/wmt14-en-de.src
-    tokens_in_batch: 512
+    tokens_in_batch: 4096
     shuffle: false
     num_samples: -1 # number of samples to be considered, -1 means all the dataset
     predict_last_k: 0
