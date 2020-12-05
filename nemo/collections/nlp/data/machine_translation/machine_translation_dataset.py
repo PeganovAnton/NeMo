@@ -43,8 +43,8 @@ class TranslationDataset(Dataset):
         self.tgt_tokenizer = tokenizer_tgt
         self.tokens_in_batch = tokens_in_batch
 
-        src_ids = dataset_to_ids(dataset_src, tokenizer_src)
-        tgt_ids = dataset_to_ids(dataset_tgt, tokenizer_tgt)
+        src_ids = dataset_to_ids(dataset_src, tokenizer_src, cache_ids=True)
+        tgt_ids = dataset_to_ids(dataset_tgt, tokenizer_tgt, cache_ids=True)
         if clean:
             src_ids, tgt_ids = self.clean_src_and_target(
                 src_ids,
