@@ -14,10 +14,8 @@
 
 
 import os
-import sys
 from argparse import ArgumentParser
 
-import pytorch_lightning as pl
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
@@ -28,9 +26,7 @@ from torch.utils.data.distributed import DistributedSampler
 from nemo.collections.nlp.data.machine_translation import TranslationOneSideDataset
 from nemo.collections.nlp.models.machine_translation import TransformerMTModel
 from nemo.collections.nlp.modules.common.tokenizer_utils import get_tokenizer
-from nemo.core.config import hydra_runner
 from nemo.utils import logging
-from nemo.utils.exp_manager import exp_manager
 
 
 def get_args():
@@ -88,7 +84,7 @@ def translate(rank, world_size, args):
             src_ids, src_mask, sent_ids = batch
             if batch_idx % 100 == 0:
                 logging.info(
-                    f"{batch_idx} batches and {num_translated_sentences} sentences were translated by process with "
+                    f"{batch_idx} batches ({num_translated_sentences} sentences) were translated by process with "
                     f"rank {rank}")
             num_translated_sentences += len(src_ids)
             _, translations = ddp_model(src_ids, src_mask)
@@ -97,6 +93,7 @@ def translate(rank, world_size, args):
                 tf.write(tgt_tokenizer.ids_to_text(t) + '\n')
             for o in src_ids:
                 of.write(src_tokenizer.ids_to_text(o) + '\n')
+    cleanup()
 
 
 def main() -> None:
