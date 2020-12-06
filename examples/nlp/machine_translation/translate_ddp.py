@@ -45,7 +45,7 @@ def setup(rank, world_size, args):
     os.environ['MASTER_PORT'] = '12355'
 
     # initialize the process group
-    dist.init_process_group("gloo", rank=rank, world_size=world_size)
+    dist.init_process_group("nccl", rank=rank, world_size=world_size)
 
 
 def cleanup():
@@ -54,6 +54,7 @@ def cleanup():
 
 def translate(rank, world_size, args):
     setup(rank, world_size, args)
+    # TODO: make it half precision
     ddp_model = TransformerMTModel.load_from_checkpoint(args.model)
     ddp_model.teacher_forcing_forward = False
     ddp_model = DDP(ddp_model.to(rank), device_ids=[rank])
