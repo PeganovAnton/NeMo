@@ -54,8 +54,7 @@ def cleanup():
 
 def translate(rank, world_size, args):
     setup(rank, world_size, args)
-    # TODO: make it half precision
-    ddp_model = TransformerMTModel.load_from_checkpoint(args.model)
+    ddp_model = TransformerMTModel.load_from_checkpoint(args.model).half()
     ddp_model.teacher_forcing_forward = False
     ddp_model = DDP(ddp_model.to(rank), device_ids=[rank])
     ddp_model.eval()
