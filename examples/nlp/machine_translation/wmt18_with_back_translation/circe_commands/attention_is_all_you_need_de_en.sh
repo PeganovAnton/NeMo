@@ -17,8 +17,8 @@ pip install -r requirements/requirements.txt \
   && python train.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
       model.train_ds.tokens_in_batch=6000 \
-      model.train_ds.src_file_name=${bt_path}/src.en \
-      model.train_ds.tgt_file_name=${bt_path}/tgt.de \
+      model.train_ds.src_file_name=${bt_path}/src.de \
+      model.train_ds.tgt_file_name=${bt_path}/tgt.en \
       model.validation_ds.src_file_name=${bi_path}/wmt13-de-en.src \
       model.validation_ds.tgt_file_name=${bi_path}/wmt13-de-en.ref \
       model.test_ds.src_file_name=${bi_path}/wmt14-de-en.src \
@@ -27,8 +27,8 @@ pip install -r requirements/requirements.txt \
       trainer.max_epochs=50 \
   && python test.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
-      model.train_ds.src_file_name=${bt_path}/src.en \
-      model.train_ds.tgt_file_name=${bt_path}/tgt.de \
+      model.train_ds.src_file_name=${bt_path}/src.de \
+      model.train_ds.tgt_file_name=${bt_path}/tgt.en \
       model.validation_ds.src_file_name=${bi_path}/wmt13-de-en.src \
       model.validation_ds.tgt_file_name=${bi_path}/wmt13-de-en.ref \
       model.test_ds.src_file_name=${bi_path}/wmt14-de-en.src \
