@@ -25,6 +25,8 @@ __all__ = ['TranslationOneSideDataset']
 
 
 class TranslationOneSideDataset(Dataset):
+    # TODO: make batch size divisible by 8
+    # TODO: unite with two side dataset
     def __init__(
         self,
         tokenizer,

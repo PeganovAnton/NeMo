@@ -25,6 +25,7 @@ __all__ = ['TranslationDataset']
 
 
 class TranslationDataset(Dataset):
+    # TODO: make batch size divisible by 8
     def __init__(
         self,
         tokenizer_src,
