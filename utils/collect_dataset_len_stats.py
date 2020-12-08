@@ -27,7 +27,7 @@ def get_args():
 
 def compute_stats(lines):
     lengths = [len(l) for l in lines]
-    return dict(Counter(lengths))
+    return dict(sorted(Counter(lengths).items(), key=lambda i: i[0]))
 
 
 def main():
