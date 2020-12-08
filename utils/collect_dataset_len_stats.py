@@ -1,6 +1,7 @@
 import argparse
 import json
 from collections import Counter
+from itertools import zip_longest
 
 import numpy as np
 
@@ -37,11 +38,12 @@ def main():
     translation_lines = []
     pair_lines = []
     with open(args.originals_file) as of, open(args.translations_file) as tf:
-        o_line = of.readline().strip()
-        t_line = tf.readline().strip()
-        original_lines.append(o_line)
-        translation_lines.append(t_line)
-        pair_lines.append(o_line + t_line)
+        for o_line, t_line in zip_longest(of, tf):
+            o_line = o_line.strip()
+            t_line = t_line.strip()
+            original_lines.append(o_line)
+            translation_lines.append(t_line)
+            pair_lines.append(o_line + t_line)
     result = {
         "original_stats": compute_stats(original_lines),
         "translation_stats": compute_stats(translation_lines),
