@@ -3,8 +3,6 @@ import json
 from collections import Counter
 from itertools import zip_longest
 
-import numpy as np
-
 
 def get_args():
     parser = argparse.ArgumentParser()
