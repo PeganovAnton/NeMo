@@ -63,6 +63,7 @@ def read_dataset(originals_file, translations_file):
 
 def write_dataset(pairs, path_to_dir):
     path_to_dir = path_to_dir.expanduser()
+    path_to_dir.mkdir(parents=True, exist_ok=True)
     originals_path = path_to_dir / Path("originals.txt")
     translations_path = path_to_dir / Path("translations.txt")
     with originals_path.open('w') as of, translations_path.open('w') as tf:
