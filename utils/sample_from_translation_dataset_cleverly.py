@@ -98,7 +98,9 @@ def sample_cleverly(pairs, reference_len_counts, n, bucket_min_size):
         raise ValueError("Reference dataset is empty.")
     for i, p in enumerate(pairs):
         new_pair_len = len(p[0]) + len(p[1])
-        if new_pair_len != curr_pair_len and len(curr_bucket) >= bucket_min_size:
+        if new_pair_len != curr_pair_len \
+                and len(curr_bucket) >= bucket_min_size \
+                and curr_ref_bucket_size >= bucket_min_size:
             if new_pair_len < curr_pair_len:
                 raise ValueError("Pairs have to be sorted in a non decreasing order.")
             ref_bucket_sizes.append(curr_ref_bucket_size)
