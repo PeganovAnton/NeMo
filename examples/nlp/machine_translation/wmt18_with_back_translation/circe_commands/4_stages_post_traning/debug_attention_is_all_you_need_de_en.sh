@@ -19,7 +19,7 @@ pip install -r requirements/requirements.txt \
           exp_manager.exp_dir=${stage1_dir} \
           trainer.max_epochs=${max_epochs} \
           trainer.max_steps=3 \
-          +trainer.resume_if_exists=true
+          +exp_manager.resume_if_exists=true
      fi \
   && export stage2_dir=${result_dir}/stage2 \
   && if [ ! -f ${stage2_dir}/best.ckpt ]; then
@@ -27,7 +27,7 @@ pip install -r requirements/requirements.txt \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           exp_manager.exp_dir=${stage2_dir} \
-          +trainer.resume_if_exists=true \
+          +exp_manager.resume_if_exists=true \
           trainer.max_epochs=${max_epochs} \
           trainer.max_steps=4 \
           +model.weights_checkpoint=${stage1_dir}/best.ckpt
@@ -40,7 +40,7 @@ pip install -r requirements/requirements.txt \
           exp_manager.exp_dir=${stage3_dir} \
           trainer.max_epochs=${max_epochs} \
           trainer.max_steps=5 \
-          +trainer.resume_if_exists=true \
+          +exp_manager.resume_if_exists=true \
           +model.weights_checkpoint=${stage2_dir}/best.ckpt
      fi \
   && export stage4_dir=${result_dir}/stage4 \
@@ -51,7 +51,7 @@ pip install -r requirements/requirements.txt \
           exp_manager.exp_dir=${stage4_dir} \
           trainer.max_epochs=${max_epochs} \
           trainer.max_steps=6 \
-          +trainer.resume_if_exists=true \
+          +exp_manager.resume_if_exists=true \
           +model.weights_checkpoint=${stage3_dir}/best.ckpt
      fi \
   && python test.py -cn ${base_conf} \
