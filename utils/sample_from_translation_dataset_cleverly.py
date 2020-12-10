@@ -134,7 +134,7 @@ def sample_close_to_reference_dataset_counts(pairs, reference_len_counts, n, buc
                     break
 
             curr_bucket.append(i)
-    buckets, ref_bucket_sizes, bucket_new_count_to_ref_count_fractions = zip(
+    buckets, ref_bucket_sizes, _ = zip(
         *sorted(zip(buckets, ref_bucket_sizes, bucket_new_count_to_ref_count_fractions), key=lambda x: x[2]))
     sampled_indices = []
     remain_to_sample = n
@@ -148,7 +148,8 @@ def sample_close_to_reference_dataset_counts(pairs, reference_len_counts, n, buc
                 bucket_sample = random.sample(
                     bucket, math.ceil(ref_bucket_size * remain_to_sample / remain_in_reference_dataset))
             else:
-                assert len(bucket) >= remain_to_sample
+                assert len(bucket) >= remain_to_sample, \
+                    f"len(bucket)={len(bucket)}, remain_to_sample={remain_to_sample}"
                 bucket_sample = random.sample(bucket, remain_to_sample)
             sampled_indices += bucket_sample
             remain_to_sample -= len(bucket_sample)
