@@ -22,8 +22,9 @@ pip3 install -r requirements/requirements.txt \
   && export stage1_dir=${result_dir}/stage1 \
   && mkdir -p ${stage1_dir} \
   && if [ ! -f ${stage1_dir}/best.ckpt ]; then
-      cat ${bi_path}/train.clean.de ${mono_data_path}/3M_en_mono_partiaally_translated_06.12.20/translations.txt >"${stage1_dir}/src.de" \
-      && cat ${bi_path}/train.clean.en ${mono_data_path}/3M_en_mono_partiaally_translated_06.12.20/originals.txt >"${stage1_dir}/tgt.en" \
+      cat ${bi_path}/train.clean.de ${mono_data_path}/3M_en_mono_partiaally_translated_06.12.20/translations.txt >"${stage1_dir}/originals.txt" \
+      && cat ${bi_path}/train.clean.en ${mono_data_path}/3M_en_mono_partiaally_translated_06.12.20/originals.txt >"${stage1_dir}/translations.txt" \
+      && python3 ${nemo_path}/utils/shuffle_pairs.py ${stage1_dir} \
       && if compgen -G ${stage1_dir}/TransformerMT/*/checkpoints/* > dev/null; then
         export resume=true
       else
@@ -32,8 +33,8 @@ pip3 install -r requirements/requirements.txt \
       && python3 train.py -cn ${base_conf} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
-          model.train_ds.src_file_name=${stage1_dir}/src.de \
-          model.train_ds.tgt_file_name=${stage1_dir}/tgt.en \
+          model.train_ds.src_file_name=${stage1_dir}/originals.txt \
+          model.train_ds.tgt_file_name=${stage1_dir}/translations.txt \
           model.validation_ds.src_file_name=${bi_path}/wmt13-de-en.src \
           model.validation_ds.tgt_file_name=${bi_path}/wmt13-de-en.ref \
           model.test_ds.src_file_name=${bi_path}/wmt14-de-en.src \
@@ -47,8 +48,9 @@ pip3 install -r requirements/requirements.txt \
   && export stage2_dir=${result_dir}/stage2 \
   && mkdir -p ${stage2_dir} \
   && if [ ! -f ${stage2_dir}/best.ckpt ]; then
-      cat ${bi_path}/train.clean.de ${mono_data_path}/6M_en_mono_partiaally_translated_06.12.20/translations.txt >"${stage2_dir}/src.de" \
-      && cat ${bi_path}/train.clean.en ${mono_data_path}/6M_en_mono_partiaally_translated_06.12.20/originals.txt >"${stage2_dir}/tgt.en" \
+      cat ${bi_path}/train.clean.de ${mono_data_path}/6M_en_mono_partiaally_translated_06.12.20/translations.txt >"${stage2_dir}/originals.txt" \
+      && cat ${bi_path}/train.clean.en ${mono_data_path}/6M_en_mono_partiaally_translated_06.12.20/originals.txt >"${stage2_dir}/translations.txt" \
+      && python3 ${nemo_path}/utils/shuffle_pairs.py ${stage2_dir} \
       && if compgen -G ${stage2_dir}/TransformerMT/*/checkpoints/* > dev/null; then
         export resume=true
       else
@@ -57,8 +59,8 @@ pip3 install -r requirements/requirements.txt \
       && python3 train.py -cn ${base_conf} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
-          model.train_ds.src_file_name=${stage2_dir}/src.de \
-          model.train_ds.tgt_file_name=${stage2_dir}/tgt.en \
+          model.train_ds.src_file_name=${stage2_dir}/originals.txt \
+          model.train_ds.tgt_file_name=${stage2_dir}/translations.txt \
           model.validation_ds.src_file_name=${bi_path}/wmt13-de-en.src \
           model.validation_ds.tgt_file_name=${bi_path}/wmt13-de-en.ref \
           model.test_ds.src_file_name=${bi_path}/wmt14-de-en.src \
@@ -72,8 +74,9 @@ pip3 install -r requirements/requirements.txt \
   && export stage3_dir=${result_dir}/stage3 \
   && mkdir -p ${stage3_dir} \
   && if [ ! -f ${stage3_dir}/best.ckpt ]; then
-      cat ${bi_path}/train.clean.de ${mono_data_path}/12M_en_mono_partiaally_translated_06.12.20/translations.txt >"${stage3_dir}/src.de" \
-      && cat ${bi_path}/train.clean.en ${mono_data_path}/12M_en_mono_partiaally_translated_06.12.20/originals.txt >"${stage3_dir}/tgt.en" \
+      cat ${bi_path}/train.clean.de ${mono_data_path}/12M_en_mono_partiaally_translated_06.12.20/translations.txt >"${stage3_dir}/originals.txt" \
+      && cat ${bi_path}/train.clean.en ${mono_data_path}/12M_en_mono_partiaally_translated_06.12.20/originals.txt >"${stage3_dir}/translations.txt" \
+      && python3 ${nemo_path}/utils/shuffle_pairs.py ${stage3_dir} \
       && if compgen -G ${stage3_dir}/TransformerMT/*/checkpoints/* > dev/null; then
         export resume=true
       else
@@ -82,8 +85,8 @@ pip3 install -r requirements/requirements.txt \
       && python3 train.py -cn ${base_conf} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
-          model.train_ds.src_file_name=${stage3_dir}/src.de \
-          model.train_ds.tgt_file_name=${stage3_dir}/tgt.en \
+          model.train_ds.src_file_name=${stage3_dir}/originals.txt \
+          model.train_ds.tgt_file_name=${stage3_dir}/translations.txt \
           model.validation_ds.src_file_name=${bi_path}/wmt13-de-en.src \
           model.validation_ds.tgt_file_name=${bi_path}/wmt13-de-en.ref \
           model.test_ds.src_file_name=${bi_path}/wmt14-de-en.src \
@@ -97,8 +100,9 @@ pip3 install -r requirements/requirements.txt \
   && export stage4_dir=${result_dir}/stage4 \
   && mkdir -p ${stage4_dir} \
   && if [ ! -f ${stage4_dir}/best.ckpt ]; then
-      cat ${bi_path}/train.clean.de ${mono_data_path}/24M_en_mono_partiaally_translated_06.12.20/translations.txt >"${stage4_dir}/src.de" \
-      && cat ${bi_path}/train.clean.en ${mono_data_path}/24M_en_mono_partiaally_translated_06.12.20/originals.txt >"${stage4_dir}/tgt.en" \
+      cat ${bi_path}/train.clean.de ${mono_data_path}/24M_en_mono_partiaally_translated_06.12.20/translations.txt >"${stage4_dir}/originals.txt" \
+      && cat ${bi_path}/train.clean.en ${mono_data_path}/24M_en_mono_partiaally_translated_06.12.20/originals.txt >"${stage4_dir}/translations.txt" \
+      && python3 ${nemo_path}/utils/shuffle_pairs.py ${stage4_dir} \
       && if compgen -G ${stage4_dir}/TransformerMT/*/checkpoints/* > dev/null; then
         export resume=true
       else
@@ -107,8 +111,8 @@ pip3 install -r requirements/requirements.txt \
       && python3 train.py -cn ${base_conf} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
-          model.train_ds.src_file_name=${stage4_dir}/src.de \
-          model.train_ds.tgt_file_name=${stage4_dir}/tgt.en \
+          model.train_ds.src_file_name=${stage4_dir}/originals.txt \
+          model.train_ds.tgt_file_name=${stage4_dir}/translations.txt \
           model.validation_ds.src_file_name=${bi_path}/wmt13-de-en.src \
           model.validation_ds.tgt_file_name=${bi_path}/wmt13-de-en.ref \
           model.test_ds.src_file_name=${bi_path}/wmt14-de-en.src \
@@ -121,8 +125,8 @@ pip3 install -r requirements/requirements.txt \
      fi \
   && python3 test.py -cn ${base_conf} \
       trainer.gpus=${ngpus} \
-      model.train_ds.src_file_name=${stage4_dir}/src.de \
-      model.train_ds.tgt_file_name=${stage4_dir}/tgt.en \
+      model.train_ds.src_file_name=${stage4_dir}/originals.txt \
+      model.train_ds.tgt_file_name=${stage4_dir}/translations.txt \
       model.validation_ds.src_file_name=${bi_path}/wmt13-de-en.src \
       model.validation_ds.tgt_file_name=${bi_path}/wmt13-de-en.ref \
       model.test_ds.src_file_name=${bi_path}/wmt14-de-en.src \
