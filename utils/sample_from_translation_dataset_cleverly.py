@@ -93,7 +93,7 @@ def sample_close_to_reference_dataset_counts(pairs, reference_len_counts, n, buc
     buckets = []
     ref_bucket_sizes = []
     bucket_new_count_to_ref_count_fractions = []
-    curr_pair_len = 0
+    curr_pair_len = -1
     curr_bucket = []
     curr_ref_bucket_size = 0
     ref_counts_iter = iter(reference_len_counts.items())
@@ -108,11 +108,12 @@ def sample_close_to_reference_dataset_counts(pairs, reference_len_counts, n, buc
                 and curr_ref_bucket_size >= bucket_min_size:
             if new_pair_len < curr_pair_len:
                 raise ValueError("Pairs have to be sorted in a non decreasing order.")
-            ref_bucket_sizes.append(curr_ref_bucket_size)
-            bucket_new_count_to_ref_count_fractions.append(
-                len(curr_bucket) / curr_ref_bucket_size if curr_ref_bucket_size > 0 else float('+inf')
-            )
-            buckets.append(curr_bucket)
+            if curr_pair_len >= 0:
+                ref_bucket_sizes.append(curr_ref_bucket_size)
+                bucket_new_count_to_ref_count_fractions.append(
+                    len(curr_bucket) / curr_ref_bucket_size if curr_ref_bucket_size > 0 else float('+inf')
+                )
+                buckets.append(curr_bucket)
             curr_ref_bucket_size = 0
             while ref_pair_len <= new_pair_len:
                 curr_ref_bucket_size += ref_count
@@ -133,6 +134,12 @@ def sample_close_to_reference_dataset_counts(pairs, reference_len_counts, n, buc
                     ref_count = 0
                     break
             curr_bucket.append(i)
+    while ref_count:
+        curr_ref_bucket_size += ref_count
+        try:
+            ref_pair_len, ref_count = next(ref_counts_iter)
+        except StopIteration:
+            ref_count = 0
     ref_bucket_sizes.append(curr_ref_bucket_size)
     bucket_new_count_to_ref_count_fractions.append(
         len(curr_bucket) / curr_ref_bucket_size if curr_ref_bucket_size > 0 else float('+inf')
