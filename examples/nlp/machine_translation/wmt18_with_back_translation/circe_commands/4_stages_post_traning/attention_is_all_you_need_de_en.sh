@@ -5,7 +5,7 @@ pip install -r requirements/requirements.txt \
   && export nemo_path=$(pwd) \
   && export HYDRA_FULL_ERROR=1 \
   && echo "NeMo path: ${nemo_path}" \
-  && export PYTHONPATH="${nemo_path}" \
+  && export python3PATH="${nemo_path}" \
   && cd  "${nemo_path}/examples/nlp/machine_translation" \
   && export base_conf=wmt16/de_en_8gpu \
   && export ngpus=16 \
@@ -28,7 +28,7 @@ pip install -r requirements/requirements.txt \
       else
         export resume=false
       fi \
-      && python train.py -cn ${base_conf} \
+      && python3 train.py -cn ${base_conf} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           model.train_ds.src_file_name=${stage1_dir}/src.de \
@@ -52,7 +52,7 @@ pip install -r requirements/requirements.txt \
       else
         export resume=false
       fi \
-      && python train.py -cn ${base_conf} \
+      && python3 train.py -cn ${base_conf} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           model.train_ds.src_file_name=${stage2_dir}/src.de \
@@ -76,7 +76,7 @@ pip install -r requirements/requirements.txt \
       else
         export resume=false
       fi \
-      && python train.py -cn ${base_conf} \
+      && python3 train.py -cn ${base_conf} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           model.train_ds.src_file_name=${stage3_dir}/src.de \
@@ -100,7 +100,7 @@ pip install -r requirements/requirements.txt \
       else
         export resume=false
       fi \
-      && python train.py -cn ${base_conf} \
+      && python3 train.py -cn ${base_conf} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           model.train_ds.src_file_name=${stage4_dir}/src.de \
@@ -115,7 +115,7 @@ pip install -r requirements/requirements.txt \
           +exp_manager.resume_if_exists=${resume} \
           +model.weights_checkpoint=${stage3_dir}/best.ckpt
      fi \
-  && python test.py -cn ${base_conf} \
+  && python3 test.py -cn ${base_conf} \
       trainer.gpus=${ngpus} \
       model.train_ds.src_file_name=${stage4_dir}/src.de \
       model.train_ds.tgt_file_name=${stage4_dir}/tgt.en \
