@@ -40,6 +40,8 @@ def main():
     originals, translations = [], []
     with input_originals_file.open() as of, input_translations_file.open() as tf:
         for o, t in zip_longest(of, tf):
+            if o is None or t is None:
+                raise ValueError("Originals and translations have different lengths.")
             originals.append(o.strip())
             translations.append(t.strip())
     pairs = list(zip(originals, translations))
