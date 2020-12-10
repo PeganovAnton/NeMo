@@ -20,6 +20,7 @@ pip3 install -r requirements/requirements.txt \
   && yttm bpe --data all_text.txt --model bpe_16k_en_de_yttm.model --vocab_size 16000 \
   && export result_dir=/workspace/result_de_en_back_translation_4_stages_1st_trial \
   && export stage1_dir=${result_dir}/stage1 \
+  && mkdir -p ${stage1_dir} \
   && if [ ! -f ${stage1_dir}/best.ckpt ]; then
       cat ${bi_path}/train.clean.de ${mono_data_path}/3M_en_mono_partiaally_translated_06.12.20/translations.txt > ${stage1_dir}/src.de \
       && cat ${bi_path}/train.clean.en ${mono_data_path}/3M_en_mono_partiaally_translated_06.12.20/originals.txt > ${stage1_dir}/tgt.en \
@@ -44,6 +45,7 @@ pip3 install -r requirements/requirements.txt \
           +model.weights_checkpoint=/workspace/old_results/result_de_en/best.ckpt
      fi \
   && export stage2_dir=${result_dir}/stage2 \
+  && mkdir -p ${stage2_dir} \
   && if [ ! -f ${stage2_dir}/best.ckpt ]; then
       cat ${bi_path}/train.clean.de ${mono_data_path}/6M_en_mono_partiaally_translated_06.12.20/translations.txt > ${stage2_dir}/src.de \
       && cat ${bi_path}/train.clean.en ${mono_data_path}/6M_en_mono_partiaally_translated_06.12.20/originals.txt > ${stage2_dir}/tgt.en \
@@ -68,6 +70,7 @@ pip3 install -r requirements/requirements.txt \
           +model.weights_checkpoint=${stage1_dir}/best.ckpt
      fi \
   && export stage3_dir=${result_dir}/stage3 \
+  && mkdir -p ${stage3_dir} \
   && if [ ! -f ${stage3_dir}/best.ckpt ]; then
       cat ${bi_path}/train.clean.de ${mono_data_path}/12M_en_mono_partiaally_translated_06.12.20/translations.txt > ${stage3_dir}/src.de \
       && cat ${bi_path}/train.clean.en ${mono_data_path}/12M_en_mono_partiaally_translated_06.12.20/originals.txt > ${stage3_dir}/tgt.en \
@@ -92,6 +95,7 @@ pip3 install -r requirements/requirements.txt \
           +model.weights_checkpoint=${stage2_dir}/best.ckpt
      fi \
   && export stage4_dir=${result_dir}/stage4 \
+  && mkdir -p ${stage4_dir} \
   && if [ ! -f ${stage4_dir}/best.ckpt ]; then
       cat ${bi_path}/train.clean.de ${mono_data_path}/24M_en_mono_partiaally_translated_06.12.20/translations.txt > ${stage4_dir}/src.de \
       && cat ${bi_path}/train.clean.en ${mono_data_path}/24M_en_mono_partiaally_translated_06.12.20/originals.txt > ${stage4_dir}/tgt.en \
