@@ -83,7 +83,7 @@ def collect_dataset_len_stats(originals_file, translations_file):
     return dict(sorted(c.items(), key=lambda x: x[0]))
 
 
-def sample_cleverly(pairs, reference_len_counts, n, bucket_min_size):
+def sample_close_to_reference_dataset_counts(pairs, reference_len_counts, n, bucket_min_size):
     if not pairs:
         raise ValueError("`pairs` is empty. Nothing to sample from.")
     reference_dataset_size = sum(reference_len_counts.values())
@@ -144,7 +144,8 @@ def sample_cleverly(pairs, reference_len_counts, n, bucket_min_size):
             remain_to_sample -= len(bucket)
         else:
             if i < len(ref_bucket_sizes) - 1:
-                bucket_sample = random.sample(bucket, round(ref_bucket_size * remain_to_sample / remain_in_reference_dataset))
+                bucket_sample = random.sample(
+                    bucket, round(ref_bucket_size * remain_to_sample / remain_in_reference_dataset))
             else:
                 assert len(bucket) >= remain_to_sample
                 bucket_sample = random.sample(bucket, remain_to_sample)
@@ -163,7 +164,7 @@ def main():
     args = get_args()
     input_pairs = read_dataset(*get_dataset_files(args.input_directory))
     reference_counts = collect_dataset_len_stats(*get_dataset_files(args.reference_dataset_directory))
-    output_pairs = sample_cleverly(input_pairs, reference_counts, args.size, args.bucket_min_size)
+    output_pairs = sample_close_to_reference_dataset_counts(input_pairs, reference_counts, args.size, args.bucket_min_size)
     write_dataset(output_pairs, args.output_directory)
 
 
