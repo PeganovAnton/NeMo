@@ -34,11 +34,8 @@ def main(cfg: DictConfig) -> None:
         exp_manager(trainer, cfg.get("exp_manager", None))
     if "weights_checkpoint" in cfg.model:
         weights_checkpoint = cfg.model.weights_checkpoint
-        transformer_mt = TransformerMTModel.load_from_checkpoint(
-            weights_checkpoint,
-            cfg=cfg.model,
-            trainer=trainer,
-        )
+        transformer_mt = TransformerMTModel.load_from_checkpoint(weights_checkpoint)
+        transformer_mt._trainer = trainer
     else:
         transformer_mt = TransformerMTModel(cfg.model, trainer=trainer)
     trainer.fit(transformer_mt)
