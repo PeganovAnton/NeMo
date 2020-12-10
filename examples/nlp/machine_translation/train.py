@@ -32,7 +32,16 @@ def main(cfg: DictConfig) -> None:
     trainer = pl.Trainer(**cfg.trainer)
     if "exp_manager" in cfg and cfg.get("exp_manager") is not None:
         exp_manager(trainer, cfg.get("exp_manager", None))
-    transformer_mt = TransformerMTModel(cfg.model, trainer=trainer)
+    if "weights_checkpoint" in cfg.model:
+        weights_checkpoint = cfg.model.weights_checkpoint
+        del cfg.model["weights_checkpoint"]
+        transformer_mt = TransformerMTModel.load_from_checkpoint(
+            weights_checkpoint,
+            cfg=cfg.model,
+            trainer=trainer,
+        )
+    else:
+        transformer_mt = TransformerMTModel(cfg.model, trainer=trainer)
     trainer.fit(transformer_mt)
     if is_global_rank_zero():
         if "exp_manager" not in cfg \
