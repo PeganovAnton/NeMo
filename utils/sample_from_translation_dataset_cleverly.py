@@ -133,9 +133,14 @@ def sample_close_to_reference_dataset_counts(pairs, reference_len_counts, n, buc
                     ref_count = 0
                     break
             curr_bucket.append(i)
+    ref_bucket_sizes.append(curr_ref_bucket_size)
+    bucket_new_count_to_ref_count_fractions.append(
+        len(curr_bucket) / curr_ref_bucket_size if curr_ref_bucket_size > 0 else float('+inf')
+    )
+    buckets.append(curr_bucket)
     n_in_buckets = sum([len(b) for b in buckets])
     assert n_in_buckets == len(pairs), \
-        f"The number of examples in buckets equals {n_in_buckets} whereas it has to be {len(pairs)}"
+        f"The number of examples in buckets equals {n_in_buckets} whereas it has to be equal to {len(pairs)}"
     assert sum(ref_bucket_sizes) == reference_dataset_size, \
         f"The number of examples in reference dataset buckets {sum(ref_bucket_sizes)} has to be equal to " \
         f"the size of the reference dataset {reference_dataset_size}."
