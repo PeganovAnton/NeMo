@@ -12,7 +12,6 @@ pip3 install -r requirements/requirements.txt \
   && export train_n_tokens_in_batch=11000 \
   && export max_epochs=1000 \
   && export mono_data_path=/workspace/mydatasets/apeganov/wmt18 \
-  && export examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_stages_post_traning/attention_is_all_you_need_de_en.sh \
   && export bi_path=/workspace/mydatasets/apeganov/wmt/wmt18_en_de/parallel \
   && export bt_path=/workspace/mydatasets/apeganov/wmt18/en_de_with_backstranslation_not_full_6.12.2020 \
   && export mono_en_path=${mono_data_path}/wmt18_en_mono \
