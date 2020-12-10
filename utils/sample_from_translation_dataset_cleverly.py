@@ -1,4 +1,5 @@
 import argparse
+import math
 import random
 from collections import Counter
 from itertools import zip_longest
@@ -145,7 +146,7 @@ def sample_close_to_reference_dataset_counts(pairs, reference_len_counts, n, buc
         else:
             if i < len(ref_bucket_sizes) - 1:
                 bucket_sample = random.sample(
-                    bucket, round(ref_bucket_size * remain_to_sample / remain_in_reference_dataset))
+                    bucket, math.ceil(ref_bucket_size * remain_to_sample / remain_in_reference_dataset))
             else:
                 assert len(bucket) >= remain_to_sample
                 bucket_sample = random.sample(bucket, remain_to_sample)
