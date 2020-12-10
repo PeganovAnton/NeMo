@@ -132,8 +132,13 @@ def sample_close_to_reference_dataset_counts(pairs, reference_len_counts, n, buc
                 except StopIteration:
                     ref_count = 0
                     break
-
             curr_bucket.append(i)
+    n_in_buckets = sum([len(b) for b in buckets])
+    assert n_in_buckets == len(pairs), \
+        f"The number of examples in buckets equals {n_in_buckets} whereas it has to be {len(pairs)}"
+    assert sum(ref_bucket_sizes) == reference_dataset_size, \
+        f"The number of examples in reference dataset buckets {sum(ref_bucket_sizes)} has to be equal to " \
+        f"the size of the reference dataset {reference_dataset_size}."
     buckets, ref_bucket_sizes, _ = zip(
         *sorted(zip(buckets, ref_bucket_sizes, bucket_new_count_to_ref_count_fractions), key=lambda x: x[2]))
     sampled_indices = []
