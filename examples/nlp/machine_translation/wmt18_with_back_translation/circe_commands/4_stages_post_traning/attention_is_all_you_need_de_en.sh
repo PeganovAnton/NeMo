@@ -23,6 +23,11 @@ pip install -r requirements/requirements.txt \
   && if [ ! -f ${stage1_dir}/best.ckpt ]; then
       cat ${bi_path}/train.clean.de ${mono_data_path}/3M_en_mono_partiaally_translated_06.12.20/translations.txt > ${stage1_dir}/src.de \
       && cat ${bi_path}/train.clean.en ${mono_data_path}/3M_en_mono_partiaally_translated_06.12.20/originals.txt > ${stage1_dir}/tgt.en \
+      && if compgen -G ${stage1_dir}/TransformerMT/*/checkpoints/* > dev/null; then
+        export resume=true
+      else
+        export resume=false
+      fi \
       && python train.py -cn ${base_conf} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
@@ -35,13 +40,18 @@ pip install -r requirements/requirements.txt \
           exp_manager.exp_dir=${stage1_dir} \
           trainer.max_epochs=${max_epochs} \
           trainer.max_steps=30000 \
-          +exp_manager.resume_if_exists=true \
+          +exp_manager.resume_if_exists=${resume} \
           +model.weights_checkpoint=/workspace/old_results/result_de_en/best.ckpt
      fi \
   && export stage2_dir=${result_dir}/stage2 \
   && if [ ! -f ${stage2_dir}/best.ckpt ]; then
       cat ${bi_path}/train.clean.de ${mono_data_path}/6M_en_mono_partiaally_translated_06.12.20/translations.txt > ${stage2_dir}/src.de \
       && cat ${bi_path}/train.clean.en ${mono_data_path}/6M_en_mono_partiaally_translated_06.12.20/originals.txt > ${stage2_dir}/tgt.en \
+      && if compgen -G ${stage2_dir}/TransformerMT/*/checkpoints/* > dev/null; then
+        export resume=true
+      else
+        export resume=false
+      fi \
       && python train.py -cn ${base_conf} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
@@ -52,7 +62,7 @@ pip install -r requirements/requirements.txt \
           model.test_ds.src_file_name=${bi_path}/wmt14-de-en.src \
           model.test_ds.tgt_file_name=${bi_path}/wmt14-de-en.ref \
           exp_manager.exp_dir=${stage2_dir} \
-          +exp_manager.resume_if_exists=true \
+          +exp_manager.resume_if_exists=${resume} \
           trainer.max_epochs=${max_epochs} \
           trainer.max_steps=50000 \
           +model.weights_checkpoint=${stage1_dir}/best.ckpt
@@ -61,6 +71,11 @@ pip install -r requirements/requirements.txt \
   && if [ ! -f ${stage3_dir}/best.ckpt ]; then
       cat ${bi_path}/train.clean.de ${mono_data_path}/12M_en_mono_partiaally_translated_06.12.20/translations.txt > ${stage3_dir}/src.de \
       && cat ${bi_path}/train.clean.en ${mono_data_path}/12M_en_mono_partiaally_translated_06.12.20/originals.txt > ${stage3_dir}/tgt.en \
+      && if compgen -G ${stage3_dir}/TransformerMT/*/checkpoints/* > dev/null; then
+        export resume=true
+      else
+        export resume=false
+      fi \
       && python train.py -cn ${base_conf} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
@@ -73,13 +88,18 @@ pip install -r requirements/requirements.txt \
           exp_manager.exp_dir=${stage3_dir} \
           trainer.max_epochs=${max_epochs} \
           trainer.max_steps=75000 \
-          +exp_manager.resume_if_exists=true \
+          +exp_manager.resume_if_exists=${resume} \
           +model.weights_checkpoint=${stage2_dir}/best.ckpt
      fi \
   && export stage4_dir=${result_dir}/stage4 \
   && if [ ! -f ${stage4_dir}/best.ckpt ]; then
       cat ${bi_path}/train.clean.de ${mono_data_path}/24M_en_mono_partiaally_translated_06.12.20/translations.txt > ${stage4_dir}/src.de \
       && cat ${bi_path}/train.clean.en ${mono_data_path}/24M_en_mono_partiaally_translated_06.12.20/originals.txt > ${stage4_dir}/tgt.en \
+      && if compgen -G ${stage4_dir}/TransformerMT/*/checkpoints/* > dev/null; then
+        export resume=true
+      else
+        export resume=false
+      fi \
       && python train.py -cn ${base_conf} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
@@ -92,7 +112,7 @@ pip install -r requirements/requirements.txt \
           exp_manager.exp_dir=${stage4_dir} \
           trainer.max_epochs=${max_epochs} \
           trainer.max_steps=100000 \
-          +exp_manager.resume_if_exists=true \
+          +exp_manager.resume_if_exists=${resume} \
           +model.weights_checkpoint=${stage3_dir}/best.ckpt
      fi \
   && python test.py -cn ${base_conf} \

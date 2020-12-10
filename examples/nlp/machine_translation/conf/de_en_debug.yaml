@@ -30,10 +30,10 @@ model:
 #    tgt_tokenizer:
 #      tokenizer_name: yttm
 #      tokenizer_model: /data/bpe_32k_en_de_yttm.model
-    hidden_size: 512
-    num_layers: 6
-    num_attn_heads: 8
-    inner_size: 2048
+    hidden_size: 32
+    num_layers: 2
+    num_attn_heads: 2
+    inner_size: 64
     max_seq_length: 512  # maximum allowed length in embedding layer
     embedding_dropout: 0.1
     ffn_dropout: 0.1
@@ -59,7 +59,7 @@ model:
   validation_ds:
     src_file_name: ~/data/wmt14_en_de2/valid.de # path to file with validation data
     tgt_file_name: ~/data/wmt14_en_de2/valid.en
-    tokens_in_batch: 512
+    tokens_in_batch: 4098
     shuffle: false
     num_samples: -1 # number of samples to be considered, -1 means all the dataset
     predict_last_k: 0
@@ -71,7 +71,7 @@ model:
   test_ds:
     src_file_name: ~/data/wmt14_en_de2/test.de # path to file with validation data
     tgt_file_name: ~/data/wmt14_en_de2/test.en
-    tokens_in_batch: 512
+    tokens_in_batch: 4098
     shuffle: false
     num_samples: -1 # number of samples to be considered, -1 means all the dataset
     predict_last_k: 0
