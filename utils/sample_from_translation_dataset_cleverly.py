@@ -44,6 +44,18 @@ def get_args():
         type=int,
         help="Minimum number of sentences in from which sampling is done."
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        help="Random seed. default is 42.",
+        default=42,
+    )
+    parser.add_argument(
+        "--shuffle",
+        type=bool,
+        help="Whether to shuffle sampled dataset.",
+        action="store_true",
+    )
     args = parser.parse_args()
     args.input_directory = args.input_directory.expanduser()
     args.output_directory = args.output_directory.expanduser()
@@ -180,11 +192,14 @@ def get_dataset_files(dir_):
 
 
 def main():
-    random.seed(42)
     args = get_args()
+    random.seed(args.seed)
     input_pairs = read_dataset(*get_dataset_files(args.input_directory))
     reference_counts = collect_dataset_len_stats(*get_dataset_files(args.reference_dataset_directory))
-    output_pairs = sample_close_to_reference_dataset_counts(input_pairs, reference_counts, args.size, args.bucket_min_size)
+    output_pairs = sample_close_to_reference_dataset_counts(
+        input_pairs, reference_counts, args.size, args.bucket_min_size)
+    if args.shuffle:
+        random.shuffle(output_pairs)
     write_dataset(output_pairs, args.output_directory)
 
 
