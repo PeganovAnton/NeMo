@@ -40,7 +40,7 @@ pip3 install -r requirements/requirements.txt \
           model.test_ds.tgt_file_name=${bi_path}/wmt14-de-en.ref \
           exp_manager.exp_dir=${stage1_dir} \
           trainer.max_epochs=${max_epochs} \
-          trainer.max_steps=30000 \
+          +trainer.max_steps=30000 \
           +exp_manager.resume_if_exists=${resume} \
           +model.weights_checkpoint=/workspace/old_results/result_de_en/best.ckpt
      fi \
@@ -66,7 +66,7 @@ pip3 install -r requirements/requirements.txt \
           exp_manager.exp_dir=${stage2_dir} \
           +exp_manager.resume_if_exists=${resume} \
           trainer.max_epochs=${max_epochs} \
-          trainer.max_steps=50000 \
+          +trainer.max_steps=50000 \
           +model.weights_checkpoint=${stage1_dir}/best.ckpt
      fi \
   && export stage3_dir=${result_dir}/stage3 \
@@ -90,7 +90,7 @@ pip3 install -r requirements/requirements.txt \
           model.test_ds.tgt_file_name=${bi_path}/wmt14-de-en.ref \
           exp_manager.exp_dir=${stage3_dir} \
           trainer.max_epochs=${max_epochs} \
-          trainer.max_steps=75000 \
+          +trainer.max_steps=75000 \
           +exp_manager.resume_if_exists=${resume} \
           +model.weights_checkpoint=${stage2_dir}/best.ckpt
      fi \
@@ -115,7 +115,7 @@ pip3 install -r requirements/requirements.txt \
           model.test_ds.tgt_file_name=${bi_path}/wmt14-de-en.ref \
           exp_manager.exp_dir=${stage4_dir} \
           trainer.max_epochs=${max_epochs} \
-          trainer.max_steps=100000 \
+          +trainer.max_steps=100000 \
           +exp_manager.resume_if_exists=${resume} \
           +model.weights_checkpoint=${stage3_dir}/best.ckpt
      fi \
