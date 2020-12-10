@@ -162,6 +162,7 @@ def get_dataset_files(dir_):
 
 
 def main():
+    random.seed(42)
     args = get_args()
     input_pairs = read_dataset(*get_dataset_files(args.input_directory))
     reference_counts = collect_dataset_len_stats(*get_dataset_files(args.reference_dataset_directory))
