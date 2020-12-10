@@ -19,7 +19,7 @@ pip install -r requirements/requirements.txt \
           exp_manager.exp_dir=${stage1_dir} \
           trainer.max_epochs=${max_epochs} \
           trainer.max_steps=3 \
-          +trainer.resume_if_exists=true \
+          +trainer.resume_if_exists=true
      fi \
   && export stage2_dir=${result_dir}/stage2 \
   && if [ ! -f ${stage2_dir}/best.ckpt ]; then
