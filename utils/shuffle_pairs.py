@@ -34,6 +34,7 @@ def get_args():
 def main():
     args = get_args()
     random.seed(args.seed)
+    args.output_dir.mkdir(parents=True, exist_ok=True)
     input_originals_file = args.input_dir / Path("originals.txt")
     input_translations_file = args.input_dir / Path("translations.txt")
     originals, translations = [], []
