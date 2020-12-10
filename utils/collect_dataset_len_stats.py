@@ -48,7 +48,7 @@ def main():
         "pair_stats": compute_stats(pair_lines),
     }
     with open(args.stats_output, 'w') as f:
-        json.dump(result, f)
+        json.dump(result, f, indent=2)
 
 
 if __name__ == "__main__":

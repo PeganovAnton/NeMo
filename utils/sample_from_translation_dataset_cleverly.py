@@ -80,11 +80,15 @@ def collect_dataset_len_stats(originals_file, translations_file):
                 raise ValueError(
                     "The number of lines in translations file is different from the number of lines in originals file.")
             c.update([len(o.strip()) + len(t.strip())])
-    return c
+    return dict(sorted(c.items(), key=lambda x: x[0]))
 
 
 def sample_cleverly(pairs, reference_len_counts, n, bucket_min_size):
+    if not pairs:
+        raise ValueError("`pairs` is empty. Nothing to sample from.")
     reference_dataset_size = sum(reference_len_counts.values())
+    if reference_dataset_size == 0:
+        raise ValueError("Reference dataset is empty.")
     buckets = []
     ref_bucket_sizes = []
     bucket_new_count_to_ref_count_fractions = []
@@ -108,6 +112,7 @@ def sample_cleverly(pairs, reference_len_counts, n, bucket_min_size):
                 len(curr_bucket) / curr_ref_bucket_size if curr_ref_bucket_size > 0 else float('+inf')
             )
             buckets.append(curr_bucket)
+            curr_ref_bucket_size = 0
             while ref_pair_len <= new_pair_len:
                 curr_ref_bucket_size += ref_count
                 try:
@@ -115,9 +120,18 @@ def sample_cleverly(pairs, reference_len_counts, n, bucket_min_size):
                 except StopIteration:
                     ref_count = 0
                     break
-            curr_ref_bucket_size = 0
             curr_bucket = [i]
+            curr_pair_len = new_pair_len
         else:
+            curr_pair_len = new_pair_len
+            while ref_pair_len <= new_pair_len:
+                curr_ref_bucket_size += ref_count
+                try:
+                    ref_pair_len, ref_count = next(ref_counts_iter)
+                except StopIteration:
+                    ref_count = 0
+                    break
+
             curr_bucket.append(i)
     buckets, ref_bucket_sizes, bucket_new_count_to_ref_count_fractions = zip(
         *sorted(zip(buckets, ref_bucket_sizes, bucket_new_count_to_ref_count_fractions), key=lambda x: x[2]))
@@ -130,7 +144,7 @@ def sample_cleverly(pairs, reference_len_counts, n, bucket_min_size):
             remain_to_sample -= len(bucket)
         else:
             if i < len(ref_bucket_sizes) - 1:
-                bucket_sample = random.sample(bucket, round(remain_to_sample / remain_in_reference_dataset))
+                bucket_sample = random.sample(bucket, round(ref_bucket_size * remain_to_sample / remain_in_reference_dataset))
             else:
                 assert len(bucket) >= remain_to_sample
                 bucket_sample = random.sample(bucket, remain_to_sample)
