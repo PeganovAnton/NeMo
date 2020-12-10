@@ -5,7 +5,7 @@ pip3 install -r requirements/requirements.txt \
   && export nemo_path=$(pwd) \
   && export HYDRA_FULL_ERROR=1 \
   && echo "NeMo path: ${nemo_path}" \
-  && export python3PATH="${nemo_path}" \
+  && export PYTHONPATH="${nemo_path}" \
   && cd  "${nemo_path}/examples/nlp/machine_translation" \
   && export base_conf=wmt16/de_en_8gpu \
   && export ngpus=16 \
