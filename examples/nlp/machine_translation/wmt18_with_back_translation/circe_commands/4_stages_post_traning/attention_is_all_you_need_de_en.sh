@@ -8,7 +8,8 @@ pip3 install -r requirements/requirements.txt \
   && export PYTHONPATH="${nemo_path}" \
   && cd  "${nemo_path}/examples/nlp/machine_translation" \
   && export base_conf=wmt16/de_en_8gpu \
-  && export ngpus=16 \
+  && export ngpus="$2" \
+  && export nnodes="$1" \
   && export train_n_tokens_in_batch=11000 \
   && export max_epochs=1000 \
   && export mono_data_path=/workspace/mydatasets/apeganov/wmt18 \
@@ -34,6 +35,7 @@ pip3 install -r requirements/requirements.txt \
             export resume=false
           fi \
           && python3 train.py -cn ${base_conf} \
+              trainer.num_nodes=${num_nodes} \
               trainer.gpus=${ngpus} \
               model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
               model.train_ds.src_file_name=${stage0_dir}/originals.txt \
@@ -63,6 +65,7 @@ pip3 install -r requirements/requirements.txt \
         export resume=false
       fi \
       && python3 train.py -cn ${base_conf} \
+          trainer.num_nodes=${num_nodes} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           model.train_ds.src_file_name=${stage1_dir}/originals.txt \
@@ -89,6 +92,7 @@ pip3 install -r requirements/requirements.txt \
         export resume=false
       fi \
       && python3 train.py -cn ${base_conf} \
+          trainer.num_nodes=${num_nodes} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           model.train_ds.src_file_name=${stage2_dir}/originals.txt \
@@ -115,6 +119,7 @@ pip3 install -r requirements/requirements.txt \
         export resume=false
       fi \
       && python3 train.py -cn ${base_conf} \
+          trainer.num_nodes=${num_nodes} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           model.train_ds.src_file_name=${stage3_dir}/originals.txt \
@@ -141,6 +146,7 @@ pip3 install -r requirements/requirements.txt \
         export resume=false
       fi \
       && python3 train.py -cn ${base_conf} \
+          trainer.num_nodes=${num_nodes} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           model.train_ds.src_file_name=${stage4_dir}/originals.txt \
@@ -156,6 +162,7 @@ pip3 install -r requirements/requirements.txt \
           +model.weights_checkpoint=${stage3_dir}/best.ckpt
      fi \
   && python3 test.py -cn ${base_conf} \
+      trainer.num_nodes=${num_nodes} \
       trainer.gpus=${ngpus} \
       model.train_ds.src_file_name=${stage4_dir}/originals.txt \
       model.train_ds.tgt_file_name=${stage4_dir}/translations.txt \
