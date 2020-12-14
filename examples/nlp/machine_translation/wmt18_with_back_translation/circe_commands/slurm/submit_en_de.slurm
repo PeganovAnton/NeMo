@@ -18,4 +18,4 @@ export PYTHONFAULTHANDLER=1
 # module load NCCL/2.4.7-1-cuda.10.0
 
 # run script from above
-srun source PeganovNeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/slurm/submit_en_de.slurm 8 16
+srun source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/slurm/submit_en_de.slurm 8 16
