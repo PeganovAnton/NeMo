@@ -4,6 +4,7 @@
 #SBATCH --mem=0
 #SBATCH --signal=SIGUSR1@90
 #SBATCH --account=dl-langspeech
+#SBATCH -o slurm_1st_trial_error_logs.txt
 
 
 # debugging flags (optional)
