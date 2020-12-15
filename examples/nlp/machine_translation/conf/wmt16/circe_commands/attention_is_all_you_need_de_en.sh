@@ -11,7 +11,7 @@ pip install -r requirements/requirements.txt \
   && mono_de_path=${data_path}/wmt18/wmt18_de_mono \
   && cat ${bi_path}/train.clean.* ${mono_en_path}/monolingual.2* ${mono_de_path}/monolingual.2* > all_text.txt \
   && yttm bpe --data all_text.txt --model bpe_16k_en_de_yttm.model --vocab_size 16000 \
-  && python train.py -cn wmt16/de_en_8gpu \
+  && python3 train.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
       model.train_ds.tokens_in_batch=10000 \
       model.train_ds.src_file_name=${bi_path}/train.clean.de \
@@ -22,7 +22,7 @@ pip install -r requirements/requirements.txt \
       model.test_ds.tgt_file_name=${bi_path}/wmt14-de-en.ref \
       exp_manager.exp_dir=/workspace/mem_tokens_2nd_trial \
       trainer.max_epochs=50 \
-  && python test.py -cn wmt16/de_en_8gpu \
+  && python3 test.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
       model.train_ds.src_file_name=${bi_path}/train.clean.de \
       model.train_ds.tgt_file_name=${bi_path}/train.clean.en \
