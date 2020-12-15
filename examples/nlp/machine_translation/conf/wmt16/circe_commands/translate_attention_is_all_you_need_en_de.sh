@@ -1,7 +1,7 @@
-pip install -r requirements/requirements.txt \
-  && pip install -r requirements/requirements_nlp.txt \
-  && pip install webdataset \
-  && pip install transformers==3.5.0 \
+pip3 install -r requirements/requirements.txt \
+  && pip3 install -r requirements/requirements_nlp.txt \
+  && pip3 install webdataset \
+  && pip3 install transformers==3.5.0 \
   && export nemo_path=$(pwd) \
   && export HYDRA_FULL_ERROR=1 \
   && echo "NeMo path: ${nemo_path}" \
@@ -16,7 +16,7 @@ pip install -r requirements/requirements.txt \
   && export best_ckpt=${train_results_path}/best.ckpt \
   && cat ${bi_path}/train.clean.en ${bi_path}/train.clean.de ${mono_en_path}/monolingual.25000000.en ${mono_de_path}/monolingual.25000000.de > all_text.txt \
   && yttm bpe --data all_text.txt --model bpe_16k_en_de_yttm.model --vocab_size 16000 \
-  && python nmt_transformer_infer.py \
+  && python3 nmt_transformer_infer.py \
       --model ${best_ckpt} \
       --text2translate ${mono_en_path}/monolingual.2* \
       --output ${output}

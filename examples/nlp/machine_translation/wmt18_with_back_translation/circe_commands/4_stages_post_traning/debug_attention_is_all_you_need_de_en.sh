@@ -1,7 +1,7 @@
-pip install -r requirements/requirements.txt \
-  && pip install -r requirements/requirements_nlp.txt \
-  && pip install webdataset \
-  && pip install transformers==3.5.0 \
+pip3 install -r requirements/requirements.txt \
+  && pip3 install -r requirements/requirements_nlp.txt \
+  && pip3 install webdataset \
+  && pip3 install transformers==3.5.0 \
   && export nemo_path=$(pwd) \
   && export HYDRA_FULL_ERROR=1 \
   && echo "NeMo path: ${nemo_path}" \
@@ -19,7 +19,7 @@ pip install -r requirements/requirements.txt \
       else
         export resume=false
       fi \
-      && python train.py -cn ${base_conf} \
+      && python3 train.py -cn ${base_conf} \
           trainer.gpus=${ngpus} \
           exp_manager.exp_dir=${stage1_dir} \
           trainer.max_epochs=${max_epochs} \
@@ -33,7 +33,7 @@ pip install -r requirements/requirements.txt \
       else
         export resume=false
       fi \
-      && python train.py -cn ${base_conf} \
+      && python3 train.py -cn ${base_conf} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           exp_manager.exp_dir=${stage2_dir} \
@@ -49,7 +49,7 @@ pip install -r requirements/requirements.txt \
       else
         export resume=false
       fi \
-      && python train.py -cn ${base_conf} \
+      && python3 train.py -cn ${base_conf} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           exp_manager.exp_dir=${stage3_dir} \
@@ -65,7 +65,7 @@ pip install -r requirements/requirements.txt \
       else
         export resume=false
       fi \
-      && python train.py -cn ${base_conf} \
+      && python3 train.py -cn ${base_conf} \
           trainer.gpus=${ngpus} \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           exp_manager.exp_dir=${stage4_dir} \
@@ -74,7 +74,7 @@ pip install -r requirements/requirements.txt \
           +exp_manager.resume_if_exists=${resume} \
           +model.weights_checkpoint=${stage3_dir}/best.ckpt
      fi \
-  && python test.py -cn ${base_conf} \
+  && python3 test.py -cn ${base_conf} \
       trainer.gpus=${ngpus} \
       exp_manager.exp_dir=${result_dir}/testing \
       model.test_checkpoint_path=${stage4_dir}/best.ckpt

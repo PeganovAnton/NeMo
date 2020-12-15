@@ -1,7 +1,7 @@
-pip install -r requirements/requirements.txt \
-  && pip install -r requirements/requirements_nlp.txt \
-  && pip install webdataset \
-  && pip install transformers==3.5.0 \
+pip3 install -r requirements/requirements.txt \
+  && pip3 install -r requirements/requirements_nlp.txt \
+  && pip3 install webdataset \
+  && pip3 install transformers==3.5.0 \
   && export nemo_path=$(pwd) \
   && export HYDRA_FULL_ERROR=1 \
   && echo "NeMo path: ${nemo_path}" \
@@ -14,7 +14,7 @@ pip install -r requirements/requirements.txt \
   && export mono_de_path=${mono_data_path}/wmt18_de_mono \
   && cat ${bt_path}/src.en ${bt_path}/tgt.de ${bt_path}/src.de ${bt_path}/tgt.en > all_text.txt \
   && yttm bpe --data all_text.txt --model bpe_16k_en_de_yttm.model --vocab_size 16000 \
-  && python train.py -cn wmt16/en_de_8gpu \
+  && python3 train.py -cn wmt16/en_de_8gpu \
       trainer.gpus=16 \
       model.train_ds.tokens_in_batch=6000 \
       model.train_ds.src_file_name=${bt_path}/src.en \
@@ -25,7 +25,7 @@ pip install -r requirements/requirements.txt \
       model.test_ds.tgt_file_name=${bi_path}/wmt14-en-de.ref \
       exp_manager.exp_dir=/workspace/result_en_de_back_translation_first_trial \
       trainer.max_epochs=50 \
-  && python test.py -cn wmt16/en_de_8gpu \
+  && python3 test.py -cn wmt16/en_de_8gpu \
       trainer.gpus=16 \
       model.train_ds.src_file_name=${bt_path}/src.en \
       model.train_ds.tgt_file_name=${bt_path}/tgt.de \
