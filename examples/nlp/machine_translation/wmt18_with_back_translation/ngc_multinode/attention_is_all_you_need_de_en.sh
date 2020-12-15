@@ -12,7 +12,7 @@ pip3 install -r requirements/requirements.txt \
   && export num_nodes="$2" \
   && if [ "${num_nodes}" -gt 1 ]; then
     declare -a host_np_arr \
-    && for i in $(seq 1 1 ${num_nodes}); host_np_arr+=("hostname${i}:${num_gpus}"); done \
+    && for i in $(seq 1 1 ${num_nodes}); do host_np_arr+=("hostname${i}:${num_gpus}"); done \
     && export host_np=$(printf ",%s" "${host_np_arr[@]}") \
     && export host_np=${host_np:1}
   else
