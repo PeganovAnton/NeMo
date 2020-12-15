@@ -6,7 +6,7 @@ pip3 install -r requirements/requirements.txt \
   && export PYTHONPATH="${nemo_path}" \
   && cd  "${nemo_path}/examples/nlp/machine_translation" \
   && data_path=/workspace/mydatasets/apeganov \
-  && bi_path=${data_path}/wmt/wmt18_en_de \
+  && bi_path=${data_path}/wmt/wmt18_en_de/parallel \
   && mono_en_path=${data_path}/wmt18/wmt18_en_mono \
   && mono_de_path=${data_path}/wmt18/wmt18_de_mono \
   && cat ${bi_path}/train.clean.* ${mono_en_path}/monolingual.2* ${mono_de_path}/monolingual.2* > all_text.txt \
