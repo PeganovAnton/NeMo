@@ -1,6 +1,5 @@
 #!/bin/bash -l
 #SBATCH --nodes=8
-#SBATCH --gres=gpu:16
 #SBATCH --ntasks-per-node=16
 #SBATCH --mem=0
 #SBATCH --signal=SIGUSR1@90
