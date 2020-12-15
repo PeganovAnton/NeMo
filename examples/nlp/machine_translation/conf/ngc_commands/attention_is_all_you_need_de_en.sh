@@ -5,6 +5,6 @@ pip install -r requirements/requirements.txt \
   && echo "NeMo path: ${nemo_path}" \
   && export PYTHONPATH="${nemo_path}" \
   && cd  "${nemo_path}/examples/nlp/machine_translation" \
-  && python train.py -cn de_en_8gpu \
-  && python test.py model.test_checkpoint_path=best.ckpt -cn de_en_8gpu
+  && python3 train.py -cn de_en_8gpu \
+  && python3 test.py model.test_checkpoint_path=best.ckpt -cn de_en_8gpu
 

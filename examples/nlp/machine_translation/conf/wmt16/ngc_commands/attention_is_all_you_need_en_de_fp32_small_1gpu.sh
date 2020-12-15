@@ -9,7 +9,7 @@ pip install -r requirements/requirements.txt \
   && cd  "${nemo_path}/examples/nlp/machine_translation" \
   && yttm bpe --data /data/train.clean.en-de.shuffled.common --model bpe_16k_en_de_yttm.model --vocab_size 16000 \
   && ls /data \
-  && python train.py -cn wmt16/en_de_8gpu \
+  && python3 train.py -cn wmt16/en_de_8gpu \
       trainer.precision=32 \
       model.train_ds.tokens_in_batch=1024 \
       model.validation_ds.tokens_in_batch=256 \
@@ -19,7 +19,7 @@ pip install -r requirements/requirements.txt \
       trainer.val_check_interval=10 \
       +trainer.max_steps=100 \
       trainer.log_every_n_steps=10 \
-  && python test.py -cn wmt16/en_de_8gpu \
+  && python3 test.py -cn wmt16/en_de_8gpu \
       trainer.precision=32 \
       model.train_ds.tokens_in_batch=1024 \
       model.validation_ds.tokens_in_batch=256 \

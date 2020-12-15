@@ -1,7 +1,7 @@
-pip install -r requirements/requirements.txt \
-  && pip install -r requirements/requirements_nlp.txt \
-  && pip install webdataset \
-  && pip install transformers==3.5.0 \
+pip3 install -r requirements/requirements.txt \
+  && pip3 install -r requirements/requirements_nlp.txt \
+  && pip3 install webdataset \
+  && pip3 install transformers==3.5.0 \
   && export nemo_path=$(pwd) \
   && export HYDRA_FULL_ERROR=1 \
   && echo "NeMo path: ${nemo_path}" \
@@ -13,7 +13,7 @@ pip install -r requirements/requirements.txt \
   && export mono_de_path=${mono_data_path}/wmt18_de_mono \
   && cat ${bi_path}/train.clean.en ${bi_path}/train.clean.de ${mono_en_path}/monolingual.25000000.en ${mono_de_path}/monolingual.25000000.de > all_text.txt \
   && yttm bpe --data all_text.txt --model bpe_16k_en_de_yttm.model --vocab_size 16000 \
-  && python test.py -cn wmt16/de_en_8gpu \
+  && python3 test.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
       model.train_ds.src_file_name=${bi_path}/train.clean.de \
       model.train_ds.tgt_file_name=${bi_path}/train.clean.en \
