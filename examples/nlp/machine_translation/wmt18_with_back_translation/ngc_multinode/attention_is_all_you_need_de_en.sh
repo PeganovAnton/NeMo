@@ -8,7 +8,17 @@ pip3 install -r requirements/requirements.txt \
   && export PYTHONPATH="${nemo_path}" \
   && cd  "${nemo_path}/examples/nlp/machine_translation" \
   && export base_conf=wmt16/de_en_8gpu \
-  && export ngpus="$2" \
+  && export num_gpus="$3" \
+  && export num_nodes="$2" \
+  && if [ "${num_nodes}" -gt 1 ]; then
+    declare -a host_np_arr \
+    && for i in $(seq 1 1 ${num_nodes}); host_np_arr+=("hostname${i}:${num_gpus}"); done \
+    && export host_np=$(printf ",%s" "${host_np_arr[@]}") \
+    && export host_np=${host_np:1}
+  else
+    export host_np=""
+  fi \
+  && export total_np=$(( ${num_nodes}*${num_gpus} )) \
   && export train_n_tokens_in_batch=11000 \
   && export max_epochs=1000 \
   && export mono_data_path=/data/translated \
@@ -35,9 +45,10 @@ pip3 install -r requirements/requirements.txt \
           else
             export resume=false
           fi \
-          && python3 train.py -cn ${base_conf} \
+          && horovodrun -np ${total_np} -H ${host_np} python3 train.py -cn ${base_conf} \
               trainer.num_nodes=${num_nodes} \
-              trainer.gpus=${ngpus} \
+              trainer.gpus=${num_gpus} \
+              trainer.accelerator=horovod \
               model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
               model.train_ds.src_file_name=${stage0_dir}/originals.txt \
               model.train_ds.tgt_file_name=${stage0_dir}/translations.txt \
@@ -66,9 +77,10 @@ pip3 install -r requirements/requirements.txt \
       else
         export resume=false
       fi \
-      && python3 train.py -cn ${base_conf} \
+      && horovodrun -np ${total_np} -H ${host_np} python3 train.py -cn ${base_conf} \
           trainer.num_nodes=${num_nodes} \
-          trainer.gpus=${ngpus} \
+          trainer.gpus=${num_gpus} \
+          trainer.accelerator=horovod \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           model.train_ds.src_file_name=${stage1_dir}/originals.txt \
           model.train_ds.tgt_file_name=${stage1_dir}/translations.txt \
@@ -94,9 +106,10 @@ pip3 install -r requirements/requirements.txt \
       else
         export resume=false
       fi \
-      && python3 train.py -cn ${base_conf} \
+      && horovodrun -np ${total_np} -H ${host_np}  python3 train.py -cn ${base_conf} \
           trainer.num_nodes=${num_nodes} \
-          trainer.gpus=${ngpus} \
+          trainer.gpus=${num_gpus} \
+          trainer.accelerator=horovod \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           model.train_ds.src_file_name=${stage2_dir}/originals.txt \
           model.train_ds.tgt_file_name=${stage2_dir}/translations.txt \
@@ -122,9 +135,10 @@ pip3 install -r requirements/requirements.txt \
       else
         export resume=false
       fi \
-      && python3 train.py -cn ${base_conf} \
+      && horovodrun -np ${total_np} -H ${host_np}  python3 train.py -cn ${base_conf} \
           trainer.num_nodes=${num_nodes} \
-          trainer.gpus=${ngpus} \
+          trainer.gpus=${num_gpus} \
+          trainer.accelerator=horovod \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           model.train_ds.src_file_name=${stage3_dir}/originals.txt \
           model.train_ds.tgt_file_name=${stage3_dir}/translations.txt \
@@ -150,9 +164,10 @@ pip3 install -r requirements/requirements.txt \
       else
         export resume=false
       fi \
-      && python3 train.py -cn ${base_conf} \
+      && horovodrun -np ${total_np} -H ${host_np} python3 train.py -cn ${base_conf} \
           trainer.num_nodes=${num_nodes} \
-          trainer.gpus=${ngpus} \
+          trainer.gpus=${num_gpus} \
+          trainer.accelerator=horovod \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           model.train_ds.src_file_name=${stage4_dir}/originals.txt \
           model.train_ds.tgt_file_name=${stage4_dir}/translations.txt \
@@ -167,9 +182,10 @@ pip3 install -r requirements/requirements.txt \
           +model.weights_checkpoint=${stage3_dir}/best.ckpt \
           model.tokenizer.tokenizer_model=${tok_model}
      fi \
-  && python3 test.py -cn ${base_conf} \
+  && horovodrun -np ${total_np} -H ${host_np} python3 test.py -cn ${base_conf} \
       trainer.num_nodes=${num_nodes} \
-      trainer.gpus=${ngpus} \
+      trainer.gpus=${num_gpus} \
+      trainer.accelerator=horovod \
       model.train_ds.src_file_name=${stage4_dir}/originals.txt \
       model.train_ds.tgt_file_name=${stage4_dir}/translations.txt \
       model.validation_ds.src_file_name=${valid_src} \
