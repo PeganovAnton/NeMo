@@ -1,0 +1,25 @@
+{
+   "aceInstance": "dgx1v.16g.8.norm",
+   "aceName": "nv-us-west-2",
+   "command": "git clone https://github.com/PeganovAnton/NeMo.git && cd NeMo && git checkout nmt && source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/ngc_multinode/attention_is_all_you_need_de_en.sh",
+   "dockerImageName": "nvidia/pytorch:20.09-py3",
+   "name": "de_en_attention_is_all_you_need",
+   "publishedContainerPorts": [
+     6006
+   ],
+   "resultContainerMountPoint": "/result",
+   "runPolicy": {
+       "preemptClass": "RUNONCE"
+   },
+   "datasetMounts": [
+     {
+       "containerMountPoint": "/data/translated",
+       "id": 70908
+     },
+     {
+       "containerMountPoint": "/data/wmt18_parallel",
+       "id": 70987
+     }
+   ],
+  "replicas": 16
+}
