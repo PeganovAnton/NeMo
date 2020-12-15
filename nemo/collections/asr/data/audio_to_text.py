@@ -779,7 +779,7 @@ class _TarredAudioToTextDataset(IterableDataset):
             .shuffle(shuffle_n)
             .rename(audio='wav', key='__key__')
             .to_tuple('audio', 'key')
-            .pipe(self._filter)
+            .pip3e(self._filter)
             .map(f=self._build_sample)
         )
 

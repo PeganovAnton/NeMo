@@ -235,20 +235,20 @@ class GlowTTSParser:
         return unidecode(text)
 
     def basic_cleaners(self, text):
-        """Basic pipeline that lowercases and collapses whitespace without transliteration."""
+        """Basic pip3eline that lowercases and collapses whitespace without transliteration."""
         text = self.lowercase(text)
         text = self.collapse_whitespace(text)
         return text
 
     def transliteration_cleaners(self, text):
-        """Pipeline for non-English text that transliterates to ASCII."""
+        """pip3eline for non-English text that transliterates to ASCII."""
         text = self.convert_to_ascii(text)
         text = self.lowercase(text)
         text = self.collapse_whitespace(text)
         return text
 
     def english_cleaners(self, text):
-        """Pipeline for English text, including number and abbreviation expansion."""
+        """pip3eline for English text, including number and abbreviation expansion."""
         text = self.convert_to_ascii(text)
         text = self.lowercase(text)
         text = self.expand_numbers(text)

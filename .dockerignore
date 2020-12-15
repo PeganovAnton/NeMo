@@ -4,8 +4,8 @@ __pycache__
 *.pyd
 .Python
 env
-pip-log.txt
-pip-delete-this-directory.txt
+pip3-log.txt
+pip3-delete-this-directory.txt
 .tox
 .coverage
 .coverage.*

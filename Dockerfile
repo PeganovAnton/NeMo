@@ -70,7 +70,7 @@ RUN COMMIT_SHA=f546575109111c455354861a0567c8aa794208a2 && \
 # install nemo dependencies
 WORKDIR /tmp/nemo
 COPY requirements .
-RUN for f in $(ls requirements/*.txt); do pip install --disable-pip-version-check --no-cache-dir -r $f; done
+RUN for f in $(ls requirements/*.txt); do pip3 install --disable-pip3-version-check --no-cache-dir -r $f; done
 
 # build CTC beam search decoder
 COPY scripts/install_ctc_decoders.sh .
@@ -89,7 +89,7 @@ ARG NEMO_VERSION=1.0.0b1
 RUN /usr/bin/test -n "$NEMO_VERSION" && \
     /bin/echo "export NEMO_VERSION=${NEMO_VERSION}" >> /root/.bashrc && \
     /bin/echo "export BASE_IMAGE=${BASE_IMAGE}" >> /root/.bashrc
-RUN --mount=from=nemo-src,target=/tmp/nemo cd /tmp/nemo && pip install ".[all]"
+RUN --mount=from=nemo-src,target=/tmp/nemo cd /tmp/nemo && pip3 install ".[all]"
 
 # copy scripts/examples/tests into container for end user
 WORKDIR /workspace/nemo

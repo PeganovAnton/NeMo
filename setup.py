@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Setup for pip package."""
+"""Setup for pip3 package."""
 
 import codecs
 import os
@@ -237,8 +237,8 @@ setuptools.setup(
     tests_require=tests_requirements,
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
-    # $ pip install -e ".[all]"
-    # $ pip install nemo_toolkit[all]
+    # $ pip3 install -e ".[all]"
+    # $ pip3 install nemo_toolkit[all]
     extras_require=extras_require,
     # Add in any packaged data.
     include_package_data=True,

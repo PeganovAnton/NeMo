@@ -59,7 +59,7 @@ class TalkNetDursLoss(Loss):
 
 
 class TalkNetDursModel(ModelPT):
-    """TalkNet's durations prediction pipeline."""
+    """TalkNet's durations prediction pip3eline."""
 
     def __init__(self, cfg: DictConfig, trainer: 'Trainer' = None):  # noqa
         super().__init__(cfg=cfg, trainer=trainer)
@@ -176,7 +176,7 @@ class TalkNetSpectLoss(Loss):
 
 
 class TalkNetSpectModel(SpectrogramGenerator):
-    """TalkNet's mel spectrogram prediction pipeline."""
+    """TalkNet's mel spectrogram prediction pip3eline."""
 
     def __init__(self, cfg: DictConfig, trainer: 'Trainer' = None):  # noqa
         super().__init__(cfg=cfg, trainer=trainer)

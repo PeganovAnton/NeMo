@@ -25,7 +25,7 @@ from nemo.utils.decorators import experimental
 
 try:
     import nvidia.dali as dali
-    from nvidia.dali.pipeline import Pipeline
+    from nvidia.dali.pip3eline import pip3eline
     from nvidia.dali.plugin.pytorch import DALIGenericIterator as DALIPytorchIterator
     from nvidia.dali.plugin.pytorch import LastBatchPolicy as LastBatchPolicy
 
@@ -73,7 +73,7 @@ class DALIOutputs(object):
 @experimental
 class AudioToCharDALIDataset(Iterator):
     """
-    NVIDIA DALI pipeline that loads tensors via one or more manifest files where each line containing a sample descriptor in JSON,
+    NVIDIA DALI pip3eline that loads tensors via one or more manifest files where each line containing a sample descriptor in JSON,
     including audio files, transcripts, and durations (in seconds).
     Here's an example:
     {"audio_filepath": "/path/to/audio.wav", "text_filepath": "/path/to/audio.txt", "duration": 23.147}
@@ -85,7 +85,7 @@ class AudioToCharDALIDataset(Iterator):
         labels: String containing all the possible characters to map to.
         sample_rate (int): Sample rate to resample loaded audio to.
         batch_size (int): Number of samples in a batch.
-        num_threads (int): Number of CPU processing threads to be created by the DALI pipeline.
+        num_threads (int): Number of CPU processing threads to be created by the DALI pip3eline.
         max_duration (float): Determines the maximum allowed duration, in seconds, of the loaded audio files.
         min_duration (float): Determines the minimum allowed duration, in seconds, of the loaded audio files.
         blank_index (int): blank character index, default = -1
@@ -163,12 +163,12 @@ class AudioToCharDALIDataset(Iterator):
         self.bos_id = bos_id
         self.sample_rate = sample_rate
 
-        self.pipe = Pipeline(
+        self.pip3e = pip3eline(
             batch_size=batch_size,
             num_threads=num_threads,
             device_id=self.device_id,
             exec_async=True,
-            exec_pipelined=True,
+            exec_pip3elined=True,
         )
 
         has_preprocessor = preprocessor_cfg is not None
@@ -277,7 +277,7 @@ class AudioToCharDALIDataset(Iterator):
             self.pad_to = params['pad_to'] if 'pad_to' in params else 16
             self.pad_value = params['pad_value'] if 'pad_value' in params else 0.0
 
-        with self.pipe:
+        with self.pip3e:
             audio, transcript = dali.fn.nemo_asr_reader(
                 name="Reader",
                 manifest_filepaths=manifest_filepath.split(','),
@@ -312,7 +312,7 @@ class AudioToCharDALIDataset(Iterator):
                 # No preprocessing, the output is the audio signal
                 audio = dali.fn.pad(audio)
                 audio_len = dali.fn.shapes(dali.fn.reshape(audio, shape=[-1]))
-                self.pipe.set_outputs(audio, audio_len, transcript, transcript_len)
+                self.pip3e.set_outputs(audio, audio_len, transcript, transcript_len)
             else:
                 # Additive gaussian noise (dither)
                 if self.dither > 0.0:
@@ -367,9 +367,9 @@ class AudioToCharDALIDataset(Iterator):
 
                 # Pads feature dimension to be a multiple of `pad_to` and the temporal dimension to be as big as the largest sample (shape -1)
                 spec = dali.fn.pad(spec, fill_value=self.pad_value, axes=(0, 1), align=(self.pad_to, 1), shape=(1, -1))
-            self.pipe.set_outputs(spec, spec_len, transcript, transcript_len)
-        # Building DALI pipeline
-        self.pipe.build()
+            self.pip3e.set_outputs(spec, spec_len, transcript, transcript_len)
+        # Building DALI pip3eline
+        self.pip3e.build()
 
         if has_preprocessor:
             output_names = ['processed_signal', 'processed_signal_len', 'transcript_raw', 'transcript_raw_len']
@@ -378,7 +378,7 @@ class AudioToCharDALIDataset(Iterator):
 
         last_batch_policy = LastBatchPolicy.DROP if drop_last else LastBatchPolicy.PARTIAL
         self._iter = DALIPytorchIterator(
-            [self.pipe],
+            [self.pip3e],
             output_map=output_names,
             reader_name="Reader",
             last_batch_policy=last_batch_policy,

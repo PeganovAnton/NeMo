@@ -31,7 +31,7 @@ NeMo's main requirements are:
 
 Installation
 ~~~~~~~~~~~~
-``apt-get update && apt-get install -y libsndfile1 ffmpeg && pip install Cython && pip install nemo_toolkit[all]==version``
+``apt-get update && apt-get install -y libsndfile1 ffmpeg && pip3 install Cython && pip3 install nemo_toolkit[all]==version``
 
 We recommend using NVIDIA's PyTorch container
 

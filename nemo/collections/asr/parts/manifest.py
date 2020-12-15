@@ -36,7 +36,7 @@ def item_iter(
 ) -> Iterator[Dict[str, Any]]:
     """Iterate through json lines of provided manifests.
 
-    NeMo ASR pipelines often assume certain manifest files structure. In
+    NeMo ASR pip3elines often assume certain manifest files structure. In
     particular, each manifest file should consist of line-per-sample files with
     each line being correct json dict. Each such json dict should have a field
     for audio file string, a field for duration float and a field for text

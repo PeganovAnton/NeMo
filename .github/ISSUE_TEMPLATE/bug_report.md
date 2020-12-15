@@ -25,7 +25,7 @@ A clear and concise description of what you expected to happen.
 **Environment overview (please complete the following information)**
 
  - Environment location: [Bare-metal, Docker, Cloud(specify cloud provider - AWS, Azure, GCP, Collab)]
- - Method of NeMo install: [pip install or from source]. Please specify exact commands you used to install.
+ - Method of NeMo install: [pip3 install or from source]. Please specify exact commands you used to install.
  - If method of install is [Docker], provide `docker pull` & `docker run` commands used
 
 **Environment details**

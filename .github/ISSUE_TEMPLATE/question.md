@@ -16,7 +16,7 @@ Describe what you want to achieve. And/or what NeMo APIs are unclear/confusing.
 **Environment overview (please complete the following information)**
 
  - Environment location: [Bare-metal, Docker, Cloud(specify cloud provider - AWS, Azure, GCP, Collab)]
- - Method of NeMo install: [pip install or from source]. Please specify exact commands you used to install.
+ - Method of NeMo install: [pip3 install or from source]. Please specify exact commands you used to install.
  - If method of install is [Docker], provide `docker pull` & `docker run` commands used
 
 **Environment details**

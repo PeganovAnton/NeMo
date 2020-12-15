@@ -1,4 +1,4 @@
-pipeline {
+pip3eline {
   agent {
         docker {
             image 'nvcr.io/nvidia/pytorch:20.09-py3'
@@ -19,7 +19,7 @@ pipeline {
 
     stage('Install test requirements') {
       steps {
-        sh 'apt-get update && apt-get install -y bc && pip install -r requirements/requirements_test.txt'
+        sh 'apt-get update && apt-get install -y bc && pip3 install -r requirements/requirements_test.txt'
       }
     }
 

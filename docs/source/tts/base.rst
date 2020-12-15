@@ -1,7 +1,7 @@
 Base Classes
 ============
 
-The NeMo TTS has two base classes corresponding to the two stage pipeline:
+The NeMo TTS has two base classes corresponding to the two stage pip3eline:
 
   - :class:`SpectrogramGenerator<nemo.collections.tts.models.base.SpectrogramGenerator>`
   - :class:`Vocoder<nemo.collections.tts.models.base.Vocoder>`

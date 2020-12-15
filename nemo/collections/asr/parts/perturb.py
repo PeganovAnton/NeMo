@@ -618,17 +618,17 @@ def register_perturbation(name: str, perturbation: Perturbation):
 class AudioAugmentor(object):
     def __init__(self, perturbations=None, rng=None):
         self._rng = random.Random() if rng is None else rng
-        self._pipeline = perturbations if perturbations is not None else []
+        self._pip3eline = perturbations if perturbations is not None else []
 
     def perturb(self, segment):
-        for (prob, p) in self._pipeline:
+        for (prob, p) in self._pip3eline:
             if self._rng.random() < prob:
                 p.perturb(segment)
         return
 
     def max_augmentation_length(self, length):
         newlen = length
-        for (prob, p) in self._pipeline:
+        for (prob, p) in self._pip3eline:
             newlen = p.max_augmentation_length(newlen)
         return newlen
 

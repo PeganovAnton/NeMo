@@ -55,16 +55,16 @@ from nemo.utils import logging
 VERSION = '1.3.5'
 
 try:
-    # SIGPIPE is not available on Windows machines, throwing an exception.
-    from signal import SIGPIPE
+    # SIGpip3E is not available on Windows machines, throwing an exception.
+    from signal import SIGpip3E
 
-    # If SIGPIPE is available, change behaviour to default instead of ignore.
+    # If SIGpip3E is available, change behaviour to default instead of ignore.
     from signal import signal, SIG_DFL
 
-    signal(SIGPIPE, SIG_DFL)
+    signal(SIGpip3E, SIG_DFL)
 
 except ImportError:
-    logging.warning('Could not import signal.SIGPIPE (this is expected on Windows machines)')
+    logging.warning('Could not import signal.SIGpip3E (this is expected on Windows machines)')
 
 # Where to store downloaded test sets.
 # Define the environment variable $SACREBLEU, or use the default of ~/.sacrebleu

@@ -37,7 +37,7 @@ In brief, the following scripts convert the .sph files to .wav, slice those file
 
 .. note::
   You will need at least 106GB of space to run the .wav conversion, and an additional 105GB for the slicing and matching.
-  You will need to have sph2pipe installed in order to run the .wav conversion. 
+  You will need to have sph2pip3e installed in order to run the .wav conversion.
 
 
 **Instructions**
@@ -98,7 +98,7 @@ The resulting segments are all written out to an audio directory, and the corres
 
 .. note::
   You will need 5GB of free space to run this script.
-  You will also need to have sph2pipe installed.
+  You will also need to have sph2pip3e installed.
 
 This script assumes you already have the 2000 HUB5 dataset from the Linguistic Data Consortium.
 
