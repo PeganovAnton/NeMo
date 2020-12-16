@@ -4,7 +4,7 @@ export nemo_path=$(pwd) \
   && export PYTHONPATH="${nemo_path}" \
   && cd  "${nemo_path}/examples/nlp/machine_translation" \
   && export data_path=/workspace/mydatasets/apeganov/wmt18 \
-  && export workdir=/workspace/mem_tokens_2nd_trial_compare \
+  && export workdir=/workspace/mem_tokens_3rd_trial_compare \
   && mkdir -p ${workdir}/data \
   && export tok_model_name=bpe_35k_en_de_yttm.model \
   && cp ${data_path}/${tok_model_name} ${workdir}/data/ \
@@ -27,7 +27,7 @@ export nemo_path=$(pwd) \
       model.validation_ds.tgt_file_name=${valid_ref} \
       model.test_ds.src_file_name=${test_src} \
       model.test_ds.tgt_file_name=${test_ref}\
-      exp_manager.exp_dir=/workspace/mem_tokens_2nd_trial_compare \
+      exp_manager.exp_dir=${workdir} \
       trainer.max_epochs=50 \
   && python3 test.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
@@ -38,4 +38,4 @@ export nemo_path=$(pwd) \
       model.validation_ds.tgt_file_name=${valid_ref} \
       model.test_ds.src_file_name=${test_src} \
       model.test_ds.tgt_file_name=${test_ref} \
-      exp_manager.exp_dir=/workspace/mem_tokens_2nd_trial_compare
+      exp_manager.exp_dir=${workdir}
