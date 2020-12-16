@@ -33,6 +33,7 @@ def main(cfg: DictConfig) -> None:
     logging.info(f'Config: {cfg.pretty()}')
     trainer = pl.Trainer(**cfg.trainer)
     exp_manager(trainer, cfg.get("exp_manager", None))
+    logging.info(f"Loading from checkpoint '{cfg.model.test_checkpoint_path}")
     transformer_mt = TransformerMTModel.load_from_checkpoint(cfg.model.test_checkpoint_path)
     transformer_mt.setup_test_data(cfg.model.test_ds)
     trainer.test(transformer_mt)
