@@ -31,7 +31,7 @@ pip3 install -r requirements/requirements.txt \
       model.validation_ds.tgt_file_name=${valid_ref} \
       model.test_ds.src_file_name=${test_src} \
       model.test_ds.tgt_file_name=${test_ref} \
-      exp_manager.exp_dir=/workspace/mem_tokens_2nd_trial \
+      exp_manager.exp_dir=${workdir} \
       trainer.max_epochs=50 \
   && python3 test.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
@@ -42,4 +42,4 @@ pip3 install -r requirements/requirements.txt \
       model.validation_ds.tgt_file_name=${valid_ref} \
       model.test_ds.src_file_name=${test_src} \
       model.test_ds.tgt_file_name=${test_ref} \
-      exp_manager.exp_dir=/workspace/mem_tokens_2nd_trial
+      exp_manager.exp_dir=${workdir}
