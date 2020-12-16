@@ -15,7 +15,7 @@ export nemo_path=$(pwd) \
   && python3 train.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
       model.train_ds.tokens_in_batch=10000 \
-      model.tokenizer.tokenizer_model=${tok_model} \
+      model.machine_translation.tokenizer.tokenizer_model=${tok_model} \
       model.train_ds.src_file_name=${par_train_src} \
       model.train_ds.tgt_file_name=${par_train_ref} \
       model.validation_ds.src_file_name=${valid_src} \
@@ -26,7 +26,7 @@ export nemo_path=$(pwd) \
       trainer.max_epochs=50 \
   && python3 test.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
-      model.tokenizer.tokenizer_model=${tok_model} \
+      model.machine_translation.tokenizer.tokenizer_model=${tok_model} \
       model.train_ds.src_file_name=${par_train_src} \
       model.train_ds.tgt_file_name=${par_train_ref} \
       model.validation_ds.src_file_name=${valid_src} \
