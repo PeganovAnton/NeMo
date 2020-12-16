@@ -8,7 +8,7 @@ pip3 install -r requirements/requirements.txt \
   && export PYTHONPATH="${nemo_path}" \
   && cd  "${nemo_path}/examples/nlp/machine_translation" \
   && export data_path=/workspace/mydatasets/apeganov/wmt18 \
-  && export workdir=/workspace/mem_tokens_3rd_trial_compare \
+  && export workdir=/workspace/mem_tokens_3rd_trial \
   && mkdir -p ${workdir}/data \
   && export tok_model_name=bpe_35k_en_de_yttm.model \
   && cp ${data_path}/${tok_model_name} ${workdir}/data/ \
