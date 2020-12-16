@@ -56,11 +56,11 @@ pip3 install -r requirements/requirements.txt \
               model.validation_ds.tgt_file_name=${valid_ref} \
               model.test_ds.src_file_name=${test_src} \
               model.test_ds.tgt_file_name=${test_ref} \
+              model.tokenizer.tokenizer_model=${tok_model} \
               exp_manager.exp_dir=${stage0_dir} \
               trainer.max_epochs=${max_epochs} \
               +trainer.max_steps=30000 \
-              +exp_manager.resume_if_exists=${resume} \
-              model.tokenizer.tokenizer_model=${tok_model}
+              +exp_manager.resume_if_exists=${resume}
       fi \
       && export stage1_weights=${stage0_dir}/best.ckpt
     else
@@ -84,6 +84,7 @@ pip3 install -r requirements/requirements.txt \
           model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
           model.train_ds.src_file_name=${stage1_dir}/originals.txt \
           model.train_ds.tgt_file_name=${stage1_dir}/translations.txt \
+          model.tokenizer.tokenizer_model=${tok_model} \
           model.validation_ds.src_file_name=${valid_src} \
           model.validation_ds.tgt_file_name=${valid_ref} \
           model.test_ds.src_file_name=${test_src} \
@@ -92,8 +93,7 @@ pip3 install -r requirements/requirements.txt \
           trainer.max_epochs=${max_epochs} \
           +trainer.max_steps=50000 \
           +exp_manager.resume_if_exists=${resume} \
-          +model.weights_checkpoint=${stage1_weights} \
-          model.tokenizer.tokenizer_model=${tok_model}
+          +model.weights_checkpoint=${stage1_weights}
     fi \
   && export stage2_dir=${result_dir}/stage2 \
   && mkdir -p ${stage2_dir} \

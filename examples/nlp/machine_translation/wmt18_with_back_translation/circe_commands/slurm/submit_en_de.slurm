@@ -20,7 +20,11 @@ export PYTHONFAULTHANDLER=1
 
 # run script from above
 srun --container-image nvcr.io#nvidia/pytorch:20.11-py3 \
-  --container-mounts "/home/apeganov/result_de_en_back_translation_4_stages_1st_trial:/workspace/result_de_en_back_translation_4_stages_1st_trial,/home/apeganov/old_results:/workspace/old_results,/gpfs/fs1/apeganov/datasets:/workspace/mydatasets/apeganov,/home/apeganov/PeganovNeMo:/workspace/PeganovNeMo" \
+  --container-mounts "/home/apeganov/result_de_en_back_translation_4_stages_1st_trial:/workspace/result_de_en_back_translation_4_stages_1st_trial,"\
+  "/home/apeganov/old_results:/workspace/old_results,"\
+  "/gpfs/fs1/apeganov/datasets:/workspace/mydatasets/apeganov,"\
+  "/home/apeganov/PeganovNeMo:/workspace/PeganovNeMo" \
   bash -c 'cd PeganovNeMo'
-srun --nodes 1 bash -c 'examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/slurm/install/standard.sh'
-srun bash -c 'cd PeganovNeMo && source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_stages_post_traning/attention_is_all_you_need_de_en.sh 8 16'
+srun --nodes 1 bash -c 'source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/slurm/install/standard.sh'
+srun bash -c 'source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/slurm/basic_exports_en_de.sh 8 16'
+srun bash -c 'cd PeganovNeMo && source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_stages_post_traning/attention_is_all_you_need.sh 0'
