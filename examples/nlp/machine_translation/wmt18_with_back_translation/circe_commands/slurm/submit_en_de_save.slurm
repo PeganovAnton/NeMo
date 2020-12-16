@@ -25,10 +25,10 @@ export container_save_path=saved_4_stages_container
 
 # run script from above
 srun --container-image=${image} --container-mounts=${mounts} --container-save ${container_save_path} \
-    bash -c 'cd PeganovNeMo && echo "Current directory after first command:" $(pwd)'
+    bash -c 'cd /workspace/PeganovNeMo && echo "Current directory after first command:" $(pwd)'
 srun --container-image=${container_save_path} --container-mounts=${mounts} --container-save ${container_save_path} --nodes 1 \
-    bash -c 'cd PeganovNeMo && source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/slurm/install/standard.sh'
+    bash -c 'cd /workspace/PeganovNeMo && source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/slurm/install/standard.sh'
 srun --container-image=${container_save_path} --container-mounts=${mounts} --container-save ${container_save_path} \
-    bash -c 'cd PeganovNeMo && source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/slurm/exports_en_de.sh 8 16'
+    bash -c 'cd /workspace/PeganovNeMo && source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/slurm/exports_en_de.sh 8 16'
 srun --container-image=${container_save_path} --container-mounts=${mounts} --container-save ${container_save_path} \
-    bash -c 'cd PeganovNeMo && source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_stages_post_traning/attention_is_all_you_need.sh 0'
+    bash -c 'cd /workspace/PeganovNeMo && source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_stages_post_traning/attention_is_all_you_need.sh 0'
