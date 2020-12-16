@@ -11,7 +11,7 @@ export nemo_path=$(pwd) \
   && export test_ref=${bi_path}/newstest2014-de-en.ref \
   && export par_train_src=${bi_path}/train.clean.filter.de.shuffled \
   && export par_train_ref=${bi_path}/train.clean.filter.en.shuffled \
-  && export tok_model=${data_path}/bpe_35k_en_de_yttm.model
+  && export tok_model=${data_path}/bpe_35k_en_de_yttm.model \
   && python3 train.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
       model.train_ds.tokens_in_batch=10000 \
