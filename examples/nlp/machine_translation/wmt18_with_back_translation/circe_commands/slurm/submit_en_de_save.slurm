@@ -21,7 +21,7 @@ export PYTHONFAULTHANDLER=1
 export image='nvcr.io#nvidia/pytorch:20.11-py3'
 export mounts='/home/apeganov/result_de_en_back_translation_4_stages_1st_trial:/workspace/result_de_en_back_translation_4_stages_1st_trial,/gpfs/fs1/apeganov/datasets:/workspace/mydatasets,/home/apeganov/PeganovNeMo:/workspace/PeganovNeMo'
 
-export container_save_path=saved_4_stages_container
+export container_save_path=/home/apeganov/saved_4_stages_container.sqsh
 
 # run script from above
 srun --container-image=${image} --container-mounts=${mounts} --container-save ${container_save_path} \
