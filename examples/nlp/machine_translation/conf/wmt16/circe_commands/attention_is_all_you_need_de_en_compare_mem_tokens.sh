@@ -1,35 +1,36 @@
-pip3 install -r requirements/requirements.txt \
-  && pip3 install -r requirements/requirements_nlp.txt \
-  && pip3 install webdataset \
-  && pip3 install transformers==3.5.0 \
-  && export nemo_path=$(pwd) \
+export nemo_path=$(pwd) \
   && export HYDRA_FULL_ERROR=1 \
   && echo "NeMo path: ${nemo_path}" \
   && export PYTHONPATH="${nemo_path}" \
   && cd  "${nemo_path}/examples/nlp/machine_translation" \
-  && export mono_data_path=/workspace/mydatasets/apeganov/wmt18 \
-  && export bi_path=/workspace/mydatasets/apeganov/wmt/wmt18_en_de/parallel \
-  && export mono_en_path=${mono_data_path}/wmt18_en_mono \
-  && export mono_de_path=${mono_data_path}/wmt18_de_mono \
-  && cat ${bi_path}/train.clean.en ${bi_path}/train.clean.de ${mono_en_path}/monolingual.25000000.en ${mono_de_path}/monolingual.25000000.de > all_text.txt \
-  && yttm bpe --data all_text.txt --model bpe_16k_en_de_yttm.model --vocab_size 16000 \
+  && export data_path=/workspace/mydatasets/apeganov/wmt18 \
+  && export bi_path=${data_path}/parallel_clean \
+  && export valid_src=${bi_path}/newstest2013-de-en.src \
+  && export valid_ref=${bi_path}/newstest2013-de-en.ref \
+  && export test_src=${bi_path}/newstest2014-de-en.src \
+  && export test_ref=${bi_path}/newstest2014-de-en.ref \
+  && export par_train_src=${bi_path}/train.clean.filter.de.shuffled \
+  && export par_train_ref=${bi_path}/train.clean.filter.en.shuffled \
+  && export tok_model=${data_path}/bpe_35k_en_de_yttm.model
   && python3 train.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
-      model.train_ds.tokens_in_batch=6000 \
-      model.train_ds.src_file_name=${bi_path}/train.clean.de \
-      model.train_ds.tgt_file_name=${bi_path}/train.clean.en \
-      model.validation_ds.src_file_name=${bi_path}/wmt13-de-en.src \
-      model.validation_ds.tgt_file_name=${bi_path}/wmt13-de-en.ref \
-      model.test_ds.src_file_name=${bi_path}/wmt14-de-en.src \
-      model.test_ds.tgt_file_name=${bi_path}/wmt14-de-en.ref \
+      model.train_ds.tokens_in_batch=10000 \
+      model.tokenizer.tokenizer_model=${tok_model} \
+      model.train_ds.src_file_name=${par_train_src} \
+      model.train_ds.tgt_file_name=${par_train_ref} \
+      model.validation_ds.src_file_name=${valid_src} \
+      model.validation_ds.tgt_file_name=${valid_ref} \
+      model.test_ds.src_file_name=${test_src} \
+      model.test_ds.tgt_file_name=${test_ref}\
       exp_manager.exp_dir=/workspace/mem_tokens_2nd_trial_compare \
       trainer.max_epochs=50 \
   && python3 test.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
-      model.train_ds.src_file_name=${bi_path}/train.clean.de \
-      model.train_ds.tgt_file_name=${bi_path}/train.clean.en \
-      model.validation_ds.src_file_name=${bi_path}/wmt13-de-en.src \
-      model.validation_ds.tgt_file_name=${bi_path}/wmt13-de-en.ref \
-      model.test_ds.src_file_name=${bi_path}/wmt14-de-en.src \
-      model.test_ds.tgt_file_name=${bi_path}/wmt14-de-en.ref \
+      model.tokenizer.tokenizer_model=${tok_model} \
+      model.train_ds.src_file_name=${par_train_src} \
+      model.train_ds.tgt_file_name=${par_train_ref} \
+      model.validation_ds.src_file_name=${valid_src} \
+      model.validation_ds.tgt_file_name=${valid_ref} \
+      model.test_ds.src_file_name=${test_src} \
+      model.test_ds.tgt_file_name=${test_ref} \
       exp_manager.exp_dir=/workspace/mem_tokens_2nd_trial_compare
