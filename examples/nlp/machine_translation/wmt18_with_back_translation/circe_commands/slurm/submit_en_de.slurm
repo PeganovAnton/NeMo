@@ -18,13 +18,20 @@ export PYTHONFAULTHANDLER=1
 # might need the latest CUDA
 # module load NCCL/2.4.7-1-cuda.10.0
 
+export image_and_mounts='--container-image nvcr.io#nvidia/pytorch:20.11-py3 '\
+'--container-mounts "/home/apeganov/result_de_en_back_translation_4_stages_1st_trial:/workspace/result_de_en_back_translation_4_stages_1st_trial,'\
+'/home/apeganov/old_results:/workspace/old_results,'\
+'/gpfs/fs1/apeganov/datasets:/workspace/mydatasets/apeganov,'\
+'/home/apeganov/PeganovNeMo:/workspace/PeganovNeMo"'
+
+export saved_container="4_stages_1st_trial"
+
 # run script from above
-srun --container-image nvcr.io#nvidia/pytorch:20.11-py3 \
-  --container-mounts "/home/apeganov/result_de_en_back_translation_4_stages_1st_trial:/workspace/result_de_en_back_translation_4_stages_1st_trial,"\
-  "/home/apeganov/old_results:/workspace/old_results,"\
-  "/gpfs/fs1/apeganov/datasets:/workspace/mydatasets/apeganov,"\
-  "/home/apeganov/PeganovNeMo:/workspace/PeganovNeMo" \
-  bash -c 'cd PeganovNeMo'
-srun --nodes 1 bash -c 'source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/slurm/install/standard.sh'
-srun bash -c 'source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/slurm/basic_exports_en_de.sh 8 16'
-srun bash -c 'cd PeganovNeMo && source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_stages_post_traning/attention_is_all_you_need.sh 0'
+srun ${image_and_mounts} \
+    bash -c 'cd PeganovNeMo && echo "Current directory after first command:" $(pwd)'
+srun ${image_and_mounts} --nodes 1 \
+    bash -c 'source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/slurm/install/standard.sh'
+srun ${image_and_mounts} \
+    bash -c 'source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/slurm/basic_exports_en_de.sh 8 16'
+srun ${image_and_mounts} \
+    bash -c 'cd PeganovNeMo && source examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_stages_post_traning/attention_is_all_you_need.sh 0'
