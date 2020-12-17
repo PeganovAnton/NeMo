@@ -29,6 +29,7 @@ export nemo_path=$(pwd) \
       model.test_ds.tgt_file_name=${test_ref}\
       exp_manager.exp_dir=${workdir} \
       trainer.max_epochs=50 \
+      model.optim.lr=0.0015 \
   && python3 test.py -cn wmt16/de_en_8gpu \
       trainer.gpus=16 \
       model.machine_translation.tokenizer.tokenizer_model=${tok_model} \
