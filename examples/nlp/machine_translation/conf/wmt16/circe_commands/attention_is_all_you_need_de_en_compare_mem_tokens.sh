@@ -8,7 +8,7 @@ export nemo_path=$(pwd) \
   && mkdir -p ${workdir}/data \
   && export tok_model_name=bpe_35k_en_de_yttm.model \
   && cp ${data_path}/${tok_model_name} ${workdir}/data/ \
-  && cp ${data_path}/parallel_clean ${workdir}/data/ \
+  && cp -r ${data_path}/parallel_clean ${workdir}/data/ \
   && export bi_path=${workdir}/data/parallel_clean \
   && export valid_src=${bi_path}/newstest2013-de-en.src \
   && export valid_ref=${bi_path}/newstest2013-de-en.ref \
