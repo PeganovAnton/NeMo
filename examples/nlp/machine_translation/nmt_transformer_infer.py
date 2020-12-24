@@ -44,7 +44,7 @@ def main():
         for i, line in enumerate(fin):
             if i % 1000 == 0:
                 logging.info(f"{i} translated")
-            fout.write(model.translate(text=[line.strip()])[0])
+            fout.write(model.translate(text=[line.strip()])[0] + '\n')
     logging.info("all done")
 
 
