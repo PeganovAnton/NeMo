@@ -42,7 +42,6 @@ def main():
     with open(args.text2translate, 'r') as fin:
         for line in fin:
             txt_to_translate.append(line.strip())
-    print(txt_to_translate)
     translation = model.translate(text=txt_to_translate)
     with open(args.output, 'w') as fout:
         for txt in translation:

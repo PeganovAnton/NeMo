@@ -397,7 +397,9 @@ class TransformerMTModel(ModelPT):
         try:
             self.eval()
             res = []
-            for txt in text:
+            for i, txt in enumerate(text):
+                if i % 100 == 0:
+                    logging.info(f"{i} examples are translated")
                 ids = self.src_tokenizer.text_to_ids(txt)
                 ids = [self.src_tokenizer.bos_id] + ids + [self.src_tokenizer.eos_id]
                 src = torch.Tensor(ids).long().to(self._device).unsqueeze(0)
