@@ -156,11 +156,12 @@ class TransformerMTModel(ModelPT):
         self.tensor_types_and_sizes = []
         self.num_taken_cuda_bytes = 0
         self.beam_search_calls_counter = 0
+        self.only_beam_search_during_eval = cfg.machine_translation.get('only_beam_search_during_eval', False)
+
         # These attributes are added to bypass Illegal memory access error in PT1.6
         # https://github.com/pytorch/pytorch/issues/21819
         self.profile = cfg.machine_translation.get('profile', False)
         self.eval_epoch_step = 0
-        self.teacher_forcing_forward = cfg.machine_translation.get("teacher_forcing_forward", True)
         self.pad_beam_search_results_to_max_seq_len = cfg.machine_translation.get(
             "pad_beam_search_results_to_max_seq_len", False)
 
@@ -250,7 +251,7 @@ class TransformerMTModel(ModelPT):
         src_embeddings = self.src_embedding_layer(input_ids=src)
         # src_embeddings *= src_embeddings.new_tensor(self.emb_scale)
         src_hiddens = self.encoder(src_embeddings, src_mask)
-        if self.training or self.teacher_forcing_forward:
+        if self.training or not self.only_beam_search_during_eval:
             tgt_embeddings = self.tgt_embedding_layer(input_ids=tgt)
             # tgt_embeddings *= tgt_embeddings.new_tensor(self.emb_scale)
             tgt_hiddens = self.decoder(tgt_embeddings, tgt_mask, src_hiddens, src_mask)
