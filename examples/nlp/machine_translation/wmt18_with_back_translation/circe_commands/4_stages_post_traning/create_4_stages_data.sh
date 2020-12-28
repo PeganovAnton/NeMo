@@ -26,8 +26,6 @@ do
     echo "Appending mono data from ${stage_mono_sources[i]}"
     cat "${stage_mono_sources[i]}" >> "${originals_fn}"
   fi
-  echo "Shuffling file ${originals_fn}"
-  python3 ~/PeganovNeMo/utils/shuffle_pairs.py "${originals_fn}"
   translations_fn="${stage_dir}/translations.txt"
   echo "Creating file ${translations_fn}"
   echo "Appending parallel data from ${par_train_ref}"
@@ -36,6 +34,6 @@ do
     echo "Appending mono lingual data from ${stage_mono_refs[i]}"
     cat "${stage_mono_refs[i]}" >> "${translations_fn}"
   fi
-  echo "Shuffling file ${translations_fn}"
-  python3 ~/PeganovNeMo/utils/shuffle_pairs.py "${translations_fn}"
+  echo "Shuffling pairs in directory ${stage_dir}"
+  python3 ~/PeganovNeMo/utils/shuffle_pairs.py "${stage_dir}"
 done
