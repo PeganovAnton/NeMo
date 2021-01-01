@@ -48,7 +48,7 @@ result_dir=/workspace/result_en_de_back_translation_4_phases_1st_trial
 tok_model=${data_path}/bpe_35k_en_de_yttm.model
 phase0_base_lr=0.001
 back_translation_phases_base_lr=0.0001
-lr_num_nodes_factor=$(( sqrt(${num_nodes}) ))
+lr_num_nodes_factor=$(( sqrt(${SLURM_NUM_NODES}) ))
 phase0_lr=$(( ${phase0_base_lr} * ${lr_num_nodes_factor} ))
 back_translation_phases_lr=$(( ${back_translation_phases_base_lr} * ${lr_num_nodes_factor} ))
 
@@ -98,8 +98,8 @@ echo "*******STARTING 0TH PHASE********" \
 && echo "---------------" \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python3 train.py -cn ${base_conf} \
-  trainer.num_nodes=${num_nodes} \
-  trainer.gpus=${ngpus} \
+  trainer.num_nodes=${SLURM_NUM_NODES} \
+  trainer.gpus=${SLURM_NUM_GPUS} \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${phase_train_data}/originals.txt \
   model.train_ds.tgt_file_name=${phase_train_data}/translations.txt \
@@ -113,7 +113,7 @@ echo "*******STARTING 0TH PHASE********" \
   +trainer.max_steps=${max_steps} \
   +exp_manager.resume_if_exists=${resume} \
   model.optim.lr=${phase0_lr} \
-&& echo  "*******FINISHING 0TH FHASE********"
+&& echo  "*******FINISHING 0TH PHASE********"
 EOF \
   && srun -o $OUTFILE0 -e $ERRFILE0 \
     --container-image="$CONTAINER" \
@@ -131,8 +131,8 @@ echo "*******STARTING 1ST PHASE********" \
 && echo "---------------" \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python3 train.py -cn ${base_conf} \
-  trainer.num_nodes=${num_nodes} \
-  trainer.gpus=${ngpus} \
+  trainer.num_nodes=${SLURM_NUM_NODES} \
+  trainer.gpus=${SLURM_NUM_GPUS} \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${phase_train_data1}/originals.txt \
   model.train_ds.tgt_file_name=${phase_train_data1}/translations.txt \
@@ -148,7 +148,7 @@ echo "*******STARTING 1ST PHASE********" \
   +model.weights_checkpoint=${phase0_dir}/best.ckpt \
   model.optim.lr=${back_translation_phases_lr} \
 fi \
-&& echo  "*******FINISHING 1ST FHASE********"
+&& echo  "*******FINISHING 1ST PHASE********"
 EOF \
   && srun -o $OUTFILE1 -e $ERRFILE1 \
     --container-image="$CONTAINER" \
@@ -166,8 +166,8 @@ echo "*******STARTING 2ND PHASE********" \
 && echo "---------------" \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python3 train.py -cn ${base_conf} \
-  trainer.num_nodes=${num_nodes} \
-  trainer.gpus=${ngpus} \
+  trainer.num_nodes=${SLURM_NUM_NODES} \
+  trainer.gpus=${SLURM_NUM_GPUS} \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${phase2_train_data}/originals.txt \
   model.train_ds.tgt_file_name=${phase2_train_data}/translations.txt \
@@ -182,7 +182,7 @@ echo "*******STARTING 2ND PHASE********" \
   +trainer.max_steps=${max_steps2} \
   +model.weights_checkpoint=${phase1_dir}/best.ckpt \
   model.optim.lr=${back_translation_phases_lr} \
-&& echo  "*******FINISHING 2ND FHASE********"
+&& echo  "*******FINISHING 2ND PHASE********"
 EOF \
   && srun -o $OUTFILE2 -e $ERRFILE2 \
     --container-image="$CONTAINER" \
@@ -200,8 +200,8 @@ echo "*******STARTING 3RD PHASE********" \
 && echo "---------------" \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python3 train.py -cn ${base_conf} \
-  trainer.num_nodes=${num_nodes} \
-  trainer.gpus=${ngpus} \
+  trainer.num_nodes=${SLURM_NUM_NODES} \
+  trainer.gpus=${SLURM_NUM_GPUS} \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${phase3_train_data}/originals.txt \
   model.train_ds.tgt_file_name=${phase3_train_data}/translations.txt \
@@ -216,7 +216,7 @@ echo "*******STARTING 3RD PHASE********" \
   +exp_manager.resume_if_exists=${resume3} \
   +model.weights_checkpoint=${phase2_dir}/best.ckpt \
   model.optim.lr=${back_translation_phases_lr} \
-&& echo  "*******FINISHING 2ND FHASE********"
+&& echo  "*******FINISHING 2ND PHASE********"
 EOF \
   && srun -o $OUTFILE3 -e $ERRFILE3 \
     --container-image="$CONTAINER" \
@@ -234,8 +234,8 @@ echo "*******STARTING 4TH PHASE********" \
 && echo "---------------" \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python3 train.py -cn ${base_conf} \
-  trainer.num_nodes=${num_nodes} \
-  trainer.gpus=${ngpus} \
+  trainer.num_nodes=${SLURM_NUM_NODES} \
+  trainer.gpus=${SLURM_NUM_GPUS} \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${phase4_train_data}/originals.txt \
   model.train_ds.tgt_file_name=${phase4_train_data}/translations.txt \
@@ -250,7 +250,7 @@ echo "*******STARTING 4TH PHASE********" \
   +exp_manager.resume_if_exists=${resume4} \
   +model.weights_checkpoint=${phase3_dir}/best.ckpt \
   model.optim.lr=${back_translation_phases_lr} \
-&& echo  "*******FINISHING 4TH FHASE********"
+&& echo  "*******FINISHING 4TH PHASE********"
 EOF \
   && srun -o $OUTFILE4 -e $ERRFILE4 \
     --container-image="$CONTAINER" \
