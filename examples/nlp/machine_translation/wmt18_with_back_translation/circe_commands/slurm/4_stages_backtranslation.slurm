@@ -48,9 +48,9 @@ result_dir=/workspace/result_en_de_back_translation_4_phases_1st_trial
 tok_model=${data_path}/bpe_35k_en_de_yttm.model
 phase0_base_lr=0.001
 back_translation_phases_base_lr=0.0001
-lr_num_nodes_factor=$(python -c "${SLURM_NUM_NODES}**0.5")
-phase0_lr=$(python -c "${phase0_base_lr} * ${lr_num_nodes_factor}")
-back_translation_phases_lr=$(python -c "${back_translation_phases_base_lr} * ${lr_num_nodes_factor}")
+lr_num_nodes_factor=$(python -c "print(${SLURM_NUM_NODES}**0.5)")
+phase0_lr=$(python -c "print(${phase0_base_lr} * ${lr_num_nodes_factor})")
+back_translation_phases_lr=$(python -c "print(${back_translation_phases_base_lr} * ${lr_num_nodes_factor})")
 
 phase0_dir=${result_dir}/phase0
 phase0_train_data="${data_path}/phase0"
