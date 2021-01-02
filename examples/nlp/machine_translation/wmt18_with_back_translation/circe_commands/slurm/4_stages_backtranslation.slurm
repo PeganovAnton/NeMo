@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -A dl-langspeech
 #SBATCH -p batch
-#SBATCH -N 2                    # number of nodes
+#SBATCH -N 16                   # number of nodes
 #SBATCH -t 8:00:00              # wall time
 #SBATCH -J "test_mul_node"   # job name
 #SBATCH --exclusive             # exclusive node access
@@ -42,7 +42,7 @@ BATCH_SIZE=11000
 
 base_conf=wmt16/de_en_8gpu
 train_n_tokens_in_batch=11000
-max_epochs=1000
+max_epochs=100000
 data_path=/workspace/mydatasets/wmt18/4_phases_back_translation_en_de
 result_dir=/workspace/result_en_de_back_translation_4_phases_1st_trial
 tok_model=${data_path}/bpe_35k_en_de_yttm.model
