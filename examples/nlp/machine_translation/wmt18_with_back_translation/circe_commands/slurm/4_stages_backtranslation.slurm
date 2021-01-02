@@ -15,7 +15,7 @@
 # Hyper params
 # Env Variable Setup
 set -x
-CONTAINER="gitlab-master.nvidia.com/okuchaiev/nemo_containers:nemo-1.0.0a0"
+CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:01012021"
 # Directories for manifests, data, etc.
 DATA_DIR='/gpfs/fs1/apeganov/datasets/wmt18/4_stages_back_translation_en_de'
 RESULTS_DIR='/home/apeganov'
