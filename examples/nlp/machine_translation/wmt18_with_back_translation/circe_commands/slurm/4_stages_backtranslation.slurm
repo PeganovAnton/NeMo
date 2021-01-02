@@ -48,9 +48,9 @@ result_dir=/workspace/result_en_de_back_translation_4_phases_1st_trial
 tok_model=${data_path}/bpe_35k_en_de_yttm.model
 phase0_base_lr=0.001
 back_translation_phases_base_lr=0.0001
-lr_num_nodes_factor=$(( sqrt(${SLURM_NUM_NODES}) ))
-phase0_lr=$(( ${phase0_base_lr} * ${lr_num_nodes_factor} ))
-back_translation_phases_lr=$(( ${back_translation_phases_base_lr} * ${lr_num_nodes_factor} ))
+lr_num_nodes_factor=$(python -c "${SLURM_NUM_NODES}**0.5")
+phase0_lr=$(python -c "${phase0_base_lr} * ${lr_num_nodes_factor}")
+back_translation_phases_lr=$(python -c "${back_translation_phases_base_lr} * ${lr_num_nodes_factor}")
 
 phase0_dir=${result_dir}/phase0
 phase0_train_data="${data_path}/phase0"
@@ -114,8 +114,8 @@ echo "*******STARTING 0TH PHASE********" \
   +exp_manager.resume_if_exists=${resume} \
   model.optim.lr=${phase0_lr} \
 && echo  "*******FINISHING 0TH PHASE********"
-EOF \
-  && srun -o $OUTFILE0 -e $ERRFILE0 \
+EOF
+  srun -o $OUTFILE0 -e $ERRFILE0 \
     --container-image="$CONTAINER" \
     $MOUNTS \
     bash -c "${cmd0}"
@@ -149,8 +149,8 @@ echo "*******STARTING 1ST PHASE********" \
   model.optim.lr=${back_translation_phases_lr} \
 fi \
 && echo  "*******FINISHING 1ST PHASE********"
-EOF \
-  && srun -o $OUTFILE1 -e $ERRFILE1 \
+EOF
+  srun -o $OUTFILE1 -e $ERRFILE1 \
     --container-image="$CONTAINER" \
     $MOUNTS \
     bash -c "${cmd1}"
@@ -183,8 +183,8 @@ echo "*******STARTING 2ND PHASE********" \
   +model.weights_checkpoint=${phase1_dir}/best.ckpt \
   model.optim.lr=${back_translation_phases_lr} \
 && echo  "*******FINISHING 2ND PHASE********"
-EOF \
-  && srun -o $OUTFILE2 -e $ERRFILE2 \
+EOF
+  srun -o $OUTFILE2 -e $ERRFILE2 \
     --container-image="$CONTAINER" \
     $MOUNTS \
     bash -c "${cmd2}"
@@ -217,8 +217,8 @@ echo "*******STARTING 3RD PHASE********" \
   +model.weights_checkpoint=${phase2_dir}/best.ckpt \
   model.optim.lr=${back_translation_phases_lr} \
 && echo  "*******FINISHING 2ND PHASE********"
-EOF \
-  && srun -o $OUTFILE3 -e $ERRFILE3 \
+EOF
+  srun -o $OUTFILE3 -e $ERRFILE3 \
     --container-image="$CONTAINER" \
     $MOUNTS \
     bash -c "${cmd3}"
@@ -251,8 +251,8 @@ echo "*******STARTING 4TH PHASE********" \
   +model.weights_checkpoint=${phase3_dir}/best.ckpt \
   model.optim.lr=${back_translation_phases_lr} \
 && echo  "*******FINISHING 4TH PHASE********"
-EOF \
-  && srun -o $OUTFILE4 -e $ERRFILE4 \
+EOF
+  srun -o $OUTFILE4 -e $ERRFILE4 \
     --container-image="$CONTAINER" \
     $MOUNTS \
     bash -c "${cmd4}"
