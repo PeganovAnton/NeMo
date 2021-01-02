@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -A dl-langspeech
 #SBATCH -p batch
-#SBATCH -N 16                   # number of nodes
+#SBATCH -N 8                    # number of nodes
 #SBATCH -t 8:00:00              # wall time
 #SBATCH -J "test_mul_node"   # job name
 #SBATCH --exclusive             # exclusive node access
