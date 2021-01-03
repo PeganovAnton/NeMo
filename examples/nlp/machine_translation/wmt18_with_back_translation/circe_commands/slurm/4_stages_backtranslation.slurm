@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -A dl-langspeech
 #SBATCH -p batch
-#SBATCH -N 16                   # number of nodes
+#SBATCH -N 8                    # number of nodes
 #SBATCH -t 8:00:00              # wall time
 #SBATCH -J "test_mul_node"   # job name
 #SBATCH --exclusive             # exclusive node access
@@ -12,19 +12,20 @@
 #SBATCH --threads-per-core 2    # hyperthreading on
 #SBATCH --sockets-per-node 2
 #SBATCH --overcommit            # Needed for pytorch
+#SBATCH --signal=SIGUSR1@90
 # Hyper params
 # Env Variable Setup
 set -x
-CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:01012021"
+CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:02012021"
 # Directories for manifests, data, etc.
-DATA_DIR='/gpfs/fs1/apeganov/datasets/wmt18/4_stages_back_translation_en_de'
-RESULTS_DIR='/home/apeganov'
-EXP_NAME='result_de_en_back_translation_4_stages_1st_trial'
+DATA_DIR='/gpfs/fs1/apeganov/datasets/wmt18'
+RESULT_DIR='/home/apeganov'
+EXP_NAME='result_en_de_back_translation_4_stages_1st_trial'
 export NCCL_DEBUG=INFO
 export PYTHONFAULTHANDLER=1
 #export NCCL_SOCKET_IFNAME=^docker0,lo
-mkdir -p $RESULTS_DIR/$EXP_NAME
-MOUNTS="--container-mounts=$DATA_DIR:/data,$RESULTS_DIR/$EXP_NAME:/results"
+mkdir -p $RESULT_DIR/$EXP_NAME
+MOUNTS="--container-mounts=$DATA_DIR:/data,$RESULT_DIR/$EXP_NAME:/result"
 # Set up multinode if applicable
 SRUN_HOST=''
 SRUN_CONT=''
@@ -37,58 +38,70 @@ fi
 SLURM_NUM_NODES=8
 SLURM_NUM_GPUS=16
 
-BASE_CONF=wmt16/de_en_8gpu
 BATCH_SIZE=11000
 
-base_conf=wmt16/de_en_8gpu
+base_conf=wmt16/en_de_8gpu
 train_n_tokens_in_batch=11000
 max_epochs=100000
-data_path=/workspace/mydatasets/wmt18/4_phases_back_translation_en_de
-result_dir=/workspace/result_en_de_back_translation_4_phases_1st_trial
+data_path=/data
+phase_data_path=${data_path}/4_stages_back_translation_en_de
+valid_src=${data_path}/parallel_clean/newstest2013-en-de.src
+valid_ref=${data_path}/parallel_clean/newstest2013-en-de.ref
+test_src=${data_path}/parallel_clean/newstest2014-en-de.src
+test_ref=${data_path}/parallel_clean/newstest2014-en-de.ref
+result_dir=/result
 tok_model=${data_path}/bpe_35k_en_de_yttm.model
 phase0_base_lr=0.001
 back_translation_phases_base_lr=0.0001
 lr_num_nodes_factor=$(python -c "print(${SLURM_NUM_NODES}**0.5)")
+echo "Learning rate number of nodes factor ${lr_num_nodes_factor}"
 phase0_lr=$(python -c "print(${phase0_base_lr} * ${lr_num_nodes_factor})")
 back_translation_phases_lr=$(python -c "print(${back_translation_phases_base_lr} * ${lr_num_nodes_factor})")
 
 phase0_dir=${result_dir}/phase0
-phase0_train_data="${data_path}/phase0"
+PHASE0_DIR=${RESULT_DIR}/${EXP_NAME}/phase0
+phase0_train_data="${phase_data_path}/phase0"
 max_steps0=30000
-OUTFILE0="${RESULTS_DIR}/${EXP_NAME}/slurm-phase0-%j-%n.out"
-ERRFILE0="${RESULTS_DIR}/${EXP_NAME}/error-phase0-%j-%n.out"
+OUTFILE0="${RESULT_DIR}/${EXP_NAME}/slurm-phase0-%j-%n.out"
+ERRFILE0="${RESULT_DIR}/${EXP_NAME}/error-phase0-%j-%n.out"
 
 phase1_dir=${result_dir}/phase1
-phase1_train_data="${data_path}/phase1"
+PHASE1_DIR=${RESULT_DIR}/${EXP_NAME}/phase1
+phase1_train_data="${phase_data_path}/phase1"
 max_steps1=50000
-OUTFILE1="${RESULTS_DIR}/${EXP_NAME}/slurm-phase1-%j-%n.out"
-ERRFILE1="${RESULTS_DIR}/${EXP_NAME}/error-phase1-%j-%n.out"
+OUTFILE1="${RESULT_DIR}/${EXP_NAME}/slurm-phase1-%j-%n.out"
+ERRFILE1="${RESULT_DIR}/${EXP_NAME}/error-phase1-%j-%n.out"
 
 phase2_dir=${result_dir}/phase2
-phase2_train_data="${data_path}/phase2"
+PHASE2_DIR=${RESULT_DIR}/${EXP_NAME}/phase2
+phase2_train_data="${phase_data_path}/phase2"
 max_steps2=75000
-OUTFILE2="${RESULTS_DIR}/${EXP_NAME}/slurm-phase2-%j-%n.out"
-ERRFILE2="${RESULTS_DIR}/${EXP_NAME}/error-phase2-%j-%n.out"
+OUTFILE2="${RESULT_DIR}/${EXP_NAME}/slurm-phase2-%j-%n.out"
+ERRFILE2="${RESULT_DIR}/${EXP_NAME}/error-phase2-%j-%n.out"
 
 phase3_dir=${result_dir}/phase3
-phase3_train_data="${data_path}/phase3"
+PHASE3_DIR=${RESULT_DIR}/${EXP_NAME}/phase3
+phase3_train_data="${phase_data_path}/phase3"
 max_steps3=75000
-OUTFILE3="${RESULTS_DIR}/${EXP_NAME}/slurm-phase3-%j-%n.out"
-ERRFILE3="${RESULTS_DIR}/${EXP_NAME}/error-phase3-%j-%n.out"
+OUTFILE3="${RESULT_DIR}/${EXP_NAME}/slurm-phase3-%j-%n.out"
+ERRFILE3="${RESULT_DIR}/${EXP_NAME}/error-phase3-%j-%n.out"
 
 phase4_dir=${result_dir}/phase4
-phase4_train_data="${data_path}/phase4"
+PHASE4_DIR=${RESULT_DIR}/${EXP_NAME}/phase4
+phase4_train_data="${phase_data_path}/phase4"
 max_steps4=100000
-OUTFILE4="${RESULTS_DIR}/${EXP_NAME}/slurm-phase4-%j-%n.out"
-ERRFILE4="${RESULTS_DIR}/${EXP_NAME}/error-phase4-%j-%n.out"
+OUTFILE4="${RESULT_DIR}/${EXP_NAME}/slurm-phase4-%j-%n.out"
+ERRFILE4="${RESULT_DIR}/${EXP_NAME}/error-phase4-%j-%n.out"
+
+val_check_interval=1000
 
 # Diagnostic prints
 echo "Hosts: $hosts"
 # Command to be run
 
-
-if [ ! -f ${phase0_dir}/best.ckpt ]; then
-  if compgen -G ${phase0_dir}/TransformerMT/*/checkpoints/* > /dev/null; then
+mkdir -p ${PHASE0_DIR} \
+&& if [ ! -f ${PHASE0_DIR}/best.ckpt ]; then
+  if compgen -G ${PHASE0_DIR}/TransformerMT/*/checkpoints/* > /dev/null; then
     resume0=true
   else
     resume0=false
@@ -96,13 +109,14 @@ if [ ! -f ${phase0_dir}/best.ckpt ]; then
   && read -r -d '' cmd0 <<EOF
 echo "*******STARTING 0TH PHASE********" \
 && echo "---------------" \
+&& set -x \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python3 train.py -cn ${base_conf} \
   trainer.num_nodes=${SLURM_NUM_NODES} \
   trainer.gpus=${SLURM_NUM_GPUS} \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
-  model.train_ds.src_file_name=${phase_train_data}/originals.txt \
-  model.train_ds.tgt_file_name=${phase_train_data}/translations.txt \
+  model.train_ds.src_file_name=${phase0_train_data}/originals.txt \
+  model.train_ds.tgt_file_name=${phase0_train_data}/translations.txt \
   model.validation_ds.src_file_name=${valid_src} \
   model.validation_ds.tgt_file_name=${valid_ref} \
   model.test_ds.src_file_name=${test_src} \
@@ -110,9 +124,11 @@ echo "*******STARTING 0TH PHASE********" \
   model.machine_translation.tokenizer.tokenizer_model=${tok_model} \
   exp_manager.exp_dir=${phase0_dir} \
   trainer.max_epochs=100000 \
-  +trainer.max_steps=${max_steps} \
-  +exp_manager.resume_if_exists=${resume} \
+  +trainer.max_steps=${max_steps0} \
+  +exp_manager.resume_if_exists=${resume0} \
   model.optim.lr=${phase0_lr} \
+  trainer.val_check_interval=${val_check_interval} \
+&& set + \
 && echo  "*******FINISHING 0TH PHASE********"
 EOF
   srun -o $OUTFILE0 -e $ERRFILE0 \
@@ -120,8 +136,9 @@ EOF
     $MOUNTS \
     bash -c "${cmd0}"
 fi \
-&& if [ ! -f ${phase1_dir}/best.ckpt ]; then
-  && if compgen -G ${phase1_dir}/TransformerMT/*/checkpoints/* > /dev/null; then
+&& mkdir -p ${PHASE1_DIR} \
+&& if [ ! -f ${PHASE1_DIR}/best.ckpt ]; then
+  if compgen -G ${PHASE1_DIR}/TransformerMT/*/checkpoints/* > /dev/null; then
     resume1=true
   else
     resume1=false
@@ -129,13 +146,14 @@ fi \
   && read -r -d '' cmd1 <<EOF
 echo "*******STARTING 1ST PHASE********" \
 && echo "---------------" \
+&& set -x \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python3 train.py -cn ${base_conf} \
   trainer.num_nodes=${SLURM_NUM_NODES} \
   trainer.gpus=${SLURM_NUM_GPUS} \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
-  model.train_ds.src_file_name=${phase_train_data1}/originals.txt \
-  model.train_ds.tgt_file_name=${phase_train_data1}/translations.txt \
+  model.train_ds.src_file_name=${phase1_train_data1}/originals.txt \
+  model.train_ds.tgt_file_name=${phase1_train_data1}/translations.txt \
   model.machine_translation.tokenizer.tokenizer_model=${tok_model} \
   model.validation_ds.src_file_name=${valid_src} \
   model.validation_ds.tgt_file_name=${valid_ref} \
@@ -147,7 +165,8 @@ echo "*******STARTING 1ST PHASE********" \
   +exp_manager.resume_if_exists=${resume1} \
   +model.weights_checkpoint=${phase0_dir}/best.ckpt \
   model.optim.lr=${back_translation_phases_lr} \
-fi \
+  trainer.val_check_interval=${val_check_interval} \
+&& set + \
 && echo  "*******FINISHING 1ST PHASE********"
 EOF
   srun -o $OUTFILE1 -e $ERRFILE1 \
@@ -155,8 +174,9 @@ EOF
     $MOUNTS \
     bash -c "${cmd1}"
 fi \
-&& if [ ! -f ${phase2_dir}/best.ckpt ]; then
-  && if compgen -G ${phase2_dir}/TransformerMT/*/checkpoints/* > /dev/null; then
+&& mkdir -p ${PHASE2_DIR} \
+&& if [ ! -f ${PHASE2_DIR}/best.ckpt ]; then
+  if compgen -G ${PHASE2_DIR}/TransformerMT/*/checkpoints/* > /dev/null; then
     resume2=true
   else
     resume2=false
@@ -164,6 +184,7 @@ fi \
   && read -r -d '' cmd2 <<EOF
 echo "*******STARTING 2ND PHASE********" \
 && echo "---------------" \
+&& set -x \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python3 train.py -cn ${base_conf} \
   trainer.num_nodes=${SLURM_NUM_NODES} \
@@ -182,6 +203,8 @@ echo "*******STARTING 2ND PHASE********" \
   +trainer.max_steps=${max_steps2} \
   +model.weights_checkpoint=${phase1_dir}/best.ckpt \
   model.optim.lr=${back_translation_phases_lr} \
+  trainer.val_check_interval=${val_check_interval} \
+&& set + \
 && echo  "*******FINISHING 2ND PHASE********"
 EOF
   srun -o $OUTFILE2 -e $ERRFILE2 \
@@ -189,8 +212,9 @@ EOF
     $MOUNTS \
     bash -c "${cmd2}"
 fi \
-&& if [ ! -f ${phase3_dir}/best.ckpt ]; then
-  && if compgen -G ${phase3_dir}/TransformerMT/*/checkpoints/* > /dev/null; then
+&& mkdir -p ${PHASE3_DIR} \
+&& if [ ! -f ${PHASE3_DIR}/best.ckpt ]; then
+  if compgen -G ${PHASE3_DIR}/TransformerMT/*/checkpoints/* > /dev/null; then
     resume3=true
   else
     resume3=false
@@ -198,6 +222,7 @@ fi \
   && read -r -d '' cmd3 <<EOF
 echo "*******STARTING 3RD PHASE********" \
 && echo "---------------" \
+&& set -x \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python3 train.py -cn ${base_conf} \
   trainer.num_nodes=${SLURM_NUM_NODES} \
@@ -216,15 +241,18 @@ echo "*******STARTING 3RD PHASE********" \
   +exp_manager.resume_if_exists=${resume3} \
   +model.weights_checkpoint=${phase2_dir}/best.ckpt \
   model.optim.lr=${back_translation_phases_lr} \
-&& echo  "*******FINISHING 2ND PHASE********"
+  trainer.val_check_interval=${val_check_interval} \
+&& set + \
+&& echo  "*******FINISHING 3RD PHASE********"
 EOF
   srun -o $OUTFILE3 -e $ERRFILE3 \
     --container-image="$CONTAINER" \
     $MOUNTS \
     bash -c "${cmd3}"
 fi \
-&& if [ ! -f ${phase4_dir}/best.ckpt ]; then
-  && if compgen -G ${phase4_dir}/TransformerMT/*/checkpoints/* > /dev/null; then
+&& mkdir -p ${PHASE4_DIR} \
+&& if [ ! -f ${PHASE4_DIR}/best.ckpt ]; then
+  if compgen -G ${PHASE4_DIR}/TransformerMT/*/checkpoints/* > /dev/null; then
     resume4=true
   else
     resume4=false
@@ -232,6 +260,7 @@ fi \
   && read -r -d '' cmd4 <<EOF
 echo "*******STARTING 4TH PHASE********" \
 && echo "---------------" \
+&& set -x \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python3 train.py -cn ${base_conf} \
   trainer.num_nodes=${SLURM_NUM_NODES} \
@@ -250,12 +279,14 @@ echo "*******STARTING 4TH PHASE********" \
   +exp_manager.resume_if_exists=${resume4} \
   +model.weights_checkpoint=${phase3_dir}/best.ckpt \
   model.optim.lr=${back_translation_phases_lr} \
+  trainer.val_check_interval=${val_check_interval} \
+&& set + \
 && echo  "*******FINISHING 4TH PHASE********"
 EOF
   srun -o $OUTFILE4 -e $ERRFILE4 \
     --container-image="$CONTAINER" \
     $MOUNTS \
     bash -c "${cmd4}"
-fi \
+fi
 
 set +
