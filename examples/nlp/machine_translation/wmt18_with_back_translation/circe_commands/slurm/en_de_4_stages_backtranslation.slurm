@@ -27,8 +27,6 @@ export PYTHONFAULTHANDLER=1
 mkdir -p $RESULT_DIR/$EXP_NAME
 MOUNTS="--container-mounts=$DATA_DIR:/data,$RESULT_DIR/$EXP_NAME:/result"
 # Set up multinode if applicable
-SRUN_HOST=''
-SRUN_CONT=''
 if [[ -z "$SLURM_JOB_ID" ]]; then
   hosts=( `hostname` )
 else
