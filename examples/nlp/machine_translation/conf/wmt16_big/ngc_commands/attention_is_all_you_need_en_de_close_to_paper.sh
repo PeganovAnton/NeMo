@@ -14,7 +14,7 @@ pip3 install -r requirements/requirements.txt \
     model.machine_translation.attn_score_dropout=0.3 \
     model.machine_translation.attn_layer_dropout=0.3 \
     model.train_ds.tokens_in_batch=10000 \
-    trainer.max_steps=300000 \
+    +trainer.max_steps=300000 \
     trainer.max_epochs=null \
     model.optim.sched.warmup_steps=4000 \
     model.optim.sched.warmup_ratio=null \
