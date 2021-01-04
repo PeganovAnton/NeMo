@@ -91,7 +91,7 @@ max_steps4=100000
 OUTFILE4="${RESULT_DIR}/${EXP_NAME}/slurm-phase4-%j-%n.out"
 ERRFILE4="${RESULT_DIR}/${EXP_NAME}/error-phase4-%j-%n.out"
 
-val_check_interval=1000
+val_check_interval=$(python -c "i=int(round(1000 / ${SLURM_NUM_NODES} / 100) * 100);print(i if i > 0 else 10)")
 
 # Diagnostic prints
 echo "Hosts: $hosts"
