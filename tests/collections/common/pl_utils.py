@@ -405,3 +405,11 @@ class PerplexityTester(MetricTester):
                 check_batch=check_batch,
                 atol=self.atol,
             )
+
+
+class LossTester(MetricTester):
+    def run_class_loss_test(
+        self,
+        ddp: bool,
+        loss
+    ):

@@ -49,8 +49,8 @@ test_src=${data_path}/parallel_clean/newstest2014-en-de.src
 test_ref=${data_path}/parallel_clean/newstest2014-en-de.ref
 result_dir=/result
 tok_model=${data_path}/bpe_35k_en_de_yttm.model
-phase0_base_lr=0.001
-back_translation_phases_base_lr=0.0001
+phase0_base_lr=0.0005
+back_translation_phases_base_lr=0.00005
 lr_num_nodes_factor=$(python -c "print(${SLURM_NUM_NODES}**0.5)")
 echo "Learning rate number of nodes factor ${lr_num_nodes_factor}"
 phase0_lr=$(python -c "print(${phase0_base_lr} * ${lr_num_nodes_factor})")
