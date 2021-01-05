@@ -32,18 +32,25 @@ import torch
 
 from .pl_utils import BATCH_SIZE, NUM_BATCHES, NUM_CLASSES
 
-PerplexityInput = namedtuple('Input', ["probs", "logits"])
+LossInput = namedtuple('Input', ["loss_sum_or_avg", "num_measurements"])
 
 
-_only_probs = PerplexityInput(probs=torch.rand(NUM_BATCHES, BATCH_SIZE, NUM_CLASSES), logits=None)
-
-_only_logits1 = PerplexityInput(probs=None, logits=torch.rand(NUM_BATCHES, BATCH_SIZE, NUM_CLASSES))
-
-_only_logits100 = PerplexityInput(probs=None, logits=torch.rand(NUM_BATCHES, BATCH_SIZE, NUM_CLASSES) * 200 - 100)
-
-_probs_and_logits = PerplexityInput(
-    probs=torch.rand(NUM_BATCHES, BATCH_SIZE, NUM_CLASSES),
-    logits=torch.rand(NUM_BATCHES, BATCH_SIZE, NUM_CLASSES) * 200 - 100,
+_no_zero_num_measurements = LossInput(
+    loss_sum_or_avg=torch.rand(NUM_BATCHES) * 2.0 - 1.0,
+    num_measurements=torch.randint(1, 100, (NUM_BATCHES,)),
 )
 
-_no_probs_no_logits = PerplexityInput(probs=None, logits=None)
+_some_num_measurements_are_zero = LossInput(
+    loss_sum_or_avg=torch.rand(NUM_BATCHES) * 2.0 - 1.0,
+    num_measurements=torch.cat(
+        (
+            torch.randint(1, 100, (NUM_BATCHES // 2,), dtype=torch.int32),
+            torch.zeros(NUM_BATCHES - NUM_BATCHES // 2, dtype=torch.int32)
+        )
+    )
+)
+
+_all_num_measurements_are_zero = LossInput(
+    loss_sum_or_avg=torch.rand(NUM_BATCHES) * 2.0 - 1.0,
+    num_measurements=torch.zeros(NUM_BATCHES, dtype=torch.int32)
+)

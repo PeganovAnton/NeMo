@@ -40,7 +40,7 @@ from scipy.stats import entropy
 from torch.distributions.utils import logits_to_probs
 from torch.multiprocessing import Pool, set_start_method
 
-from nemo.collections.common.metrics import Perplexity
+from nemo.collections.common.metrics import Loss, Perplexity
 
 NUM_PROCESSES = 2
 NUM_BATCHES = 10
@@ -407,9 +407,121 @@ class PerplexityTester(MetricTester):
             )
 
 
+def reference_loss_func(loss_sum_or_avg, num_measurements, take_avg_loss):
+    if take_avg_loss:
+        for i in range(loss_sum_or_avg.shape[0]):
+            loss_sum_or_avg[i] *= num_measurements[i]
+    nm_sum = num_measurements.sum()
+    if nm_sum == 0:
+        return None
+    return loss_sum_or_avg.sum() / nm_sum
+
+
+def _loss_class_test(
+    rank: int,
+    worldsize: int,
+    loss_sum_or_avg: Optional[torch.Tensor],
+    num_measurements: Optional[torch.Tensor],
+    dist_sync_on_step: bool,
+    take_avg_loss: bool,
+    check_dist_sync_on_step: bool = True,
+    check_batch: bool = True,
+    atol: float = 1e-8,
+):
+    """ Utility function doing the actual comparison between lightning class metric
+        and reference metric.
+        Args:
+            rank: rank of current process
+            worldsize: number of processes
+            loss: torch tensor with probabilities
+            logits: torch tensor with logits. The function checks ``probs`` and ``logits are mutually exclusive for
+                ``Perplexity`` metric.
+            dist_sync_on_step: bool, if true will synchronize metric state across
+                processes at each ``forward()``
+            take_avg_loss: dict with additional arguments used for class initialization
+            check_dist_sync_on_step: bool, if true will check if the metric is also correctly
+                calculated per batch per device (and not just at the end)
+            check_batch: bool, if true will check if the metric is also correctly
+                calculated across devices for each batch (and not just at the end)
+    """
+    if take_avg_loss is None:
+        take_avg_loss = {}
+    # Instantiate lightning metric
+    loss_metric = Loss(compute_on_step=True, dist_sync_on_step=dist_sync_on_step, take_avg_loss=take_avg_loss)
+
+    # verify perplexity works after being loaded from pickled state
+    pickled_metric = pickle.dumps(loss_metric)
+    loss_metric = pickle.loads(pickled_metric)
+
+    for i in range(rank, NUM_BATCHES, worldsize):
+        batch_result = loss_metric(loss_sum_or_avg[i], num_measurements[i])
+        if loss_metric.dist_sync_on_step:
+            if rank == 0:
+                ddp_loss_sum_or_avg = torch.stack([loss_sum_or_avg[i + r] for r in range(worldsize)])
+                ddp_num_measurements = torch.stack([num_measurements[i + r] for r in range(worldsize)])
+                sk_batch_result = reference_loss_func(ddp_loss_sum_or_avg, ddp_num_measurements, take_avg_loss)
+                # assert for dist_sync_on_step
+                if check_dist_sync_on_step:
+                    if sk_batch_result is None:
+                        assert batch_result is None
+                    assert np.allclose(batch_result.numpy(), sk_batch_result, atol=atol)
+        else:
+            ls = loss_sum_or_avg[i:i+1]
+            nm = num_measurements[i:i+1]
+            sk_batch_result = reference_loss_func(ls, nm, take_avg_loss)
+            # assert for batch
+            if check_batch:
+                if sk_batch_result is None:
+                    assert batch_result is None
+                assert np.allclose(batch_result.numpy(), sk_batch_result, atol=atol)
+    # check on all batches on all ranks
+    result = loss_metric.compute()
+    assert isinstance(result, torch.Tensor)
+    sk_result = reference_loss_func(loss_sum_or_avg, num_measurements, take_avg_loss)
+
+    # assert after aggregation
+    if sk_result is None:
+        assert result is None
+    else:
+        assert np.allclose(result.numpy(), sk_result, atol=atol)
+
+
 class LossTester(MetricTester):
     def run_class_loss_test(
         self,
         ddp: bool,
-        loss
+        loss_sum_or_avg: torch.Tensor,
+        num_measurements: torch.Tensor,
+        dist_sync_on_step: bool,
+        take_avg_loss: bool,
+        check_dist_sync_on_step: bool = True,
+        check_batch: bool = True,
     ):
+        if ddp:
+            if sys.platform == "win32":
+                pytest.skip("DDP not supported on windows")
+            self.pool.starmap(
+                partial(
+                    _loss_class_test,
+                    loss_sum_or_avg=loss_sum_or_avg,
+                    num_measurements=num_measurements,
+                    dist_sync_on_step=dist_sync_on_step,
+                    take_avg_loss=take_avg_loss,
+                    check_dist_sync_on_step=check_dist_sync_on_step,
+                    check_batch=check_batch,
+                    atol=self.atol,
+                ),
+                [(rank, self.poolSize) for rank in range(self.poolSize)],
+            )
+        else:
+            _loss_class_test(
+                0,
+                1,
+                loss_sum_or_avg=loss_sum_or_avg,
+                num_measurements=num_measurements,
+                dist_sync_on_step=dist_sync_on_step,
+                take_avg_loss=take_avg_loss,
+                check_dist_sync_on_step=check_dist_sync_on_step,
+                check_batch=check_batch,
+                atol=self.atol,
+            )
