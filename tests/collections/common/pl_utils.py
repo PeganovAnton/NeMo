@@ -412,8 +412,8 @@ def reference_loss_func(loss_sum_or_avg, num_measurements, take_avg_loss):
         for i in range(loss_sum_or_avg.shape[0]):
             loss_sum_or_avg[i] *= num_measurements[i]
     nm_sum = num_measurements.sum()
-    if nm_sum == 0:
-        return None
+    if nm_sum.eq(0):
+        return torch.tensor(float('nan'))
     return loss_sum_or_avg.sum() / nm_sum
 
 
@@ -444,8 +444,6 @@ def _loss_class_test(
             check_batch: bool, if true will check if the metric is also correctly
                 calculated across devices for each batch (and not just at the end)
     """
-    if take_avg_loss is None:
-        take_avg_loss = {}
     # Instantiate lightning metric
     loss_metric = Loss(compute_on_step=True, dist_sync_on_step=dist_sync_on_step, take_avg_loss=take_avg_loss)
 
@@ -462,28 +460,39 @@ def _loss_class_test(
                 sk_batch_result = reference_loss_func(ddp_loss_sum_or_avg, ddp_num_measurements, take_avg_loss)
                 # assert for dist_sync_on_step
                 if check_dist_sync_on_step:
-                    if sk_batch_result is None:
-                        assert batch_result is None
-                    assert np.allclose(batch_result.numpy(), sk_batch_result, atol=atol)
+                    if sk_batch_result.isnan():
+                        assert batch_result.isnan()
+                    else:
+                        assert (
+                            np.allclose(batch_result.numpy(), sk_batch_result, atol=atol), 
+                            f"batch_result = {batch_result.numpy()}, sk_batch_result = {sk_batch_result}",
+                        )
         else:
             ls = loss_sum_or_avg[i:i+1]
             nm = num_measurements[i:i+1]
             sk_batch_result = reference_loss_func(ls, nm, take_avg_loss)
             # assert for batch
             if check_batch:
-                if sk_batch_result is None:
-                    assert batch_result is None
-                assert np.allclose(batch_result.numpy(), sk_batch_result, atol=atol)
+                if sk_batch_result.isnan():
+                    assert batch_result.isnan()
+                else:
+                    assert (
+                        np.allclose(batch_result.numpy(), sk_batch_result, atol=atol),
+                        f"batch_result = {batch_result.numpy()}, sk_batch_result = {sk_batch_result}",
+                    )
     # check on all batches on all ranks
     result = loss_metric.compute()
     assert isinstance(result, torch.Tensor)
     sk_result = reference_loss_func(loss_sum_or_avg, num_measurements, take_avg_loss)
 
     # assert after aggregation
-    if sk_result is None:
-        assert result is None
+    if sk_result.isnan():
+        assert result.isnan()
     else:
-        assert np.allclose(result.numpy(), sk_result, atol=atol)
+        assert (
+            np.allclose(result.numpy(), sk_result, atol=atol),
+            f"result = {result.numpy()}, sk_result = {sk_result}",
+        )
 
 
 class LossTester(MetricTester):

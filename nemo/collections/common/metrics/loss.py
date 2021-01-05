@@ -35,5 +35,5 @@ class Loss(Metric):
 
     def compute(self):
         if self.num_measurements.eq(0):
-            return None
+            return torch.tensor(float('nan'))
         return self.loss_sum / self.num_measurements

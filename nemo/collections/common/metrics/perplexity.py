@@ -70,5 +70,5 @@ class Perplexity(Metric):
         Returns perplexity across all workers and resets to 0 :attr:`perplexities_sum` and :attr:`num_distributions`.
         """
         if self.num_distributions.eq(0):
-            return None
+            return torch.tensor(float('nan'))
         return self.perplexities_sum / self.num_distributions
