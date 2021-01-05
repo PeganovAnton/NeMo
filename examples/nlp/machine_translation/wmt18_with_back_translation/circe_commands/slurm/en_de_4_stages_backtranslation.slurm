@@ -59,35 +59,35 @@ back_translation_phases_lr=$(python -c "print(${back_translation_phases_base_lr}
 phase0_dir=${result_dir}/phase0
 PHASE0_DIR=${RESULT_DIR}/${EXP_NAME}/phase0
 phase0_train_data="${phase_data_path}/phase0"
-max_steps0=30000
+max_steps0=60000
 OUTFILE0="${RESULT_DIR}/${EXP_NAME}/slurm-phase0-%j-%n.out"
 ERRFILE0="${RESULT_DIR}/${EXP_NAME}/error-phase0-%j-%n.out"
 
 phase1_dir=${result_dir}/phase1
 PHASE1_DIR=${RESULT_DIR}/${EXP_NAME}/phase1
 phase1_train_data="${phase_data_path}/phase1"
-max_steps1=50000
+max_steps1=100000
 OUTFILE1="${RESULT_DIR}/${EXP_NAME}/slurm-phase1-%j-%n.out"
 ERRFILE1="${RESULT_DIR}/${EXP_NAME}/error-phase1-%j-%n.out"
 
 phase2_dir=${result_dir}/phase2
 PHASE2_DIR=${RESULT_DIR}/${EXP_NAME}/phase2
 phase2_train_data="${phase_data_path}/phase2"
-max_steps2=75000
+max_steps2=150000
 OUTFILE2="${RESULT_DIR}/${EXP_NAME}/slurm-phase2-%j-%n.out"
 ERRFILE2="${RESULT_DIR}/${EXP_NAME}/error-phase2-%j-%n.out"
 
 phase3_dir=${result_dir}/phase3
 PHASE3_DIR=${RESULT_DIR}/${EXP_NAME}/phase3
 phase3_train_data="${phase_data_path}/phase3"
-max_steps3=75000
+max_steps3=150000
 OUTFILE3="${RESULT_DIR}/${EXP_NAME}/slurm-phase3-%j-%n.out"
 ERRFILE3="${RESULT_DIR}/${EXP_NAME}/error-phase3-%j-%n.out"
 
 phase4_dir=${result_dir}/phase4
 PHASE4_DIR=${RESULT_DIR}/${EXP_NAME}/phase4
 phase4_train_data="${phase_data_path}/phase4"
-max_steps4=100000
+max_steps4=200000
 OUTFILE4="${RESULT_DIR}/${EXP_NAME}/slurm-phase4-%j-%n.out"
 ERRFILE4="${RESULT_DIR}/${EXP_NAME}/error-phase4-%j-%n.out"
 
@@ -150,8 +150,8 @@ echo "*******STARTING 1ST PHASE********" \
   trainer.num_nodes=${SLURM_NUM_NODES} \
   trainer.gpus=${SLURM_NUM_GPUS} \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
-  model.train_ds.src_file_name=${phase1_train_data1}/originals.txt \
-  model.train_ds.tgt_file_name=${phase1_train_data1}/translations.txt \
+  model.train_ds.src_file_name=${phase1_train_data}/originals.txt \
+  model.train_ds.tgt_file_name=${phase1_train_data}/translations.txt \
   model.machine_translation.tokenizer.tokenizer_model=${tok_model} \
   model.validation_ds.src_file_name=${valid_src} \
   model.validation_ds.tgt_file_name=${valid_ref} \
