@@ -100,8 +100,10 @@ echo "Hosts: $hosts"
 mkdir -p ${PHASE0_DIR} \
 && if [ ! -f ${PHASE0_DIR}/best.ckpt ]; then
   if compgen -G ${PHASE0_DIR}/TransformerMT/*/checkpoints/* > /dev/null; then
+    echo "Will try to resume PHASE 0 training from checkpoint"
     resume0=true
   else
+    echo "Checkpoints for PHASE 0 are not found. Training will be started from scratch."
     resume0=false
   fi \
   && read -r -d '' cmd0 <<EOF
@@ -135,10 +137,12 @@ EOF
     bash -c "${cmd0}"
 fi \
 && mkdir -p ${PHASE1_DIR} \
-&& if [ ! -f ${PHASE1_DIR}/best.ckpt ]; then
+&& if [ ! -L ${PHASE1_DIR}/best.ckpt ]; then
   if compgen -G ${PHASE1_DIR}/TransformerMT/*/checkpoints/* > /dev/null; then
+    echo "Will try to resume PHASE 1 training from checkpoint"
     resume1=true
   else
+    echo "Checkpoints for PHASE 1 are not found. Training will be started from scratch."
     resume1=false
   fi \
   && read -r -d '' cmd1 <<EOF
@@ -173,10 +177,12 @@ EOF
     bash -c "${cmd1}"
 fi \
 && mkdir -p ${PHASE2_DIR} \
-&& if [ ! -f ${PHASE2_DIR}/best.ckpt ]; then
+&& if [ ! -L ${PHASE2_DIR}/best.ckpt ]; then
   if compgen -G ${PHASE2_DIR}/TransformerMT/*/checkpoints/* > /dev/null; then
+    echo "Will try to resume PHASE 2 training from checkpoint"
     resume2=true
   else
+    echo "Checkpoints for PHASE 2 are not found. Training will be started from scratch."
     resume2=false
   fi \
   && read -r -d '' cmd2 <<EOF
@@ -211,10 +217,12 @@ EOF
     bash -c "${cmd2}"
 fi \
 && mkdir -p ${PHASE3_DIR} \
-&& if [ ! -f ${PHASE3_DIR}/best.ckpt ]; then
+&& if [ ! -L ${PHASE3_DIR}/best.ckpt ]; then
   if compgen -G ${PHASE3_DIR}/TransformerMT/*/checkpoints/* > /dev/null; then
+    echo "Will try to resume PHASE 3 training from checkpoint"
     resume3=true
   else
+    echo "Checkpoints for PHASE 3 are not found. Training will be started from scratch."
     resume3=false
   fi \
   && read -r -d '' cmd3 <<EOF
@@ -249,10 +257,12 @@ EOF
     bash -c "${cmd3}"
 fi \
 && mkdir -p ${PHASE4_DIR} \
-&& if [ ! -f ${PHASE4_DIR}/best.ckpt ]; then
+&& if [ ! -L ${PHASE4_DIR}/best.ckpt ]; then
   if compgen -G ${PHASE4_DIR}/TransformerMT/*/checkpoints/* > /dev/null; then
+    echo "Will try to resume PHASE 4 training from checkpoint"
     resume4=true
   else
+    echo "Checkpoints for PHASE 4 are not found. Training will be started from scratch."
     resume4=false
   fi \
   && read -r -d '' cmd4 <<EOF
