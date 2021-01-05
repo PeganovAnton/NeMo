@@ -16,8 +16,9 @@ pip3 install -r requirements/requirements.txt \
     model.train_ds.tokens_in_batch=10000 \
     +trainer.max_steps=300000 \
     trainer.max_epochs=300000 \
-    model.optim.sched.warmup_steps=4000 \
+    model.optim.sched.warmup_steps=10000 \
     model.optim.sched.warmup_ratio=null \
+    model.optim.lr=0.0005 \
   && wmt13_translated=/result/newstest2013_en_translated.txt \
   && python3 nmt_transformer_infer.py \
     --model /result/best.ckpt \
