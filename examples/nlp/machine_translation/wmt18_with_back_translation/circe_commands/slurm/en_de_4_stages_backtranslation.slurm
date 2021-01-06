@@ -16,7 +16,7 @@
 # Hyper params
 # Env Variable Setup
 set -x
-CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:02012021"
+CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest"
 # Directories for manifests, data, etc.
 DATA_DIR='/gpfs/fs1/apeganov/datasets/wmt18'
 RESULT_DIR='/home/apeganov'
