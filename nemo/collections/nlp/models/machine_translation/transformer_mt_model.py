@@ -341,7 +341,7 @@ class TransformerMTModel(ModelPT):
                 batch[i] = batch[i].squeeze(dim=0)
         src_ids, src_mask, tgt_ids, tgt_mask, labels, sent_ids = batch
         log_probs, beam_results = self(src_ids, src_mask, tgt_ids, tgt_mask)
-        eval_loss = self.loss_fn(log_probs=log_probs, labels=labels).cpu().numpy()
+        eval_loss = self.loss_fn(log_probs=log_probs, labels=labels)
         self.eval_perplexity(logits=log_probs)
         self.eval_loss(loss=eval_loss, num_measurements=log_probs.shape[0]*log_probs.shape[1])
         translations = [self.tgt_tokenizer.ids_to_text(tr) for tr in beam_results.cpu().numpy()]
