@@ -19,6 +19,7 @@ pip3 install -r requirements/requirements.txt \
     model.optim.sched.warmup_steps=10000 \
     model.optim.sched.warmup_ratio=null \
     model.optim.lr=0.0005 \
+    model.optim.weight_decay=0.0002 \
   && wmt13_translated=/result/newstest2013_en_translated.txt \
   && python3 nmt_transformer_infer.py \
     --model /result/best.ckpt \

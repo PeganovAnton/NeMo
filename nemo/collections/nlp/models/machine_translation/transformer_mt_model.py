@@ -30,7 +30,7 @@ from pytorch_lightning.utilities import rank_zero_only
 from sacrebleu import corpus_bleu
 
 from nemo.collections.common.losses import SmoothedCrossEntropyLoss
-from nemo.collections.common.metrics import Perplexity
+from nemo.collections.common.metrics import Loss as LossMetric, Perplexity
 from nemo.collections.common.parts import transformer_weights_init
 from nemo.collections.nlp.data import TranslationDataset
 from nemo.collections.nlp.modules.common import TokenClassifier
@@ -152,6 +152,9 @@ class TransformerMTModel(ModelPT):
 
         self.training_perplexity = Perplexity(dist_sync_on_step=True)
         self.eval_perplexity = Perplexity(compute_on_step=False)
+
+        self.training_loss = LossMetric(dist_sync_on_step=True, take_avg_loss=True)
+        self.eval_loss = LossMetric(dist_sync_on_step=False, take_avg_loss=True)
 
         self.tensor_types_and_sizes = []
         self.num_taken_cuda_bytes = 0
@@ -304,8 +307,16 @@ class TransformerMTModel(ModelPT):
         train_loss = self.loss_fn(log_probs=log_probs, labels=labels)
         try:
             training_perplexity = self.training_perplexity(logits=log_probs).cpu().numpy().item()
+            train_loss = self.training_loss(
+                loss=train_loss,
+                num_measurements=log_probs.shape[0] * log_probs.shape[1],
+            )
         except ValueError as e:
-            ckpt_path = "invalid_value.ckpt"
+            exp_dir = self.get_exp_dir()
+            if exp_dir is None:
+                exp_dir = "/result"
+            ckpt_path = Path(exp_dir) / Path("NaNs_in_log_probs.ckpt")
+            ckpt_path.parent.mkdir(exist_ok=True, parents=True)
             torch.save(
                 {
                     "invalid_log_probs": log_probs,
@@ -315,7 +326,7 @@ class TransformerMTModel(ModelPT):
             )
             import warnings
             invalid_indices = torch.nonzero(~torch.isnan(log_probs)).cpu().numpy()
-            warnings.warn(f"Invalid values of log probabilities. The model is saved to {ckpt_path}. "
+            warnings.warn(f"Invalid values of log probabilities. The model is saved to {str(ckpt_path)}. "
                           f"The indices of NaNs are {invalid_indices}")
             raise e
         self.log_dict(
@@ -332,6 +343,7 @@ class TransformerMTModel(ModelPT):
         log_probs, beam_results = self(src_ids, src_mask, tgt_ids, tgt_mask)
         eval_loss = self.loss_fn(log_probs=log_probs, labels=labels).cpu().numpy()
         self.eval_perplexity(logits=log_probs)
+        self.eval_loss(loss=eval_loss, num_measurements=log_probs.shape[0]*log_probs.shape[1])
         translations = [self.tgt_tokenizer.ids_to_text(tr) for tr in beam_results.cpu().numpy()]
         np_tgt = tgt_ids.cpu().numpy()
         ground_truths = [self.tgt_tokenizer.ids_to_text(tgt) for tgt in np_tgt]
@@ -340,7 +352,6 @@ class TransformerMTModel(ModelPT):
             'translations': translations,
             'ground_truths': ground_truths,
             'num_non_pad_tokens': num_non_pad_tokens,
-            f'{mode}_loss': eval_loss,
         }
 
     def test_step(self, batch, batch_idx):
@@ -366,9 +377,8 @@ class TransformerMTModel(ModelPT):
 
     def eval_epoch_end(self, outputs, mode):
         self.eval_epoch_step = 0
-        counts = np.array([x['num_non_pad_tokens'] for x in outputs])
-        eval_loss = np.sum(np.array([x[f'{mode}_loss'] for x in outputs]) * counts) / counts.sum()
         eval_perplexity = self.eval_perplexity.compute()
+        eval_loss = self.eval_loss.compute()
         translations = list(itertools.chain(*[x['translations'] for x in outputs]))
         ground_truths = list(itertools.chain(*[x['ground_truths'] for x in outputs]))
         assert len(translations) == len(ground_truths)

@@ -127,6 +127,7 @@ echo "*******STARTING 0TH PHASE********" \
   +trainer.max_steps=${max_steps0} \
   +exp_manager.resume_if_exists=${resume0} \
   model.optim.lr=${phase0_lr} \
+  model.optim.weight_decay=0.0002 \
   trainer.val_check_interval=${val_check_interval} \
 && set + \
 && echo  "*******FINISHING 0TH PHASE********"
@@ -167,6 +168,7 @@ echo "*******STARTING 1ST PHASE********" \
   +exp_manager.resume_if_exists=${resume1} \
   +model.weights_checkpoint=${phase0_dir}/best.ckpt \
   model.optim.lr=${back_translation_phases_lr} \
+  model.optim.weight_decay=0.0002 \
   trainer.val_check_interval=${val_check_interval} \
 && set + \
 && echo  "*******FINISHING 1ST PHASE********"
@@ -207,6 +209,7 @@ echo "*******STARTING 2ND PHASE********" \
   +trainer.max_steps=${max_steps2} \
   +model.weights_checkpoint=${phase1_dir}/best.ckpt \
   model.optim.lr=${back_translation_phases_lr} \
+  model.optim.weight_decay=0.0002 \
   trainer.val_check_interval=${val_check_interval} \
 && set + \
 && echo  "*******FINISHING 2ND PHASE********"
@@ -247,6 +250,7 @@ echo "*******STARTING 3RD PHASE********" \
   +exp_manager.resume_if_exists=${resume3} \
   +model.weights_checkpoint=${phase2_dir}/best.ckpt \
   model.optim.lr=${back_translation_phases_lr} \
+  model.optim.weight_decay=0.0002 \
   trainer.val_check_interval=${val_check_interval} \
 && set + \
 && echo  "*******FINISHING 3RD PHASE********"
@@ -287,6 +291,7 @@ echo "*******STARTING 4TH PHASE********" \
   +exp_manager.resume_if_exists=${resume4} \
   +model.weights_checkpoint=${phase3_dir}/best.ckpt \
   model.optim.lr=${back_translation_phases_lr} \
+  model.optim.weight_decay=0.0002 \
   trainer.val_check_interval=${val_check_interval} \
 && set + \
 && echo  "*******FINISHING 4TH PHASE********"
