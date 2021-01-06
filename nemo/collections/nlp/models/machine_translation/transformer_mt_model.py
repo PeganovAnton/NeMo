@@ -153,7 +153,6 @@ class TransformerMTModel(ModelPT):
         self.training_perplexity = Perplexity(dist_sync_on_step=True)
         self.eval_perplexity = Perplexity(compute_on_step=False)
 
-        self.training_loss = LossMetric(dist_sync_on_step=True, take_avg_loss=True)
         self.eval_loss = LossMetric(dist_sync_on_step=False, take_avg_loss=True)
 
         self.tensor_types_and_sizes = []
@@ -307,10 +306,6 @@ class TransformerMTModel(ModelPT):
         train_loss = self.loss_fn(log_probs=log_probs, labels=labels)
         try:
             training_perplexity = self.training_perplexity(logits=log_probs).cpu().numpy().item()
-            train_loss = self.training_loss(
-                loss=train_loss,
-                num_measurements=log_probs.shape[0] * log_probs.shape[1],
-            )
         except ValueError as e:
             exp_dir = self.get_exp_dir()
             if exp_dir is None:
