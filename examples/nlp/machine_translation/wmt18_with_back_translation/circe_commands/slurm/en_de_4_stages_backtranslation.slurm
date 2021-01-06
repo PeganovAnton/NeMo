@@ -98,8 +98,8 @@ echo "Hosts: $hosts"
 # Command to be run
 
 mkdir -p ${PHASE0_DIR} \
-&& if [ ! -f ${PHASE0_DIR}/best.ckpt ]; then
-  if compgen -G ${PHASE0_DIR}/TransformerMT/*/checkpoints/* > /dev/null; then
+&& if [ ! -L ${PHASE0_DIR}/best.ckpt ]; then
+  if compgen -G ${PHASE0_DIR}/TransformerMT/checkpoints/* > /dev/null; then
     echo "Will try to resume PHASE 0 training from checkpoint"
     resume0=true
   else
@@ -138,7 +138,7 @@ EOF
 fi \
 && mkdir -p ${PHASE1_DIR} \
 && if [ ! -L ${PHASE1_DIR}/best.ckpt ]; then
-  if compgen -G ${PHASE1_DIR}/TransformerMT/*/checkpoints/* > /dev/null; then
+  if compgen -G ${PHASE1_DIR}/TransformerMT/checkpoints/* > /dev/null; then
     echo "Will try to resume PHASE 1 training from checkpoint"
     resume1=true
   else
@@ -178,7 +178,7 @@ EOF
 fi \
 && mkdir -p ${PHASE2_DIR} \
 && if [ ! -L ${PHASE2_DIR}/best.ckpt ]; then
-  if compgen -G ${PHASE2_DIR}/TransformerMT/*/checkpoints/* > /dev/null; then
+  if compgen -G ${PHASE2_DIR}/TransformerMT/checkpoints/* > /dev/null; then
     echo "Will try to resume PHASE 2 training from checkpoint"
     resume2=true
   else
@@ -218,7 +218,7 @@ EOF
 fi \
 && mkdir -p ${PHASE3_DIR} \
 && if [ ! -L ${PHASE3_DIR}/best.ckpt ]; then
-  if compgen -G ${PHASE3_DIR}/TransformerMT/*/checkpoints/* > /dev/null; then
+  if compgen -G ${PHASE3_DIR}/TransformerMT/checkpoints/* > /dev/null; then
     echo "Will try to resume PHASE 3 training from checkpoint"
     resume3=true
   else
@@ -258,7 +258,7 @@ EOF
 fi \
 && mkdir -p ${PHASE4_DIR} \
 && if [ ! -L ${PHASE4_DIR}/best.ckpt ]; then
-  if compgen -G ${PHASE4_DIR}/TransformerMT/*/checkpoints/* > /dev/null; then
+  if compgen -G ${PHASE4_DIR}/TransformerMT/checkpoints/* > /dev/null; then
     echo "Will try to resume PHASE 4 training from checkpoint"
     resume4=true
   else
