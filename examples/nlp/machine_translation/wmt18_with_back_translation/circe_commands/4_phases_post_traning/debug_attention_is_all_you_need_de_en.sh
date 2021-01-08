@@ -23,7 +23,9 @@ pip3 install -r requirements/requirements.txt \
           exp_manager.exp_dir=${stage1_dir} \
           trainer.max_epochs=${max_epochs} \
           trainer.max_steps=3 \
-          +exp_manager.resume_if_exists=${resume}
+          +exp_manager.resume_if_exists=${resume} \
+          model.optim.sched.name=ReduceLROnPlateau \
+          +model.optim.sched.params.min_lr=1e-7
      fi \
   && export stage2_dir=${result_dir}/stage2 \
   && if [ ! -f ${stage2_dir}/best.ckpt ]; then
@@ -39,7 +41,9 @@ pip3 install -r requirements/requirements.txt \
           +exp_manager.resume_if_exists=${resume} \
           trainer.max_epochs=${max_epochs} \
           trainer.max_steps=4 \
-          +model.weights_checkpoint=${stage1_dir}/best.ckpt
+          +model.weights_checkpoint=${stage1_dir}/best.ckpt \
+          model.optim.sched.name=ReduceLROnPlateau \
+          +model.optim.sched.params.min_lr=1e-7
      fi \
   && export stage3_dir=${result_dir}/stage3 \
   && if [ ! -f ${stage3_dir}/best.ckpt ]; then
@@ -55,7 +59,9 @@ pip3 install -r requirements/requirements.txt \
           trainer.max_epochs=${max_epochs} \
           trainer.max_steps=5 \
           +exp_manager.resume_if_exists=${resume} \
-          +model.weights_checkpoint=${stage2_dir}/best.ckpt
+          +model.weights_checkpoint=${stage2_dir}/best.ckpt \
+          model.optim.sched.name=ReduceLROnPlateau \
+          +model.optim.sched.params.min_lr=1e-7
      fi \
   && export stage4_dir=${result_dir}/stage4 \
   && if [ ! -f ${stage4_dir}/best.ckpt ]; then
@@ -71,7 +77,9 @@ pip3 install -r requirements/requirements.txt \
           trainer.max_epochs=${max_epochs} \
           trainer.max_steps=6 \
           +exp_manager.resume_if_exists=${resume} \
-          +model.weights_checkpoint=${stage3_dir}/best.ckpt
+          +model.weights_checkpoint=${stage3_dir}/best.ckpt \
+          model.optim.sched.name=ReduceLROnPlateau \
+          +model.optim.sched.params.min_lr=1e-7
      fi \
   && python3 test.py -cn ${base_conf} \
       trainer.gpus=${ngpus} \
