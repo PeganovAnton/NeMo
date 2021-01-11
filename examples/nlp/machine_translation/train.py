@@ -14,32 +14,43 @@
 
 
 import os
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 import pytorch_lightning as pl
-from omegaconf import DictConfig
 
-from nemo.collections.nlp.models.machine_translation import TransformerMTModel
+from nemo.collections.nlp.models.machine_translation.mt_enc_dec_config import AAYNBaseConfig
+from nemo.collections.nlp.models.machine_translation.mt_enc_dec_model import MTEncDecModel
 from nemo.core.config import hydra_runner
+from nemo.core.config.modelPT import NemoConfig
+from nemo.core.config.pytorch_lightning import TrainerConfig
 from nemo.utils import logging
-from nemo.utils.exp_manager import exp_manager
+from nemo.utils.exp_manager import ExpManagerConfig, exp_manager
 from nemo.utils.get_rank import is_global_rank_zero
 
 
+@dataclass
+class MTEncDecConfig(NemoConfig):
+    model: AAYNBaseConfig = AAYNBaseConfig()
+    trainer: Optional[TrainerConfig] = TrainerConfig()
+    exp_manager: Optional[ExpManagerConfig] = ExpManagerConfig(name='MTEncDec', files_to_copy=[])
+
+
 @hydra_runner(config_path="conf", config_name="en_de_8gpu")
-def main(cfg: DictConfig) -> None:
+def main(cfg: MTEncDecConfig) -> None:
     logging.info(f'Config: {cfg.pretty()}')
     trainer = pl.Trainer(**cfg.trainer)
     if "exp_manager" in cfg and cfg.get("exp_manager") is not None:
         exp_manager(trainer, cfg.get("exp_manager", None))
     if "weights_checkpoint" in cfg.model and cfg.model.weights_checkpoint is not None:
-        transformer_mt = TransformerMTModel.load_from_checkpoint(cfg.model.weights_checkpoint)
+        transformer_mt = MTEncDecModel.load_from_checkpoint(cfg.model.weights_checkpoint)
         transformer_mt._trainer = trainer
         transformer_mt.setup_training_data(cfg.model.train_ds)
         transformer_mt.setup_validation_data(cfg.model.validation_ds)
         transformer_mt.setup_test_data(cfg.model.test_ds)
     else:
-        transformer_mt = TransformerMTModel(cfg.model, trainer=trainer)
+        transformer_mt = MTEncDecModel(cfg.model, trainer=trainer)
     trainer.fit(transformer_mt)
     if is_global_rank_zero():
         if "exp_manager" not in cfg \

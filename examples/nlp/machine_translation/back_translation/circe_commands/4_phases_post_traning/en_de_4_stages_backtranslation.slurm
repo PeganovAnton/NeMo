@@ -109,11 +109,16 @@ mkdir -p ${PHASE0_DIR} \
   && read -r -d '' cmd0 <<EOF
 echo "*******STARTING 0TH PHASE********" \
 && echo "---------------" \
+&& wandb login ${wandb_token} \
 && set -x \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
-&& python3 train.py -cn ${base_conf} \
+&& python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
   trainer.gpus=${SLURM_NUM_GPUS} \
+  ~trainer.max_epochs \
+  +trainer.max_steps=${max_steps0}  \
+  model.encoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.decoder_tokenizer.tokenizer_model=${tok_model}  \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${phase0_train_data}/originals.txt \
   model.train_ds.tgt_file_name=${phase0_train_data}/translations.txt \
@@ -121,14 +126,11 @@ echo "*******STARTING 0TH PHASE********" \
   model.validation_ds.tgt_file_name=${valid_ref} \
   model.test_ds.src_file_name=${test_src} \
   model.test_ds.tgt_file_name=${test_ref} \
-  model.machine_translation.tokenizer.tokenizer_model=${tok_model} \
-  exp_manager.exp_dir=${phase0_dir} \
-  trainer.max_epochs=100000 \
-  +trainer.max_steps=${max_steps0} \
+  model.optim.lr=${phase0_lr}  \
+  exp_manager.wandb_logger_kwargs.name=phase0 \
+  exp_manager.wandb_logger_kwargs.project=nmt_en_de_back_translation_4_phases_v0 \
+  exp_manager.exp_dir=${phase0_lr} \
   +exp_manager.resume_if_exists=${resume0} \
-  model.optim.lr=${phase0_lr} \
-  model.optim.weight_decay=0.0002 \
-  trainer.val_check_interval=${val_check_interval} \
 && set + \
 && echo  "*******FINISHING 0TH PHASE********"
 EOF
@@ -149,27 +151,28 @@ fi \
   && read -r -d '' cmd1 <<EOF
 echo "*******STARTING 1ST PHASE********" \
 && echo "---------------" \
+&& wandb login ${wandb_token} \
 && set -x \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
-&& python3 train.py -cn ${base_conf} \
+&& python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
   trainer.gpus=${SLURM_NUM_GPUS} \
+  ~trainer.max_epochs \
+  +trainer.max_steps=${max_steps1}  \
+  model.encoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.decoder_tokenizer.tokenizer_model=${tok_model}  \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${phase1_train_data}/originals.txt \
   model.train_ds.tgt_file_name=${phase1_train_data}/translations.txt \
-  model.machine_translation.tokenizer.tokenizer_model=${tok_model} \
   model.validation_ds.src_file_name=${valid_src} \
   model.validation_ds.tgt_file_name=${valid_ref} \
   model.test_ds.src_file_name=${test_src} \
   model.test_ds.tgt_file_name=${test_ref} \
-  exp_manager.exp_dir=${phase1_dir} \
-  trainer.max_epochs=100000 \
-  +trainer.max_steps=${max_steps1} \
+  model.optim.lr=${phase1_lr}  \
+  exp_manager.wandb_logger_kwargs.name=phase1 \
+  exp_manager.wandb_logger_kwargs.project=nmt_en_de_back_translation_4_phases_v0 \
+  exp_manager.exp_dir=${phase1_lr} \
   +exp_manager.resume_if_exists=${resume1} \
-  +model.weights_checkpoint=${phase0_dir}/best.ckpt \
-  model.optim.lr=${back_translation_phases_lr} \
-  model.optim.weight_decay=0.0002 \
-  trainer.val_check_interval=${val_check_interval} \
 && set + \
 && echo  "*******FINISHING 1ST PHASE********"
 EOF
@@ -190,27 +193,28 @@ fi \
   && read -r -d '' cmd2 <<EOF
 echo "*******STARTING 2ND PHASE********" \
 && echo "---------------" \
+&& wandb login ${wandb_token} \
 && set -x \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
-&& python3 train.py -cn ${base_conf} \
+&& python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
   trainer.gpus=${SLURM_NUM_GPUS} \
+  ~trainer.max_epochs \
+  +trainer.max_steps=${max_steps2}  \
+  model.encoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.decoder_tokenizer.tokenizer_model=${tok_model}  \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${phase2_train_data}/originals.txt \
   model.train_ds.tgt_file_name=${phase2_train_data}/translations.txt \
-  model.machine_translation.tokenizer.tokenizer_model=${tok_model} \
   model.validation_ds.src_file_name=${valid_src} \
   model.validation_ds.tgt_file_name=${valid_ref} \
   model.test_ds.src_file_name=${test_src} \
   model.test_ds.tgt_file_name=${test_ref} \
-  exp_manager.exp_dir=${phase2_dir} \
+  model.optim.lr=${phase2_lr}  \
+  exp_manager.wandb_logger_kwargs.name=phase2 \
+  exp_manager.wandb_logger_kwargs.project=nmt_en_de_back_translation_4_phases_v0 \
+  exp_manager.exp_dir=${phase2_lr} \
   +exp_manager.resume_if_exists=${resume2} \
-  trainer.max_epochs=100000 \
-  +trainer.max_steps=${max_steps2} \
-  +model.weights_checkpoint=${phase1_dir}/best.ckpt \
-  model.optim.lr=${back_translation_phases_lr} \
-  model.optim.weight_decay=0.0002 \
-  trainer.val_check_interval=${val_check_interval} \
 && set + \
 && echo  "*******FINISHING 2ND PHASE********"
 EOF
@@ -231,27 +235,28 @@ fi \
   && read -r -d '' cmd3 <<EOF
 echo "*******STARTING 3RD PHASE********" \
 && echo "---------------" \
+&& wandb login ${wandb_token} \
 && set -x \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
-&& python3 train.py -cn ${base_conf} \
+&& python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
   trainer.gpus=${SLURM_NUM_GPUS} \
+  ~trainer.max_epochs \
+  +trainer.max_steps=${max_steps3}  \
+  model.encoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.decoder_tokenizer.tokenizer_model=${tok_model}  \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${phase3_train_data}/originals.txt \
   model.train_ds.tgt_file_name=${phase3_train_data}/translations.txt \
-  model.machine_translation.tokenizer.tokenizer_model=${tok_model} \
   model.validation_ds.src_file_name=${valid_src} \
   model.validation_ds.tgt_file_name=${valid_ref} \
   model.test_ds.src_file_name=${test_src} \
   model.test_ds.tgt_file_name=${test_ref} \
-  exp_manager.exp_dir=${phase3_dir} \
-  trainer.max_epochs=100000 \
-  +trainer.max_steps=${max_steps3} \
+  model.optim.lr=${phase3_lr}  \
+  exp_manager.wandb_logger_kwargs.name=phase3 \
+  exp_manager.wandb_logger_kwargs.project=nmt_en_de_back_translation_4_phases_v0 \
+  exp_manager.exp_dir=${phase3_lr} \
   +exp_manager.resume_if_exists=${resume3} \
-  +model.weights_checkpoint=${phase2_dir}/best.ckpt \
-  model.optim.lr=${back_translation_phases_lr} \
-  model.optim.weight_decay=0.0002 \
-  trainer.val_check_interval=${val_check_interval} \
 && set + \
 && echo  "*******FINISHING 3RD PHASE********"
 EOF
@@ -272,27 +277,28 @@ fi \
   && read -r -d '' cmd4 <<EOF
 echo "*******STARTING 4TH PHASE********" \
 && echo "---------------" \
+&& wandb login ${wandb_token} \
 && set -x \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
-&& python3 train.py -cn ${base_conf} \
+&& python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
   trainer.gpus=${SLURM_NUM_GPUS} \
+  ~trainer.max_epochs \
+  +trainer.max_steps=${max_steps4}  \
+  model.encoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.decoder_tokenizer.tokenizer_model=${tok_model}  \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${phase4_train_data}/originals.txt \
   model.train_ds.tgt_file_name=${phase4_train_data}/translations.txt \
-  model.machine_translation.tokenizer.tokenizer_model=${tok_model} \
   model.validation_ds.src_file_name=${valid_src} \
   model.validation_ds.tgt_file_name=${valid_ref} \
   model.test_ds.src_file_name=${test_src} \
   model.test_ds.tgt_file_name=${test_ref} \
-  exp_manager.exp_dir=${phase4_dir} \
-  trainer.max_epochs=100000 \
-  +trainer.max_steps=${max_steps4} \
+  model.optim.lr=${phase4_lr}  \
+  exp_manager.wandb_logger_kwargs.name=phase4 \
+  exp_manager.wandb_logger_kwargs.project=nmt_en_de_back_translation_4_phases_v0 \
+  exp_manager.exp_dir=${phase4_lr} \
   +exp_manager.resume_if_exists=${resume4} \
-  +model.weights_checkpoint=${phase3_dir}/best.ckpt \
-  model.optim.lr=${back_translation_phases_lr} \
-  model.optim.weight_decay=0.0002 \
-  trainer.val_check_interval=${val_check_interval} \
 && set + \
 && echo  "*******FINISHING 4TH PHASE********"
 EOF
