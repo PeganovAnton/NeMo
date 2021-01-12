@@ -96,6 +96,7 @@ val_check_interval=$(python -c "i=int(round(1000 / ${SLURM_NUM_NODES} / 100) * 1
 # Diagnostic prints
 echo "Hosts: $hosts"
 # Command to be run
+echo "Your W&B token is ${WANDB_TOKEN}"
 
 mkdir -p ${PHASE0_DIR} \
 && if [ ! -L ${PHASE0_DIR}/best.ckpt ]; then
@@ -110,7 +111,7 @@ mkdir -p ${PHASE0_DIR} \
 echo "*******STARTING 0TH PHASE********" \
 && echo "---------------" \
 && set -x \
-&& wandb login ${wandb_token} \
+&& wandb login ${WANDB_TOKEN} \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
@@ -152,7 +153,7 @@ fi \
 echo "*******STARTING 1ST PHASE********" \
 && echo "---------------" \
 && set -x \
-&& wandb login ${wandb_token} \
+&& wandb login ${WANDB_TOKEN} \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
@@ -194,7 +195,7 @@ fi \
 echo "*******STARTING 2ND PHASE********" \
 && echo "---------------" \
 && set -x \
-&& wandb login ${wandb_token} \
+&& wandb login ${WANDB_TOKEN} \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
@@ -236,7 +237,7 @@ fi \
 echo "*******STARTING 3RD PHASE********" \
 && echo "---------------" \
 && set -x \
-&& wandb login ${wandb_token} \
+&& wandb login ${WANDB_TOKEN} \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
@@ -278,7 +279,7 @@ fi \
 echo "*******STARTING 4TH PHASE********" \
 && echo "---------------" \
 && set -x \
-&& wandb login ${wandb_token} \
+&& wandb login ${WANDB_TOKEN} \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
