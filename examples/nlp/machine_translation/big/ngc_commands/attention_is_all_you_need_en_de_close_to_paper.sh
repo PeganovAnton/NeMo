@@ -1,7 +1,6 @@
 #!/bin/bash
 # The only argument is wandb token.
 
-set -x -e
 
 read -r -d '' cmd <<EOF
 git clone https://github.com/PeganovAnton/NeMo.git \
@@ -54,7 +53,7 @@ EOF
 
 ngc batch run \
   --name big_en_de_attention_is_all_you_need_close_to_paper \
-  --preemt RUNONCE \
+  --preempt RUNONCE \
   --image nvidia/pytorch:20.09-py3 \
   --ace nv-us-west-2 \
   --instance dgx1v.32g.8.norm \
@@ -64,4 +63,3 @@ ngc batch run \
   --team ac-aiapps \
   --datasetid 68792:/data
 
-set +
