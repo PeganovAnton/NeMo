@@ -37,3 +37,8 @@ Metrics
     :show-inheritance:
     :members:
     :undoc-members:
+
+.. autoclass:: nemo.collections.common.metrics.Loss
+    :show-inheritance:
+    :members:
+    :undoc-members:
