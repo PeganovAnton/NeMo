@@ -130,7 +130,7 @@ echo "*******STARTING 0TH PHASE********" \
   model.optim.lr=${phase0_lr}  \
   exp_manager.wandb_logger_kwargs.name=phase0 \
   exp_manager.wandb_logger_kwargs.project=nmt_en_de_back_translation_4_phases_v0 \
-  exp_manager.exp_dir=${phase0_lr} \
+  +exp_manager.exp_dir=${phase0_dir} \
   +exp_manager.resume_if_exists=${resume0} \
 && set + \
 && echo  "*******FINISHING 0TH PHASE********"
@@ -172,7 +172,7 @@ echo "*******STARTING 1ST PHASE********" \
   model.optim.lr=${phase1_lr}  \
   exp_manager.wandb_logger_kwargs.name=phase1 \
   exp_manager.wandb_logger_kwargs.project=nmt_en_de_back_translation_4_phases_v0 \
-  exp_manager.exp_dir=${phase1_lr} \
+  +exp_manager.exp_dir=${phase1_dir} \
   +exp_manager.resume_if_exists=${resume1} \
 && set + \
 && echo  "*******FINISHING 1ST PHASE********"
@@ -214,7 +214,7 @@ echo "*******STARTING 2ND PHASE********" \
   model.optim.lr=${phase2_lr}  \
   exp_manager.wandb_logger_kwargs.name=phase2 \
   exp_manager.wandb_logger_kwargs.project=nmt_en_de_back_translation_4_phases_v0 \
-  exp_manager.exp_dir=${phase2_lr} \
+  +exp_manager.exp_dir=${phase2_dir} \
   +exp_manager.resume_if_exists=${resume2} \
 && set + \
 && echo  "*******FINISHING 2ND PHASE********"
@@ -256,7 +256,7 @@ echo "*******STARTING 3RD PHASE********" \
   model.optim.lr=${phase3_lr}  \
   exp_manager.wandb_logger_kwargs.name=phase3 \
   exp_manager.wandb_logger_kwargs.project=nmt_en_de_back_translation_4_phases_v0 \
-  exp_manager.exp_dir=${phase3_lr} \
+  +exp_manager.exp_dir=${phase3_dir} \
   +exp_manager.resume_if_exists=${resume3} \
 && set + \
 && echo  "*******FINISHING 3RD PHASE********"
@@ -298,7 +298,7 @@ echo "*******STARTING 4TH PHASE********" \
   model.optim.lr=${phase4_lr}  \
   exp_manager.wandb_logger_kwargs.name=phase4 \
   exp_manager.wandb_logger_kwargs.project=nmt_en_de_back_translation_4_phases_v0 \
-  exp_manager.exp_dir=${phase4_lr} \
+  +exp_manager.exp_dir=${phase4_dir} \
   +exp_manager.resume_if_exists=${resume4} \
 && set + \
 && echo  "*******FINISHING 4TH PHASE********"
