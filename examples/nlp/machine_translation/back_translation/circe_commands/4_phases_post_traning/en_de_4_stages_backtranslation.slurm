@@ -55,6 +55,8 @@ lr_num_nodes_factor=$(python -c "print(${SLURM_NUM_NODES}**0.5)")
 echo "Learning rate number of nodes factor ${lr_num_nodes_factor}"
 phase0_lr=$(python -c "print(${phase0_base_lr} * ${lr_num_nodes_factor})")
 back_translation_phases_lr=$(python -c "print(${back_translation_phases_base_lr} * ${lr_num_nodes_factor})")
+encoder_bpe_dropout=0.1
+decoder_bpe_dropout=0.1
 
 phase0_dir=${result_dir}/phase0
 PHASE0_DIR=${RESULT_DIR}/${EXP_NAME}/phase0
@@ -119,9 +121,9 @@ echo "*******STARTING 0TH PHASE********" \
   ~trainer.max_epochs \
   +trainer.max_steps=${max_steps0}  \
   model.encoder_tokenizer.tokenizer_model=${tok_model}  \
-  model.encoder_tokenizer.bpe_dropout=0.1 \
+  model.encoder_tokenizer.bpe_dropout=${encoder_bpe_dropout} \
   model.decoder_tokenizer.tokenizer_model=${tok_model}  \
-  model.decoder_tokenizer.bpe_dropout=0.1 \
+  model.decoder_tokenizer.bpe_dropout=${decoder_bpe_dropout} \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${phase0_train_data}/originals.txt \
   model.train_ds.tgt_file_name=${phase0_train_data}/translations.txt \
@@ -163,7 +165,9 @@ echo "*******STARTING 1ST PHASE********" \
   ~trainer.max_epochs \
   +trainer.max_steps=${max_steps1}  \
   model.encoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.encoder_tokenizer.bpe_dropout=${encoder_bpe_dropout} \
   model.decoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.decoder_tokenizer.bpe_dropout=${decoder_bpe_dropout} \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${phase1_train_data}/originals.txt \
   model.train_ds.tgt_file_name=${phase1_train_data}/translations.txt \
@@ -205,7 +209,9 @@ echo "*******STARTING 2ND PHASE********" \
   ~trainer.max_epochs \
   +trainer.max_steps=${max_steps2}  \
   model.encoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.encoder_tokenizer.bpe_dropout=${encoder_bpe_dropout} \
   model.decoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.decoder_tokenizer.bpe_dropout=${decoder_bpe_dropout} \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${phase2_train_data}/originals.txt \
   model.train_ds.tgt_file_name=${phase2_train_data}/translations.txt \
@@ -247,7 +253,9 @@ echo "*******STARTING 3RD PHASE********" \
   ~trainer.max_epochs \
   +trainer.max_steps=${max_steps3}  \
   model.encoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.encoder_tokenizer.bpe_dropout=${encoder_bpe_dropout} \
   model.decoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.decoder_tokenizer.bpe_dropout=${decoder_bpe_dropout} \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${phase3_train_data}/originals.txt \
   model.train_ds.tgt_file_name=${phase3_train_data}/translations.txt \
@@ -289,7 +297,9 @@ echo "*******STARTING 4TH PHASE********" \
   ~trainer.max_epochs \
   +trainer.max_steps=${max_steps4}  \
   model.encoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.encoder_tokenizer.bpe_dropout=${encoder_bpe_dropout} \
   model.decoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.decoder_tokenizer.bpe_dropout=${decoder_bpe_dropout} \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${phase4_train_data}/originals.txt \
   model.train_ds.tgt_file_name=${phase4_train_data}/translations.txt \
