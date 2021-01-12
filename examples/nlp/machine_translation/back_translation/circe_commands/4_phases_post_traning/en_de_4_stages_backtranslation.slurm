@@ -109,8 +109,8 @@ mkdir -p ${PHASE0_DIR} \
   && read -r -d '' cmd0 <<EOF
 echo "*******STARTING 0TH PHASE********" \
 && echo "---------------" \
-&& wandb login ${wandb_token} \
 && set -x \
+&& wandb login ${wandb_token} \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
@@ -151,8 +151,8 @@ fi \
   && read -r -d '' cmd1 <<EOF
 echo "*******STARTING 1ST PHASE********" \
 && echo "---------------" \
-&& wandb login ${wandb_token} \
 && set -x \
+&& wandb login ${wandb_token} \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
@@ -193,8 +193,8 @@ fi \
   && read -r -d '' cmd2 <<EOF
 echo "*******STARTING 2ND PHASE********" \
 && echo "---------------" \
-&& wandb login ${wandb_token} \
 && set -x \
+&& wandb login ${wandb_token} \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
@@ -235,8 +235,8 @@ fi \
   && read -r -d '' cmd3 <<EOF
 echo "*******STARTING 3RD PHASE********" \
 && echo "---------------" \
-&& wandb login ${wandb_token} \
 && set -x \
+&& wandb login ${wandb_token} \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
@@ -277,8 +277,8 @@ fi \
   && read -r -d '' cmd4 <<EOF
 echo "*******STARTING 4TH PHASE********" \
 && echo "---------------" \
-&& wandb login ${wandb_token} \
 && set -x \
+&& wandb login ${wandb_token} \
 && source /workspace/NeMo/examples/nlp/machine_translation/wmt18_with_back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
