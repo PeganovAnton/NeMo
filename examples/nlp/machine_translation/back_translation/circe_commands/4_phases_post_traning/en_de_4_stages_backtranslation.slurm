@@ -16,6 +16,7 @@
 # Hyper params
 # Env Variable Setup
 set -x
+
 CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest"
 # Directories for manifests, data, etc.
 DATA_DIR='/gpfs/fs1/apeganov/datasets/wmt18'
@@ -113,7 +114,7 @@ mkdir -p ${PHASE0_DIR} \
 echo "*******STARTING 0TH PHASE********" \
 && echo "---------------" \
 && set -x \
-&& wandb login ${WANDB_TOKEN} \
+&& if [ "\${SLURM_PROCID}" -eq "0" ]; then wandb login ${WANDB_TOKEN}; fi \
 && source /workspace/NeMo/examples/nlp/machine_translation/back_translation/circe_commands/4_phases_post_traning/exports_en_de.sh \
 && python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
