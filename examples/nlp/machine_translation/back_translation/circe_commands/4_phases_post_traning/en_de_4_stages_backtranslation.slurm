@@ -119,7 +119,9 @@ echo "*******STARTING 0TH PHASE********" \
   ~trainer.max_epochs \
   +trainer.max_steps=${max_steps0}  \
   model.encoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.encoder_tokenizer.bpe_dropout=0.1 \
   model.decoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.decoder_tokenizer.bpe_dropout=0.1 \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${phase0_train_data}/originals.txt \
   model.train_ds.tgt_file_name=${phase0_train_data}/translations.txt \

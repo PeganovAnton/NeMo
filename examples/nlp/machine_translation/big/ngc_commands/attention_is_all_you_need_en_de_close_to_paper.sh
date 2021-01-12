@@ -21,7 +21,9 @@ git clone https://github.com/PeganovAnton/NeMo.git \
   trainer.gpus=8 \
   ~trainer.max_epochs \
   model.encoder_tokenizer.tokenizer_model=bpe_37k_en_de_yttm.model  \
+  model.encoder_tokenizer.bpe_dropout=0.1 \
   model.decoder_tokenizer.tokenizer_model=bpe_37k_en_de_yttm.model  \
+  model.decoder_tokenizer.bpe_dropout=0.1 \
   model.train_ds.src_file_name=/data/train.clean.en.shuffled \
   model.train_ds.tgt_file_name=/data/train.clean.de.shuffled \
   model.validation_ds.src_file_name=/data/wmt13-en-de.src \
