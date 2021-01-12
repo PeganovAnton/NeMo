@@ -9,6 +9,7 @@ git clone https://github.com/PeganovAnton/NeMo.git \
 && git checkout nmtmodel \
 && pip3 install -r requirements/requirements.txt \
 && pip3 install -r requirements/requirements_nlp.txt \
+&& pip3 install --upgrade wandb \
 && pip3 install webdataset \
 && wandb login $1 \
 && export nemo_path=$(pwd) \
