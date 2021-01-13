@@ -30,7 +30,7 @@ git clone https://github.com/PeganovAnton/NeMo.git \
   model.validation_ds.tgt_file_name=/data/wmt13-en-de.ref \
   model.test_ds.src_file_name=/data/wmt14-en-de.src \
   model.test_ds.tgt_file_name=/data/wmt14-en-de.ref \
-  model.optim.sched.warmup_steps=20000 \
+  +model.optim.sched.warmup_steps=20000 \
   ~model.optim.sched.warmup_ratio \
   model.optim.lr=0.0005  \
   +model.optim.weight_decay=0.0002 \
