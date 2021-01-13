@@ -20,6 +20,7 @@ git clone https://github.com/PeganovAnton/NeMo.git \
 && python train.py --config-name=aayn_big \
   trainer.gpus=8 \
   ~trainer.max_epochs \
+  +trainer.progress_bar_refresh_rate=0 \
   model.encoder_tokenizer.tokenizer_model=bpe_37k_en_de_yttm.model  \
   model.encoder_tokenizer.bpe_dropout=0.1 \
   model.decoder_tokenizer.tokenizer_model=bpe_37k_en_de_yttm.model  \
