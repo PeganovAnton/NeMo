@@ -26,10 +26,13 @@ git clone https://github.com/PeganovAnton/NeMo.git \
   model.decoder_tokenizer.bpe_dropout=0.1 \
   model.train_ds.src_file_name=/data/train.clean.en.shuffled \
   model.train_ds.tgt_file_name=/data/train.clean.de.shuffled \
+  model.train_ds.cache_ids=false \
   model.validation_ds.src_file_name=/data/wmt13-en-de.src \
   model.validation_ds.tgt_file_name=/data/wmt13-en-de.ref \
+  model.validation_ds.cache_ids=false \
   model.test_ds.src_file_name=/data/wmt14-en-de.src \
   model.test_ds.tgt_file_name=/data/wmt14-en-de.ref \
+  model.test_ds.cache_ids=false \
   +model.optim.sched.warmup_steps=20000 \
   ~model.optim.sched.warmup_ratio \
   model.optim.lr=0.0005  \
