@@ -36,7 +36,7 @@ git clone https://github.com/PeganovAnton/NeMo.git \
   model.optim.weight_decay=0.0002 \
   exp_manager.wandb_logger_kwargs.name=1st_trial \
   exp_manager.wandb_logger_kwargs.project=nmt_aayn_en_de_big_v0 \
-  exp_manager.exp_dir=/result \
+  +exp_manager.exp_dir=/result \
 && wmt13_translated=/result/newstest2013_en_translated.txt \
 && python3 nmt_transformer_infer.py \
   --model /result/best.ckpt \
