@@ -11,11 +11,11 @@ git clone https://github.com/PeganovAnton/NeMo.git \
 && pip3 install --upgrade wandb \
 && pip3 install webdataset \
 && wandb login $1 \
-&& export nemo_path=$(pwd) \
+&& export nemo_path="\$(pwd)" \
 && export HYDRA_FULL_ERROR=1 \
-&& echo "NeMo path: ${nemo_path}" \
-&& export PYTHONPATH="${nemo_path}" \
-&& cd  "${nemo_path}/examples/nlp/machine_translation" \
+&& echo "NeMo path: \${nemo_path}" \
+&& export PYTHONPATH="\${nemo_path}" \
+&& cd  "\${nemo_path}/examples/nlp/machine_translation" \
 && yttm bpe --data /data/train.clean.en-de.shuffled.common --model bpe_37k_en_de_yttm.model --vocab_size 37000 \
 && python train.py --config-name=aayn_big \
   trainer.gpus=8 \
@@ -41,16 +41,16 @@ git clone https://github.com/PeganovAnton/NeMo.git \
 && python3 nmt_transformer_infer.py \
   --model /result/best.ckpt \
   --srctext /data/wmt13_en_de.src \
-  --tgtout ${wmt13_translated} \
+  --tgtout "\${wmt13_translated}" \
   --target_lang de \
-&& cat ${wmt13_translated} | sacrebleu -t wmt13 -l en-de \
+&& cat "\${wmt13_translated}" | sacrebleu -t wmt13 -l en-de \
 && wmt14_translated=/result/newstest2014_en_translated.txt \
 && python3 nmt_transformer_infer.py \
   --model /result/best.ckpt \
   --srctext /data/wmt14_en_de.src \
-  --tgtout ${wmt14_translated} \
+  --tgtout "\${wmt14_translated}" \
   --target_lang de \
-&& cat ${wmt14_translated} | sacrebleu -t wmt14 -l en-de
+&& cat "\${wmt14_translated}" | sacrebleu -t wmt14 -l en-de
 EOF
 
 ngc batch run \
