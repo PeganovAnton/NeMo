@@ -36,7 +36,7 @@ git clone https://github.com/PeganovAnton/NeMo.git \
   model.test_ds.cache_ids=false \
   +model.optim.sched.warmup_steps=20000 \
   ~model.optim.sched.warmup_ratio \
-  model.optim.lr=0.0005  \
+  model.optim.lr=0.001  \
   model.optim.weight_decay=0.0002 \
   exp_manager.wandb_logger_kwargs.name=1st_trial \
   exp_manager.wandb_logger_kwargs.project=nmt_aayn_en_de_big_v0 \
