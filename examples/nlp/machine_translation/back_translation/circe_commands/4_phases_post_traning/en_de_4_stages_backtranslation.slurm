@@ -322,4 +322,4 @@ EOF
     bash -c "${cmd4}"
 fi
 
-set +
+set +x
