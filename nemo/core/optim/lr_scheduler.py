@@ -24,7 +24,7 @@ import torch.optim as optim
 import torch.optim.lr_scheduler as pt_scheduler
 import torch.utils.data.dataloader as dataloader
 from omegaconf import DictConfig, OmegaConf
-from torch.optim.lr_scheduler import _LRScheduler
+from torch.optim.lr_scheduler import ReduceLROnPlateau, _LRScheduler
 
 from nemo.core.config import SchedulerParams, get_scheduler_config, register_scheduler_params
 from nemo.utils import logging
@@ -362,6 +362,53 @@ class PolynomialHoldDecayAnnealing(WarmupHoldPolicy):
         return new_lrs
 
 
+class ReduceLROnPlateauWarmupHold(_LRScheduler):
+    def __init__(
+            self,
+            optimizer,
+            *,
+            mode='min',
+            factor=0.1,
+            patience=10,
+            threshold=1e-4,
+            threshold_mode='rel',
+            cooldown=0,
+            min_lr=0.0,
+            eps=1e-8,
+            verbose=False,
+            warmup_steps=None,
+            warmup_ratio=None,
+            hold_steps=None,
+            hold_ratio=None,
+            max_steps=None,
+            last_epoch=-1,
+    ):
+        self.reduce_lr_on_plateau = ReduceLROnPlateau(
+            self,
+            optimizer,
+            mode=mode,
+            factor=factor,
+            patience=patience,
+            threshold=threshold,
+            threshold_mode=threshold_mode,
+            cooldown=cooldown,
+            min_lr=min_lr,
+            eps=eps,
+            verbose=verbose,
+        )
+        WarmupHoldPolicy.__init__(
+            self,
+            optimizer,
+            warmup_steps=warmup_steps,
+            warmup_ratio=warmup_ratio,
+            hold_steps=hold_steps,
+            hold_ratio=hold_ratio,
+            max_steps=max_steps,
+            min_lr=min_lr,
+            last_epoch=last_epoch,
+        )
+
+
 def register_scheduler(name: str, scheduler: _LRScheduler, scheduler_params: SchedulerParams):
     """
     Checks if the scheduler name exists in the registry, and if it doesnt, adds it.
@@ -623,7 +670,7 @@ def prepare_lr_scheduler(
 
     # Wrap the schedule in PTL arguments to perform stepwise computation
     # Rather than epoch level computation
-    if isinstance(schedule, optim.lr_scheduler.ReduceLROnPlateau):
+    if isinstance(schedule, ReduceLROnPlateau):
         reduce_lr_on_plateau = True
     else:
         reduce_lr_on_plateau = False
@@ -678,5 +725,6 @@ AVAILABLE_SCHEDULERS = {
     'StepLR': pt_scheduler.StepLR,
     'ExponentialLR': pt_scheduler.ExponentialLR,
     'ReduceLROnPlateau': pt_scheduler.ReduceLROnPlateau,
+    'ReduceLROnPlateauWarmupHold': ReduceLROnPlateauWarmupHold,
     'CyclicLR': pt_scheduler.CyclicLR,
 }

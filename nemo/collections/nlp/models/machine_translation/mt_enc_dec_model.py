@@ -26,16 +26,17 @@ from omegaconf import DictConfig
 from pytorch_lightning import Trainer
 from pytorch_lightning.utilities import rank_zero_only
 from sacrebleu import corpus_bleu
-from sacremoses import MosesDetokenizer
+from sacremoses import MosesDetokenizer, MosesPunctNormalizer, MosesTokenizer
 
 from nemo.collections.common.losses import SmoothedCrossEntropyLoss
-from nemo.collections.common.metrics import Loss as LossMetric
+from nemo.collections.common.metrics import GlobalAverageLossMetric
 from nemo.collections.common.parts import transformer_weights_init
 from nemo.collections.nlp.data import TranslationDataset
 from nemo.collections.nlp.models.enc_dec_nlp_model import EncDecNLPModel
 from nemo.collections.nlp.models.machine_translation.mt_enc_dec_config import MTEncDecModelConfig
 from nemo.collections.nlp.modules.common import TokenClassifier
-from nemo.collections.nlp.modules.common.transformer import BeamSearchSequenceGenerator, TransformerEmbedding
+from nemo.collections.nlp.modules.common.transformer import BeamSearchSequenceGenerator
+from nemo.collections.nlp.modules.common.transformer.transformer import TransformerDecoderNM, TransformerEncoderNM
 from nemo.core.classes.common import typecheck
 from nemo.utils import logging, model_utils
 
@@ -54,27 +55,51 @@ class MTEncDecModel(EncDecNLPModel):
 
         super().__init__(cfg=cfg, trainer=trainer)
 
-        self.encoder = instantiate(cfg.encoder)
-        self.encoder_embedding = TransformerEmbedding(
+        # TODO: use get_encoder function with support for HF and Megatron
+        self.encoder = TransformerEncoderNM(
             vocab_size=self.encoder_vocab_size,
             hidden_size=cfg.encoder.hidden_size,
-            max_sequence_length=cfg.encoder_embedding.max_sequence_length,
-            num_token_types=cfg.encoder_embedding.num_token_types,
-            embedding_dropout=cfg.encoder_embedding.embedding_dropout,
-            learn_positional_encodings=cfg.encoder_embedding.learn_positional_encodings,
+            num_layers=cfg.encoder.num_layers,
+            inner_size=cfg.encoder.inner_size,
+            max_sequence_length=cfg.encoder.max_sequence_length
+            if hasattr(cfg.encoder, 'max_sequence_length')
+            else 512,
+            embedding_dropout=cfg.encoder.embedding_dropout if hasattr(cfg.encoder, 'embedding_dropout') else 0.0,
+            learn_positional_encodings=cfg.encoder.learn_positional_encodings
+            if hasattr(cfg.encoder, 'learn_positional_encodings')
+            else False,
+            num_attention_heads=cfg.encoder.num_attention_heads,
+            ffn_dropout=cfg.encoder.ffn_dropout,
+            attn_score_dropout=cfg.encoder.attn_score_dropout,
+            attn_layer_dropout=cfg.encoder.attn_layer_dropout,
+            hidden_act=cfg.encoder.hidden_act,
+            mask_future=cfg.encoder.mask_future,
+            pre_ln=cfg.encoder.pre_ln,
         )
-        self.decoder = instantiate(cfg.decoder)
-        self.decoder_embedding = TransformerEmbedding(
+
+        # TODO: user get_decoder function with support for HF and Megatron
+        self.decoder = TransformerDecoderNM(
             vocab_size=self.decoder_vocab_size,
             hidden_size=cfg.decoder.hidden_size,
-            max_sequence_length=cfg.decoder_embedding.max_sequence_length,
-            num_token_types=cfg.decoder_embedding.num_token_types,
-            embedding_dropout=cfg.decoder_embedding.embedding_dropout,
-            learn_positional_encodings=cfg.decoder_embedding.learn_positional_encodings,
+            num_layers=cfg.decoder.num_layers,
+            inner_size=cfg.decoder.inner_size,
+            max_sequence_length=cfg.decoder.max_sequence_length
+            if hasattr(cfg.decoder, 'max_sequence_length')
+            else 512,
+            embedding_dropout=cfg.decoder.embedding_dropout if hasattr(cfg.decoder, 'embedding_dropout') else 0.0,
+            learn_positional_encodings=cfg.decoder.learn_positional_encodings
+            if hasattr(cfg.decoder, 'learn_positional_encodings')
+            else False,
+            num_attention_heads=cfg.decoder.num_attention_heads,
+            ffn_dropout=cfg.decoder.ffn_dropout,
+            attn_score_dropout=cfg.decoder.attn_score_dropout,
+            attn_layer_dropout=cfg.decoder.attn_layer_dropout,
+            hidden_act=cfg.decoder.hidden_act,
+            pre_ln=cfg.decoder.pre_ln,
         )
 
         self.log_softmax = TokenClassifier(
-            hidden_size=cfg.decoder.hidden_size,
+            hidden_size=self.decoder.hidden_size,
             num_classes=self.decoder_vocab_size,
             activation=cfg.head.activation,
             log_softmax=cfg.head.log_softmax,
@@ -83,10 +108,10 @@ class MTEncDecModel(EncDecNLPModel):
         )
 
         self.beam_search = BeamSearchSequenceGenerator(
-            embedding=self.decoder_embedding,
-            decoder=self.decoder,
+            embedding=self.decoder.embedding,
+            decoder=self.decoder.decoder,
             log_softmax=self.log_softmax,
-            max_sequence_length=cfg.decoder_embedding.max_sequence_length,
+            max_sequence_length=self.decoder.max_sequence_length,
             beam_size=cfg.beam_size,
             bos=self.decoder_tokenizer.bos_id,
             pad=self.decoder_tokenizer.pad_id,
@@ -95,22 +120,19 @@ class MTEncDecModel(EncDecNLPModel):
             max_delta_length=cfg.max_generation_delta,
         )
 
-        self.eval_loss = LossMetric(dist_sync_on_step=False, take_avg_loss=True)
+        self.eval_loss = GlobalAverageLossMetric(dist_sync_on_step=False, take_avg_loss=True)
 
         # tie weights of embedding and softmax matrices
-        self.log_softmax.mlp.layer0.weight = self.decoder_embedding.token_embedding.weight
+        self.log_softmax.mlp.layer0.weight = self.decoder.embedding.token_embedding.weight
 
         # TODO: encoder and decoder with different hidden size?
-        std_init_range = 1 / cfg.encoder.hidden_size ** 0.5
+        std_init_range = 1 / self.encoder.hidden_size ** 0.5
         self.apply(lambda module: transformer_weights_init(module, std_init_range))
 
         self.loss_fn = SmoothedCrossEntropyLoss(
             pad_id=self.decoder_tokenizer.pad_id, label_smoothing=cfg.label_smoothing
         )
-
-        # Optimizer setup needs to happen after all model weights are ready
-        self.setup_optimization(cfg.optim)
-
+        self.eval_loss = GlobalAverageLossMetric(dist_sync_on_step=False, take_avg_loss=True)
         # self.training_perplexity = Perplexity(dist_sync_on_step=True)
         # self.eval_perplexity = Perplexity(compute_on_step=False)
 
@@ -131,11 +153,9 @@ class MTEncDecModel(EncDecNLPModel):
         Returns:
 
         """
-        src_embeddings = self.encoder_embedding(input_ids=src)
-        src_hiddens = self.encoder(src_embeddings, src_mask)
+        src_hiddens = self.encoder(src, src_mask)
         if tgt is not None:
-            tgt_embeddings = self.decoder_embedding(input_ids=tgt)
-            tgt_hiddens = self.decoder(tgt_embeddings, tgt_mask, src_hiddens, src_mask)
+            tgt_hiddens = self.decoder(tgt, tgt_mask, src_hiddens, src_mask)
             log_probs = self.log_softmax(hidden_states=tgt_hiddens)
         else:
             log_probs = None
@@ -290,33 +310,42 @@ class MTEncDecModel(EncDecNLPModel):
         )
 
     @torch.no_grad()
-    def translate(self, text: List[str], target_lang: str = 'en') -> List[str]:
+    def translate(self, text: List[str], source_lang: str = None, target_lang: str = None) -> List[str]:
         """
         Translates list of sentences from source language to target language.
         Should be regular text, this method performs its own tokenization/de-tokenization
         Args:
             text: list of strings to translate
-
+            source_lang: if not None, corresponding MosesTokenizer and MosesPunctNormalizer will be run
+            target_lang: if not None, corresponding MosesDecokenizer will be run
         Returns:
             list of translated strings
         """
         mode = self.training
-        detokenizer = MosesDetokenizer(lang=target_lang)
+        if source_lang != "None":
+            tokenizer = MosesTokenizer(lang=source_lang)
+            normalizer = MosesPunctNormalizer(lang=source_lang)
+        if target_lang != "None":
+            detokenizer = MosesDetokenizer(lang=target_lang)
         try:
             self.eval()
             res = []
             for txt in text:
+                if source_lang != "None":
+                    txt = normalizer.normalize(txt)
+                    txt = tokenizer.tokenize(txt, escape=False, return_str=True)
                 ids = self.encoder_tokenizer.text_to_ids(txt)
                 ids = [self.encoder_tokenizer.bos_id] + ids + [self.encoder_tokenizer.eos_id]
                 src = torch.Tensor(ids).long().to(self._device).unsqueeze(0)
                 src_mask = torch.ones_like(src)
-                src_embeddings = self.encoder_embedding(input_ids=src)
-                src_hiddens = self.encoder(src_embeddings, src_mask)
+                src_hiddens = self.encoder(input_ids=src, encoder_mask=src_mask)
                 beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
                 beam_results = self.filter_predicted_ids(beam_results)
                 translation_ids = beam_results.cpu()[0].numpy()
                 translation = self.decoder_tokenizer.ids_to_text(translation_ids)
-                res.append(detokenizer.detokenize(translation.split()))
+                if target_lang != "None":
+                    translation = detokenizer.detokenize(translation.split())
+                res.append(translation)
         finally:
             self.train(mode=mode)
         return res

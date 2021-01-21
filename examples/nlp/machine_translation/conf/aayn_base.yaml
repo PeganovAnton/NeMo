@@ -76,14 +76,11 @@ model:
     special_tokens: null
     bpe_dropout: ???
 
-  encoder_embedding:
+  encoder:
     max_sequence_length: 512
     num_token_types: 2
     embedding_dropout: 0.1
     learn_positional_encodings: false
-    _target_: nemo.collections.nlp.modules.common.transformer.TransformerEmbedding
-
-  encoder:
     hidden_size: 512
     num_layers: 6
     inner_size: 2048
@@ -94,16 +91,12 @@ model:
     hidden_act: relu
     mask_future: false
     pre_ln: false
-    _target_: nemo.collections.nlp.modules.common.transformer.TransformerEncoder
 
-  decoder_embedding:
+  decoder:
     max_sequence_length: 512
     num_token_types: 2
     embedding_dropout: 0.1
     learn_positional_encodings: false
-    _target_: nemo.collections.nlp.modules.common.transformer.TransformerEmbedding
-
-  decoder:
     hidden_size: 512
     inner_size: 2048
     num_layers: 6
@@ -113,17 +106,13 @@ model:
     attn_layer_dropout: 0.1
     hidden_act: relu
     pre_ln: false
-    _target_: nemo.collections.nlp.modules.common.transformer.TransformerDecoder
 
   head:
-    hidden_size: 512
-    num_classes: 37000
     num_layers: 1
     activation: relu
     log_softmax: true
     dropout: 0.0
     use_transformer_init: true
-    _target_: nemo.collections.nlp.modules.common.token_classifier.TokenClassifier
 
 trainer:
   gpus: 4
@@ -131,12 +120,11 @@ trainer:
   max_epochs: 200
   amp_level: O2 # O1/O2 for mixed precision
   precision: 16 # Should be set to 16 for O1 and O2, default is 16 as PT ignores it when am_level is O0
-  distributed_backend: ddp
+  accelerator: ddp
   checkpoint_callback: False
   logger: False
   log_every_n_steps: 50  # Interval of logging.
   check_val_every_n_epoch: 1
-  _target_: pytorch_lightning.Trainer
 
 exp_manager:
   name: AAYNBase

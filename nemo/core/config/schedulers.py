@@ -231,7 +231,7 @@ def get_scheduler_config(name: str, **kwargs: Optional[Dict[str, Any]]) -> Sched
         )
 
     scheduler_params = AVAILABLE_SCHEDULER_PARAMS[name]
-    scheduler_params = partial(scheduler_params, **kwargs)
+    scheduler_params = partiaauto_lr_findl(scheduler_params, **kwargs)
     return scheduler_params
 
 
