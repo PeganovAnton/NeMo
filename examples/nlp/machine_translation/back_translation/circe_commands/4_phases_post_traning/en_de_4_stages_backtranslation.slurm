@@ -137,7 +137,7 @@ echo "*******STARTING 0TH PHASE********" \
   exp_manager.wandb_logger_kwargs.project=nmt_en_de_back_translation_4_phases_v0 \
   +exp_manager.exp_dir=${phase0_dir} \
   +exp_manager.resume_if_exists=${resume0} \
-&& set + \
+&& set +x \
 && echo  "*******FINISHING 0TH PHASE********"
 EOF
   srun -o $OUTFILE0 -e $ERRFILE0 \
@@ -181,7 +181,7 @@ echo "*******STARTING 1ST PHASE********" \
   exp_manager.wandb_logger_kwargs.project=nmt_en_de_back_translation_4_phases_v0 \
   +exp_manager.exp_dir=${phase1_dir} \
   +exp_manager.resume_if_exists=${resume1} \
-&& set + \
+&& set +x \
 && echo  "*******FINISHING 1ST PHASE********"
 EOF
   srun -o $OUTFILE1 -e $ERRFILE1 \
@@ -225,7 +225,7 @@ echo "*******STARTING 2ND PHASE********" \
   exp_manager.wandb_logger_kwargs.project=nmt_en_de_back_translation_4_phases_v0 \
   +exp_manager.exp_dir=${phase2_dir} \
   +exp_manager.resume_if_exists=${resume2} \
-&& set + \
+&& set +x \
 && echo  "*******FINISHING 2ND PHASE********"
 EOF
   srun -o $OUTFILE2 -e $ERRFILE2 \
@@ -269,7 +269,7 @@ echo "*******STARTING 3RD PHASE********" \
   exp_manager.wandb_logger_kwargs.project=nmt_en_de_back_translation_4_phases_v0 \
   +exp_manager.exp_dir=${phase3_dir} \
   +exp_manager.resume_if_exists=${resume3} \
-&& set + \
+&& set +x \
 && echo  "*******FINISHING 3RD PHASE********"
 EOF
   srun -o $OUTFILE3 -e $ERRFILE3 \
@@ -313,7 +313,7 @@ echo "*******STARTING 4TH PHASE********" \
   exp_manager.wandb_logger_kwargs.project=nmt_en_de_back_translation_4_phases_v0 \
   +exp_manager.exp_dir=${phase4_dir} \
   +exp_manager.resume_if_exists=${resume4} \
-&& set + \
+&& set +x \
 && echo  "*******FINISHING 4TH PHASE********"
 EOF
   srun -o $OUTFILE4 -e $ERRFILE4 \
