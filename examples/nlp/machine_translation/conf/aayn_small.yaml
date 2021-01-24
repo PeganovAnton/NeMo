@@ -81,10 +81,10 @@ model:
     num_token_types: 2
     embedding_dropout: 0.1
     learn_positional_encodings: false
-    hidden_size: 64
+    hidden_size: 512
     num_layers: 2
-    inner_size: 128
-    num_attention_heads: 4
+    inner_size: 2048
+    num_attention_heads: 8
     ffn_dropout: 0.1
     attn_score_dropout: 0.1
     attn_layer_dropout: 0.1
@@ -97,10 +97,10 @@ model:
     num_token_types: 2
     embedding_dropout: 0.1
     learn_positional_encodings: false
-    hidden_size: 64
-    inner_size: 128
+    hidden_size: 512
+    inner_size: 2048
     num_layers: 2
-    num_attention_heads: 4
+    num_attention_heads: 8
     ffn_dropout: 0.1
     attn_score_dropout: 0.1
     attn_layer_dropout: 0.1

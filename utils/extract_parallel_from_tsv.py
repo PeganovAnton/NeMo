@@ -1,4 +1,5 @@
 import argparse
+import csv
 from pathlib import Path
 
 import pandas as pd
@@ -40,9 +41,9 @@ def get_args():
 
 def main():
     args =  get_args()
-    df = pd.read_csv(args.file_name, header=None, dtype=str, sep="\t")
-    df.to_csv(args.output1, columns=[f"X{args.col1}"], header=None, index=None)
-    df.to_csv(args.output2, columns=[f"X{args.col2}"], header=None, index=None)
+    df = pd.read_csv(args.file_name, header=None, dtype=str, sep='\t', quoting=csv.QUOTE_NONE)
+    df.to_csv(args.output1, columns=[args.col1], header=None, index=None, sep='\t')
+    df.to_csv(args.output2, columns=[args.col2], header=None, index=None, sep='\t')
 
 
 if __name__ == "__main__":
