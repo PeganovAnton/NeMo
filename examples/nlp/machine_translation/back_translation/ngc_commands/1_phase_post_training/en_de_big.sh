@@ -25,7 +25,6 @@ export PYTHONPATH="\${nemo_path}"
 cd  "\${nemo_path}/examples/nlp/machine_translation"
 num_gpus=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
 
-
 base_conf=wmt16/en_de_8gpu
 train_n_tokens_in_batch=16000
 max_epochs=100000

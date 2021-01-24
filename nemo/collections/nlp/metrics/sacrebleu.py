@@ -16,7 +16,10 @@ import torch
 from pytorch_lightning.metrics import Metric
 from torch.distributions.categorical import Categorical
 
-__all__ = ['Perplexity']
+__all__ = ['SacreBLEU']
+
+
+SacreBlEUConfig =
 
 
 class SacreBLEU(Metric):
