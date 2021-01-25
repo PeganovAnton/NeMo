@@ -45,7 +45,7 @@ def main():
                 pairs.append((ss.strip(), ts.strip()))
     pairs = list(set(pairs))
     random.shuffle(pairs)
-    with args.output_src.open() as sf, args.output_tgt.open() as tf:
+    with args.output_src.open('w') as sf, args.output_tgt.open('w') as tf:
         for p in pairs:
             sf.write(p[0] + '\n')
             tf.write(p[1] + '\n')
