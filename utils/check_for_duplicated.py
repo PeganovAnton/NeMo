@@ -27,8 +27,10 @@ def get_args():
     args = parser.parse_args()
     args.src1 = args.src1.expanduser()
     args.src2 = args.src2.expanduser()
-    args.tgt1 = args.tgt1.expanduser()
-    args.tgt2 = args.tgt2.expanduser()
+    if args.tgt1 is not None:
+        args.tgt1 = args.tgt1.expanduser()
+    if args.tgt2 is not None:
+        args.tgt2 = args.tgt2.expanduser()
     return args
 
 
