@@ -51,6 +51,7 @@ def main():
         pairs = list(pairs)
         order = list(range(len(pairs)))
         random.shuffle(order)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
         with args.output_src.open() as sf, args.output_tgt.open() as tf:
             for i in order:
                 p = pairs[i]
@@ -65,6 +66,7 @@ def main():
         sentences = list(sentences)
         order = list(range(len(sentences)))
         random.shuffle(order)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
         with args.output_src.open() as sf:
             for i in order:
                 sf.write(sentences[i] + '\n')
