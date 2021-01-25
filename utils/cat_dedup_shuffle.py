@@ -43,24 +43,24 @@ def main():
     args = get_args()
     random.seed(42)
     if args.tgt is not None:
-        pairs = []
+        pairs = set()
         for s, t in zip(args.src, args.tgt):
             with s.open() as sf, t.open() as tf:
                 for ss, ts in zip(sf, tf):
-                    pairs.append((ss.strip(), ts.strip()))
-        pairs = list(set(pairs))
+                    pairs.add((ss.strip(), ts.strip()))
+        pairs = list(pairs)
         random.shuffle(pairs)
         with args.output_src.open() as sf, args.output_tgt.open() as tf:
             for p in pairs:
                 sf.write(p[0] + '\n')
                 tf.write(p[1] + '\n')
     else:
-        sentences = []
+        sentences = set()
         for s in args.src:
             with s.open() as sf:
                 for ss in sf:
-                    sentences.append((ss.strip()))
-        sentences = list(set(sentences))
+                    sentences.add((ss.strip()))
+        sentences = list(sentences)
         random.shuffle(sentences)
         with args.output_src.open() as sf:
             for s in sentences:
