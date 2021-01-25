@@ -40,7 +40,7 @@ def main():
             args.tgt2.open() as tgt2:
         s1 = set(zip(src1.readlines(), tgt1.readlines()))
         s2 = set(zip(src2.readlines(), tgt2.readlines()))
-    print(f"Number of duplicates between ({args.src1}, {args.tgt1}) and ({args.src2} and {args.tgt2}):", len(s1 & s2))
+    print(f"Number of duplicates between ({args.src1}, {args.tgt1}) and ({args.src2}, {args.tgt2}):", len(s1 & s2))
 
 
 if __name__ == "__main__":
