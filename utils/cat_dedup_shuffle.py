@@ -49,12 +49,10 @@ def main():
                 for ss, ts in zip(sf, tf):
                     pairs.add((ss.strip(), ts.strip()))
         pairs = list(pairs)
-        order = list(range(len(pairs)))
-        random.shuffle(order)
+        random.shuffle(pairs)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         with args.output_src.open() as sf, args.output_tgt.open() as tf:
-            for i in order:
-                p = pairs[i]
+            for p in pairs:
                 sf.write(p[0] + '\n')
                 tf.write(p[1] + '\n')
     else:
@@ -64,12 +62,11 @@ def main():
                 for ss in sf:
                     sentences.add((ss.strip()))
         sentences = list(sentences)
-        order = list(range(len(sentences)))
-        random.shuffle(order)
+        random.shuffle(sentences)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         with args.output_src.open() as sf:
-            for i in order:
-                sf.write(sentences[i] + '\n')
+            for s in sentences:
+                sf.write(s + '\n')
 
 
 if __name__ == "__main__":
