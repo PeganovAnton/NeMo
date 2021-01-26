@@ -1,6 +1,10 @@
 import argparse
+import csv
 import random
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 
 def get_args():
@@ -56,17 +60,23 @@ def main():
                 sf.write(p[0] + '\n')
                 tf.write(p[1] + '\n')
     else:
-        sentences = set()
-        for s in args.src:
-            with s.open() as sf:
-                for ss in sf:
-                    sentences.add((ss.strip()))
-        sentences = list(sentences)
-        random.shuffle(sentences)
+        #df = pd.read_csv(args.src, header=None, dtype=str, sep='\t', quoting=csv.QUOTE_NONE)
+        data = np.loadtxt(args.src, dtype='S')
+        unique = pd.unique(data)
+        np.random.shuffle(unique)
+        # sentences = set()
+        # for s in args.src:
+        #     with s.open() as sf:
+        #         for ss in sf:
+        #             sentences.add((ss.strip()))
+        # sentences = list(sentences)
+        # random.shuffle(sentences)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         with args.output_src.open() as sf:
-            for s in sentences:
-                sf.write(s + '\n')
+            # for s in sentences:
+            #     sf.write(s + '\n')
+            for s in unique:
+                sf.write(s)
 
 
 if __name__ == "__main__":
