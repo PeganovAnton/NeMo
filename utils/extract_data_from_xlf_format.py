@@ -23,7 +23,7 @@ def main():
     m = re.match(r'\{(.*)\}', root.tag)
     namespaces = {"doc": m.group(1)}
     src_lang = root.get("srcLang")
-    tgt_lang = root.get("tgtLang")
+    tgt_lang = root.get("trgLang")
     dir_ = args.input.parent
     src_path = dir_ / Path(src_lang)
     tgt_path = dir_ / Path(tgt_lang)

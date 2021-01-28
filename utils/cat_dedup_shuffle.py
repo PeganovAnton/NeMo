@@ -60,21 +60,13 @@ def main():
                 sf.write(p[0] + '\n')
                 tf.write(p[1] + '\n')
     else:
-        #df = pd.read_csv(args.src, header=None, dtype=str, sep='\t', quoting=csv.QUOTE_NONE)
-        data = np.loadtxt(args.src, dtype='S')
+        data = np.concatenate([np.loadtxt(fn, dtype=str, delimiter='\t', encoding='utf-8') for fn in args.src], axis=0)
+        print("Number of sentences before deduplication:", data.shape[0])
         unique = pd.unique(data)
+        print("Number of sentences after deduplication:", unique.shape[0])
         np.random.shuffle(unique)
-        # sentences = set()
-        # for s in args.src:
-        #     with s.open() as sf:
-        #         for ss in sf:
-        #             sentences.add((ss.strip()))
-        # sentences = list(sentences)
-        # random.shuffle(sentences)
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        with args.output_src.open() as sf:
-            # for s in sentences:
-            #     sf.write(s + '\n')
+        args.output_src.parent.mkdir(parents=True, exist_ok=True)
+        with args.output_src.open('w') as sf:
             for s in unique:
                 sf.write(s)
 
