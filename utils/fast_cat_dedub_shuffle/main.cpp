@@ -1,7 +1,5 @@
-#include <codecvt>
 #include <fstream>
 #include <iostream>
-#include <locale>
 #include <unordered_set>
 #include <string>
 #include <utility>
@@ -13,10 +11,6 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-/*    const std::locale empty_locale = std::locale::empty();
-    typedef std::codecvt_utf8<wchar_t> converter_type;
-    const converter_type* converter = new converter_type;
-    const std::locale utf8_locale = std::locale(empty_locale, converter);*/
     string tmp;
     unordered_set<string> data;
     int tnu = 0;
