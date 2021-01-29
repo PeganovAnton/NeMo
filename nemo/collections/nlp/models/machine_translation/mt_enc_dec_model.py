@@ -197,7 +197,6 @@ class MTEncDecModel(EncDecNLPModel):
         log_probs, beam_results = self(src_ids, src_mask, tgt_ids, tgt_mask)
         eval_loss = self.loss_fn(log_probs=log_probs, labels=labels)
         self.eval_loss(loss=eval_loss, num_measurements=log_probs.shape[0] * log_probs.shape[1])
-        # self.eval_perplexity(logits=log_probs)
         translations = [self.decoder_tokenizer.ids_to_text(tr) for tr in beam_results.cpu().numpy()]
         np_tgt = tgt_ids.cpu().numpy()
         ground_truths = [self.decoder_tokenizer.ids_to_text(tgt) for tgt in np_tgt]
@@ -231,10 +230,10 @@ class MTEncDecModel(EncDecNLPModel):
 
     def eval_epoch_end(self, outputs, mode):
         eval_loss = self.eval_loss.compute()
-        # eval_perplexity = self.eval_perplexity.compute()
         translations = list(itertools.chain(*[x['translations'] for x in outputs]))
         ground_truths = list(itertools.chain(*[x['ground_truths'] for x in outputs]))
-        # __TODO__ add target language so detokenizer can be lang specific.
+
+        # TODO: add target language so detokenizer can be lang specific.
         detokenizer = MosesDetokenizer()
         translations = [detokenizer.detokenize(sent.split()) for sent in translations]
         ground_truths = [detokenizer.detokenize(sent.split()) for sent in ground_truths]
@@ -250,7 +249,7 @@ class MTEncDecModel(EncDecNLPModel):
             logging.info(f"    Prediction:   {translations[ind]}")
             logging.info(f"    Ground Truth: {ground_truths[ind]}")
 
-        ans = {f"{mode}_loss": eval_loss.cpu().numpy().item(), f"{mode}_sacreBLEU": sacre_bleu.score}  # , f"{mode}_ppl": eval_perplexity}
+        ans = {f"{mode}_loss": eval_loss, f"{mode}_sacreBLEU": sacre_bleu.score}
         ans['log'] = dict(ans)
         return ans
 

@@ -1,10 +1,15 @@
 import argparse
+import logging
+import pickle
 import shutil
 import tarfile
 import warnings
 from pathlib import Path
 
 import torch
+
+
+logging.getLogger().setLevel(logging.INFO)
 
 
 def get_args():
@@ -44,13 +49,15 @@ def fix_weights_dict(weights_dict):
 def fix_nemo_checkpoint(args):
     tmp_dir = Path("tmp")
     with tarfile.open(args.input, "r:gz") as tar:
-        init_names = tar.getnames()
+        init_names = [n for n in tar.getnames() if n != '.']
         tar.extractall(tmp_dir)
     model_names_file = None
     config_file_name = None
     tokenizer_file_name = None
     unknown_file_names = []
+    logging.info(f"Content of archive {args.input}")
     for n in init_names:
+        logging.info(f"{n}")
         if n.endswith('.ckpt'):
             if model_names_file is None:
                 model_names_file = n
@@ -70,26 +77,36 @@ def fix_nemo_checkpoint(args):
         else:
             warnings.warn(f"Unexpected file {n} is found in archive {args.input}.")
             unknown_file_names.append(n)
-    weights_dict = fix_weights_dict(torch.load(model_names_file))
+    try:
+        weights_dict = fix_weights_dict(torch.load(tmp_dir / model_names_file))
+    except pickle.UnpicklingError:
+        raise ValueError(f".ckpt file in archive {args.input} is brocken. Cannot unpickle")
     torch.save(weights_dict, model_names_file)
     with tarfile.open(args.output, "w:gz") as tar:
-        tar.add(model_names_file)
-        tar.add(config_file_name)
+        logging.info(f"Adding {model_names_file} to archive {args.output}")
+        tar.add(tmp_dir / model_names_file, model_names_file)
+        logging.info(f"Adding {config_file_name} to archive {args.output}")
+        tar.add(tmp_dir / config_file_name, config_file_name)
         if tokenizer_file_name is not None:
-            tar.add(tokenizer_file_name)
+            logging.info(f"Adding {tokenizer_file_name} to archive {args.output}")
+            tar.add(tmp_dir / tokenizer_file_name, tokenizer_file_name)
         for n in unknown_file_names:
-            tar.add(n)
+            logging.info(f"Adding {n} to archive {args.output}")
+            tar.add(tmp_dir / n, n)
     shutil.rmtree(tmp_dir)
 
 
 def fix_torch_checkpoint(args):
-    weights_dict = fix_weights_dict(torch.load(args.input))
+    try:
+        weights_dict = fix_weights_dict(torch.load(args.input))
+    except pickle.UnpicklingError:
+        raise ValueError(f".ckpt file {args.input} is broken")
     torch.save(weights_dict, args.output)
 
 
 def main():
     args = get_args()
-    if args.input.endswith(".nemo") or args.input.endswith(".ckpt"):
+    if args.input.suffix in ['.tgz', '.gz', '.nemo']:
         fix_nemo_checkpoint(args)
     else:
         fix_torch_checkpoint(args)
