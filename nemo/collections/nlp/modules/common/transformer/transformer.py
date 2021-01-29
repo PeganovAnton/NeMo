@@ -21,6 +21,7 @@ from nemo.collections.nlp.modules.common.encoder_module import EncoderModule
 from nemo.collections.nlp.modules.common.transformer.transformer_decoders import TransformerDecoder
 from nemo.collections.nlp.modules.common.transformer.transformer_encoders import TransformerEncoder
 from nemo.collections.nlp.modules.common.transformer.transformer_modules import TransformerEmbedding
+from nemo.core.classes.common import typecheck
 
 
 @dataclass
@@ -96,6 +97,7 @@ class TransformerEncoderNM(EncoderModule):
             pre_ln=pre_ln,
         )
 
+    # @typecheck
     def forward(self, input_ids, encoder_mask):
         embeddings = self._embedding(input_ids)
         encoder_hidden_states = self._encoder(embeddings, encoder_mask)
@@ -151,6 +153,7 @@ class TransformerDecoderNM(DecoderModule):
             pre_ln=pre_ln,
         )
 
+    # @typecheck
     def forward(self, input_ids, decoder_mask, encoder_embeddings, encoder_mask):
         decoder_embeddings = self._embedding(input_ids)
         decoder_hidden_states = self._decoder(decoder_embeddings, decoder_mask, encoder_embeddings, encoder_mask)

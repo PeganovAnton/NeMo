@@ -1,13 +1,13 @@
 model:
   beam_size: 4
   len_pen: 0.6
-  max_generation_delta: 50
+  max_generation_delta: 5
   label_smoothing: 0.1
 
   train_ds:
     src_file_name: ???
     tgt_file_name: ???
-    tokens_in_batch: 16384
+    tokens_in_batch: 512
     clean: true
     max_seq_length: 512
     cache_ids: true
@@ -67,14 +67,12 @@ model:
     tokenizer_model: ???
     vocab_file: null
     special_tokens: null
-    bpe_dropout: ???
 
   decoder_tokenizer:
     tokenizer_name: yttm
     tokenizer_model: ???
     vocab_file: null
     special_tokens: null
-    bpe_dropout: ???
 
   encoder:
     max_sequence_length: 512
@@ -137,3 +135,4 @@ exp_manager:
   checkpoint_callback_params:
     monitor: val_sacreBLEU
     mode: max
+
