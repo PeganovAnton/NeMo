@@ -116,7 +116,7 @@ def get_edges_in_1_file(fn, num_parts):
     return [edges[int(i*num_lines/num_parts)] for i in range(num_parts)] + [edges[-1]], num_lines
 
 
-def get_edges(src_fn, tgt_fn, num_parts):
+def get_edges_and_num_lines(src_fn, tgt_fn, num_parts):
     src_edges, src_num_lines = get_edges_in_1_file(src_fn, num_parts)
     assert num_parts + 1 == len(src_edges)
     src_edges = [(src_edges[i], src_edges[i+1]) for i in range(len(src_edges)-1)]
@@ -130,7 +130,7 @@ def get_edges(src_fn, tgt_fn, num_parts):
     else:
         tgt_edges = [None] * num_parts
     assert len(src_edges) == num_parts
-    return src_edges, tgt_edges
+    return src_edges, tgt_edges, src_num_lines
 
 
 def filter_by_lang(args):
@@ -206,7 +206,7 @@ def filter_by_lang(args):
                     )
                 src_l, tgt_l, i = in_src.readline(), in_tgt.readline(), i + 1
                 with counter.get_lock():
-                    counter += 1
+                    counter.value += 1
 
 def _cat_results(out_file, tmp_dir):
     file_name_pattern = re.compile(r"/rank([1-9][0-9]*)|0$")
@@ -261,10 +261,10 @@ def main():
         tmp_removed_tgt = tmp_removed / Path("tgt")
         tmp_removed_tgt.mkdir(parents=True, exist_ok=True)
     num_jobs = mp.cpu_count() if args.num_jobs is None else args.num_jobs
-    src_edges, tgt_edges = get_edges(args.input_src, args.input_tgt, num_jobs)
+    src_edges, tgt_edges, num_lines = get_edges_and_num_lines(args.input_src, args.input_tgt, num_jobs)
     global counter
     counter = mp.Value('i', 0)
-    t = tqdm(total=src_edges[-1][-1], desc="processed lines / total number of lines")
+    t = tqdm(total=num_lines, desc="processed lines / total number of lines")
     with mp.Pool(num_jobs, initializer=init, initargs=(counter,)) as pool:
         queues = [mp.Queue() for _ in range(num_jobs)]
         async_result = pool.map_async(
@@ -288,9 +288,9 @@ def main():
             ]
         )
         while not async_result.ready():
-            t.update(counter)
+            t.update(counter.value)
             sleep(0.1)
-        t.update(counter)
+        t.update(counter.value)
 
     cat_results(
         [args.output_src, args.output_tgt, args.removed_src, args.removed_tgt],
