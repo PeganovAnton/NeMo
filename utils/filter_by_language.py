@@ -1,4 +1,8 @@
 import argparse
+import multiprocessing as mp
+import os
+import re
+import shutil
 import warnings
 from pathlib import Path
 
@@ -77,35 +81,188 @@ def get_lang(line, fn, line_num):
     return lang
 
 
-def main():
-    args = get_args()
-    count = 0
-    if args.input_tgt is None:
-        with open(args.input_src) as in_f, open(args.ouptut, 'w') as out_f:
+def get_edges_in_1_file(fn, num_parts):
+    num_lines = 0
+    edges = [0]
+    with open(fn) as f:
+        while True:
+            c = f.read(1)
+            if not c:
+                break
+            if c == '\n':
+                num_lines += 1
+                edges.append(f.tell()+1)
+    if edges[-1] >= f.tell():
+        edges.pop()
+        num_lines -= 1
+    edges.append(f.tell()+1)
+    return [edges[int(i*num_lines/num_parts)] for i in range(num_parts)], num_lines
+
+
+
+def get_edges(src_fn, tgt_fn, num_parts):
+    src_edges, src_num_lines = get_edges_in_1_file(src_fn, num_parts)
+    assert num_parts == len(src_edges) + 1
+    src_edges = [(src_edges[i], src_edges[i+1]) for i in range(len(src_edges)-1)]
+    if tgt_fn is not None:
+        tgt_edges, tgt_num_lines = get_edges_in_1_file(tgt_fn, num_parts)
+        tgt_edges = [(tgt_edges[i], tgt_edges[i + 1]) for i in range(len(tgt_edges) - 1)]
+        if tgt_num_lines != src_num_lines:
+            raise ValueError(f"Source {repr(src_fn)} and target {repr(tgt_fn)} files have different lengths "
+                             f"{src_num_lines} and {tgt_num_lines} correspondingly.")
+
+    else:
+        tgt_edges = [None] * num_parts
+    assert len(src_edges) == num_parts
+    return src_edges, tgt_edges
+
+
+def filter_by_lang(
+        src_edges,
+        tgt_edges,
+        input_src,
+        input_tgt,
+        filtered_dir_src,
+        filtered_dir_tgt,
+        removed_dir_src,
+        removed_dir_tgt,
+        source_lang,
+        target_lang,
+        rank,
+):
+    output_src = filtered_dir_src / Path(f"rank{rank}")
+    output_src_removed = removed_dir_src / Path(f"rank{rank}")
+    if input_tgt is None:
+        if tgt_edges is not None:
+            warnings.warn("If no input target `tgt_edges` argument is expected to be `None`")
+        with open(input_src) as in_f, open(output_src, 'w') as out_f, open(output_src_removed, 'w') as out_r_f:
+            in_f.seek(src_edges[0])
             for i, l in enumerate(in_f):
                 l = l.strip()
-                in_lang = get_lang(l, args.input_src, i)
+                in_lang = get_lang(l, input_src, i)
                 if in_lang is None:
+                    out_r_f.write(l + '\n')
                     continue
-                if in_lang == args.input_lang:
-                    count += 1
+                if in_lang == source_lang:
                     out_f.write(l + '\n')
+                else:
+                    out_r_f.write(l + '\n')
+                if in_f.tell() >= src_edges[1]:
+                    break
     else:
-        with open(args.input_src) as in_src, open(args.input_tgt) as in_tgt, open(args.output_src, 'w') as out_src, \
-                open(args.output_tgt, 'w') as out_tgt:
+        output_tgt = filtered_dir_tgt / Path(f"rank{rank}")
+        output_tgt_removed = removed_dir_tgt / Path(f"rank{rank}")
+        with open(input_src) as in_src, open(input_tgt) as in_tgt, open(output_src, 'w') as out_src, \
+                open(output_tgt, 'w') as out_tgt, open(output_src_removed, 'w') as out_r_src, \
+                open(output_tgt_removed, 'w') as out_r_tgt:
+            in_src.seek(src_edges[0])
+            out_src.seek(tgt_edges[0])
             for i, (src_l, tgt_l) in enumerate(zip(in_src, in_tgt)):
                 src_l = src_l.strip()
                 tgt_l = tgt_l.strip()
-                src_lang = get_lang(src_l, args.input_src, i)
+                src_lang = get_lang(src_l, input_src, i)
                 if src_lang is None:
+                    out_r_src.write(src_l + '\n')
+                    out_r_tgt.write(tgt_l + '\n')
                     continue
-                tgt_lang = get_lang(tgt_l, args.input_tgt, i)
+                tgt_lang = get_lang(tgt_l, input_tgt, i)
                 if tgt_lang is None:
+                    out_r_src.write(src_l + '\n')
+                    out_r_tgt.write(tgt_l + '\n')
                     continue
-                if src_lang == args.source_lang and tgt_lang == args.target_lang:
-                    count += 1
+                if src_lang == source_lang and tgt_lang == target_lang:
                     out_src.write(src_l + '\n')
                     out_tgt.write(tgt_l + '\n')
+                else:
+                    out_r_src.write(src_l + '\n')
+                    out_r_tgt.write(tgt_l + '\n')
+                if in_src.tell() >= src_edges[1]:
+                    if in_tgt.tell() < tgt_edges[1]:
+                        raise ValueError(
+                            f"Edges of target and source has to be reached simultaneously, whereas "
+                            f"in_src.tell()={in_src.tell()}, in_tgt.tell()={in_tgt.tell()}, "
+                            f"src_edges[1]={src_edges[1]}, tgt_edges[1]={tgt_edges[1]}."
+                        )
+                    break
+                if in_tgt.tell() >= tgt_edges[1]:
+                    raise ValueError(
+                        f"Edges of target and source has to be reached simultaneously, whereas "
+                        f"in_src.tell()={in_src.tell()}, in_tgt.tell()={in_tgt.tell()}, "
+                        f"src_edges[1]={src_edges[1]}, tgt_edges[1]={tgt_edges[1]}."
+                    )
+
+
+def _cat_results(out_file, tmp_dir):
+    file_name_pattern = re.compile(r"/rank[1-9][\d]*$")
+    with out_file.open('w') as out_f:
+        for f in tmp_dir.iterdir():
+            if not f.is_file():
+                warnings.warn(f"Unexpected not file {f}")
+            elif not file_name_pattern.search(str(f)):
+                warnings.warn(f"Unexpected file {f}")
+            else:
+                with f.open('r') as in_f:
+                    for l in in_f:
+                        out_f.write(l)
+
+
+def cat_results(out_files, tmp_dirs):
+    for o_f, t_d in zip(out_files, tmp_dirs):
+        if o_f is None or t_d is None:
+            if o_f is not None or t_d is not None:
+                warnings.warn(
+                    f"Both output file and tmp directory expected to be `None` whereas tmp directory is {t_d} "
+                    f"and output file is {o_f}."
+                )
+        _cat_results(o_f, t_d)
+
+
+def main():
+    args = get_args()
+    tmp_dir = Path("tmp")
+    tmp_filtered = tmp_dir / Path("filtered")
+    tmp_filtered_src = tmp_filtered / Path("src")
+    tmp_filtered_src.mkdir(parents=True, exist_ok=True)
+    if args.input_tgt is None:
+        tmp_filtered_tgt = None
+    else:
+        tmp_filtered_tgt = tmp_filtered / Path("tgt")
+        tmp_filtered_tgt.mkdir(parents=True, exist_ok=True)
+    tmp_removed = tmp_dir / Path("removed")
+    tmp_removed_src = tmp_removed / Path("src")
+    tmp_removed_src.mkdir(parents=True, exist_ok=True)
+    if args.input_tgt is None:
+        tmp_removed_tgt = None
+    else:
+        tmp_removed_tgt = tmp_removed / Path("tgt")
+        tmp_removed_tgt.mkdir(parents=True, exist_ok=True)
+    num_cpu = mp.cpu_count()
+    src_edges, tgt_edges = get_edges(args.input_src, args.input_tgt, num_cpu)
+    with mp.Pool(num_cpu) as pool:
+        pool.map(
+            filter_by_lang,
+            [
+                (
+                    se,
+                    te,
+                    args.input_src,
+                    args.input_target,
+                    tmp_filtered_src,
+                    tmp_filtered_tgt,
+                    tmp_removed_src,
+                    tmp_removed_tgt,
+                    args.source_lang,
+                    args.target_lang,
+                    rank,
+                )
+                for rank, (se, te) in enumerate(zip(src_edges, tgt_edges))
+            ]
+        )
+    cat_results(
+        [args.output_src, args.output_tgt, args.removed_src, args.removed_tgt],
+        [tmp_filtered_src, tmp_filtered_tgt, tmp_removed_src, tmp_removed_tgt]
+    )
+    shutil.rmtree(tmp_dir)
 
 
 if __name__ == "__main__":
