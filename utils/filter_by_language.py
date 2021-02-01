@@ -5,9 +5,11 @@ import re
 import shutil
 import warnings
 from pathlib import Path
+from time import sleep
 
 from langdetect import detect
 from langdetect.lang_detect_exception import LangDetectException
+from tqdm import tqdm
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -144,7 +146,9 @@ def filter_by_lang(args):
         source_lang,
         target_lang,
         rank,
+        q,
     ) = args
+    global counter
     output_src = filtered_dir_src / Path(f"rank{rank}")
     output_src_removed = removed_dir_src / Path(f"rank{rank}")
     if input_tgt is None:
@@ -163,6 +167,8 @@ def filter_by_lang(args):
                 if in_f.tell() >= src_edges[1]:
                     break
                 i, l = i+1, in_f.readline()
+                with counter.get_lock():
+                    counter += 1
     else:
         output_tgt = filtered_dir_tgt / Path(f"rank{rank}")
         output_tgt_removed = removed_dir_tgt / Path(f"rank{rank}")
@@ -199,6 +205,8 @@ def filter_by_lang(args):
                         f"src_edges[1]={src_edges[1]}, tgt_edges[1]={tgt_edges[1]}."
                     )
                 src_l, tgt_l, i = in_src.readline(), in_tgt.readline(), i + 1
+                with counter.get_lock():
+                    counter += 1
 
 def _cat_results(out_file, tmp_dir):
     file_name_pattern = re.compile(r"/rank([1-9][0-9]*)|0$")
@@ -225,6 +233,14 @@ def cat_results(out_files, tmp_dirs):
         _cat_results(o_f, t_d)
 
 
+counter = None
+
+
+def init(args):
+    global counter
+    counter = args
+
+
 def main():
     args = get_args()
     tmp_dir = Path("tmp")
@@ -246,8 +262,12 @@ def main():
         tmp_removed_tgt.mkdir(parents=True, exist_ok=True)
     num_jobs = mp.cpu_count() if args.num_jobs is None else args.num_jobs
     src_edges, tgt_edges = get_edges(args.input_src, args.input_tgt, num_jobs)
-    with mp.Pool(num_jobs) as pool:
-        pool.map(
+    global counter
+    counter = mp.Value('i', 0)
+    t = tqdm(total=src_edges[-1][-1], desc="processed lines / total number of lines")
+    with mp.Pool(num_jobs, initializer=init, initargs=(counter,)) as pool:
+        queues = [mp.Queue() for _ in range(num_jobs)]
+        async_result = pool.map_async(
             filter_by_lang,
             [
                 (
@@ -262,10 +282,16 @@ def main():
                     args.source_lang,
                     args.target_lang,
                     rank,
+                    queues[rank],
                 )
                 for rank, (se, te) in enumerate(zip(src_edges, tgt_edges))
             ]
         )
+        while not async_result.ready():
+            t.update(counter)
+            sleep(0.1)
+        t.update(counter)
+
     cat_results(
         [args.output_src, args.output_tgt, args.removed_src, args.removed_tgt],
         [tmp_filtered_src, tmp_filtered_tgt, tmp_removed_src, tmp_removed_tgt]
