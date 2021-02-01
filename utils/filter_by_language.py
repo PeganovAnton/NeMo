@@ -109,9 +109,9 @@ def get_edges_in_1_file(fn, num_parts):
                 break
             if c == '\n':
                 num_lines += 1
-                edges.append(f.tell()+1)
+                edges.append(f.tell())
         if edges[-1] < f.tell():
-            edges.append(f.tell()+1)
+            edges.append(f.tell())
             num_lines += 1
     return [edges[int(i*num_lines/num_parts)] for i in range(num_parts)] + [edges[-1]], num_lines
 
@@ -146,7 +146,6 @@ def filter_by_lang(args):
         source_lang,
         target_lang,
         rank,
-        q,
     ) = args
     global counter
     output_src = filtered_dir_src / Path(f"rank{rank}")
@@ -178,6 +177,8 @@ def filter_by_lang(args):
             in_src.seek(src_edges[0])
             in_tgt.seek(tgt_edges[0])
             src_l, tgt_l, i = in_src.readline(), in_tgt.readline(), 0
+            with counter.get_lock():
+                counter.value += 1
             while src_l and tgt_l:
                 src_l = src_l.strip()
                 tgt_l = tgt_l.strip()
@@ -266,7 +267,6 @@ def main():
     counter = mp.Value('i', 0)
     t = tqdm(total=num_lines, desc="processed lines / total number of lines")
     with mp.Pool(num_jobs, initializer=init, initargs=(counter,)) as pool:
-        queues = [mp.Queue() for _ in range(num_jobs)]
         async_result = pool.map_async(
             filter_by_lang,
             [
@@ -282,13 +282,14 @@ def main():
                     args.source_lang,
                     args.target_lang,
                     rank,
-                    queues[rank],
                 )
                 for rank, (se, te) in enumerate(zip(src_edges, tgt_edges))
             ]
         )
         while not async_result.ready():
             t.update(counter.value)
+            with counter.get_lock():
+                counter.value = 0
             sleep(0.1)
         t.update(counter.value)
 
