@@ -1,12 +1,15 @@
 import argparse
+import logging
 import multiprocessing as mp
-import os
 import re
 import shutil
 import warnings
 from pathlib import Path
 
 from langdetect import detect
+
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def get_args():
@@ -43,14 +46,14 @@ def get_args():
         help="Output language. See https://github.com/Mimino666/langdetect."
     )
     parser.add_argument(
-        "removed_tgt",
-        help="Path to file where removed target lines will be saved",
+        "removed_src",
+        help="Path to file where removed source lines will be saved",
         type=Path,
     )
     parser.add_argument(
-        "--removed-src",
+        "--removed-tgt",
         "-r",
-        help="Path to file where removed source lines will be saved",
+        help="Path to file where removed target lines will be saved",
         type=Path,
     )
     args = parser.parse_args()
@@ -72,11 +75,11 @@ def get_args():
     return args
 
 
-def get_lang(line, fn, line_num):
+def get_lang(line, fn):
     try:
        lang = detect(line)
     except:
-       warnings.warn(f"No features found in line {repr(line)} with number {line_num} in file {fn}")
+       #warnings.warn(f"No features found in line {repr(line)} in file {fn}")
        lang = None
     return lang
 
@@ -92,23 +95,21 @@ def get_edges_in_1_file(fn, num_parts):
             if c == '\n':
                 num_lines += 1
                 edges.append(f.tell()+1)
-    if edges[-1] >= f.tell():
-        edges.pop()
-        num_lines -= 1
-    edges.append(f.tell()+1)
-    return [edges[int(i*num_lines/num_parts)] for i in range(num_parts)], num_lines
-
+        if edges[-1] < f.tell():
+            edges.append(f.tell()+1)
+            num_lines += 1
+    return [edges[int(i*num_lines/num_parts)] for i in range(num_parts)] + [edges[-1]], num_lines
 
 
 def get_edges(src_fn, tgt_fn, num_parts):
     src_edges, src_num_lines = get_edges_in_1_file(src_fn, num_parts)
-    assert num_parts == len(src_edges) + 1
+    assert num_parts + 1 == len(src_edges)
     src_edges = [(src_edges[i], src_edges[i+1]) for i in range(len(src_edges)-1)]
     if tgt_fn is not None:
         tgt_edges, tgt_num_lines = get_edges_in_1_file(tgt_fn, num_parts)
         tgt_edges = [(tgt_edges[i], tgt_edges[i + 1]) for i in range(len(tgt_edges) - 1)]
         if tgt_num_lines != src_num_lines:
-            raise ValueError(f"Source {repr(src_fn)} and target {repr(tgt_fn)} files have different lengths "
+            raise ValueError(f"Source {repr(src_fn)} and target {repr(tgt_fn)} files have different number of lines "
                              f"{src_num_lines} and {tgt_num_lines} correspondingly.")
 
     else:
@@ -117,7 +118,8 @@ def get_edges(src_fn, tgt_fn, num_parts):
     return src_edges, tgt_edges
 
 
-def filter_by_lang(
+def filter_by_lang(args):
+    (
         src_edges,
         tgt_edges,
         input_src,
@@ -129,26 +131,25 @@ def filter_by_lang(
         source_lang,
         target_lang,
         rank,
-):
+    ) = args
     output_src = filtered_dir_src / Path(f"rank{rank}")
     output_src_removed = removed_dir_src / Path(f"rank{rank}")
     if input_tgt is None:
         if tgt_edges is not None:
-            warnings.warn("If no input target `tgt_edges` argument is expected to be `None`")
+            warnings.warn("If input target is not provided `tgt_edges` argument is expected to be `None`")
         with open(input_src) as in_f, open(output_src, 'w') as out_f, open(output_src_removed, 'w') as out_r_f:
             in_f.seek(src_edges[0])
-            for i, l in enumerate(in_f):
+            i, l = 0, in_f.readline()
+            while l:
                 l = l.strip()
-                in_lang = get_lang(l, input_src, i)
-                if in_lang is None:
+                in_lang = get_lang(l, input_src)
+                if in_lang is None or in_lang != source_lang:
                     out_r_f.write(l + '\n')
-                    continue
-                if in_lang == source_lang:
-                    out_f.write(l + '\n')
                 else:
-                    out_r_f.write(l + '\n')
+                    out_f.write(l + '\n')
                 if in_f.tell() >= src_edges[1]:
                     break
+                i, l = i+1, in_f.readline()
     else:
         output_tgt = filtered_dir_tgt / Path(f"rank{rank}")
         output_tgt_removed = removed_dir_tgt / Path(f"rank{rank}")
@@ -156,26 +157,20 @@ def filter_by_lang(
                 open(output_tgt, 'w') as out_tgt, open(output_src_removed, 'w') as out_r_src, \
                 open(output_tgt_removed, 'w') as out_r_tgt:
             in_src.seek(src_edges[0])
-            out_src.seek(tgt_edges[0])
-            for i, (src_l, tgt_l) in enumerate(zip(in_src, in_tgt)):
+            in_tgt.seek(tgt_edges[0])
+            src_l, tgt_l, i = in_src.readline(), in_tgt.readline(), 0
+            while src_l and tgt_l:
                 src_l = src_l.strip()
                 tgt_l = tgt_l.strip()
-                src_lang = get_lang(src_l, input_src, i)
-                if src_lang is None:
+                src_lang = get_lang(src_l, input_src)
+                if src_lang is not None:
+                   tgt_lang = get_lang(tgt_l, input_tgt)
+                if src_lang is None or tgt_lang is None or src_lang != source_lang or tgt_lang != target_lang:
                     out_r_src.write(src_l + '\n')
                     out_r_tgt.write(tgt_l + '\n')
-                    continue
-                tgt_lang = get_lang(tgt_l, input_tgt, i)
-                if tgt_lang is None:
-                    out_r_src.write(src_l + '\n')
-                    out_r_tgt.write(tgt_l + '\n')
-                    continue
-                if src_lang == source_lang and tgt_lang == target_lang:
+                else:
                     out_src.write(src_l + '\n')
                     out_tgt.write(tgt_l + '\n')
-                else:
-                    out_r_src.write(src_l + '\n')
-                    out_r_tgt.write(tgt_l + '\n')
                 if in_src.tell() >= src_edges[1]:
                     if in_tgt.tell() < tgt_edges[1]:
                         raise ValueError(
@@ -190,7 +185,7 @@ def filter_by_lang(
                         f"in_src.tell()={in_src.tell()}, in_tgt.tell()={in_tgt.tell()}, "
                         f"src_edges[1]={src_edges[1]}, tgt_edges[1]={tgt_edges[1]}."
                     )
-
+                src_l, tgt_l, i = in_src.readline(), in_tgt.readline(), i + 1
 
 def _cat_results(out_file, tmp_dir):
     file_name_pattern = re.compile(r"/rank[1-9][\d]*$")
@@ -246,7 +241,7 @@ def main():
                     se,
                     te,
                     args.input_src,
-                    args.input_target,
+                    args.input_tgt,
                     tmp_filtered_src,
                     tmp_filtered_tgt,
                     tmp_removed_src,
