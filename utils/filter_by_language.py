@@ -7,13 +7,20 @@ import warnings
 from pathlib import Path
 
 from langdetect import detect
+from langdetect.lang_detect_exception import LangDetectException
 
 
 logging.basicConfig(level=logging.DEBUG)
 
 
 def get_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="A script for verifying language of lines in a file. If used on parallel corpus verifies both "
+                    "and target language. If number of jobs `--num-jobs` is bigger than 1 than lines in an input file "
+                    "are split equally between workers. In that case the best performance is achieved if dataset is "
+                    "shuffled and line lengths are distributed evenly across dataset. Files with data are not loaded "
+                    ""
+    )
     parser.add_argument(
         "input_src",
         help="Path to the input source file.",
@@ -56,6 +63,12 @@ def get_args():
         help="Path to file where removed target lines will be saved",
         type=Path,
     )
+    parser.add_argument(
+        "--num-jobs",
+        "-j",
+        type=int,
+        help="Number of jobs. By default, the number of jobs is equal to the number of CPU cores."
+    )
     args = parser.parse_args()
     if not (args.output_tgt is None and args.input_tgt is None and args.source_lang is None and args.removed_src is None \
             or args.output_tgt is not None and args.input_tgt is not None and args.target_lang is not None and args.removed_tgt is not None):
@@ -78,7 +91,7 @@ def get_args():
 def get_lang(line, fn):
     try:
        lang = detect(line)
-    except:
+    except LangDetectException:
        #warnings.warn(f"No features found in line {repr(line)} in file {fn}")
        lang = None
     return lang
@@ -188,7 +201,7 @@ def filter_by_lang(args):
                 src_l, tgt_l, i = in_src.readline(), in_tgt.readline(), i + 1
 
 def _cat_results(out_file, tmp_dir):
-    file_name_pattern = re.compile(r"/rank[1-9][\d]*$")
+    file_name_pattern = re.compile(r"/rank([1-9][0-9]*)|0$")
     with out_file.open('w') as out_f:
         for f in tmp_dir.iterdir():
             if not f.is_file():
@@ -231,9 +244,9 @@ def main():
     else:
         tmp_removed_tgt = tmp_removed / Path("tgt")
         tmp_removed_tgt.mkdir(parents=True, exist_ok=True)
-    num_cpu = mp.cpu_count()
-    src_edges, tgt_edges = get_edges(args.input_src, args.input_tgt, num_cpu)
-    with mp.Pool(num_cpu) as pool:
+    num_jobs = mp.cpu_count() if args.num_jobs is None else args.num_jobs
+    src_edges, tgt_edges = get_edges(args.input_src, args.input_tgt, num_jobs)
+    with mp.Pool(num_jobs) as pool:
         pool.map(
             filter_by_lang,
             [
