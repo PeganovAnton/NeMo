@@ -1,9 +1,10 @@
 #!/bin/bash
 
 #Run in directory where dataset will be saved
-set -x
+set -x -e
 mkdir raw
-bash ~/PeganovNeMo/utils/download_wmt20_parallel.sh raw
+source ~/PeganovNeMo/coommands/download_wmt20_parallel.sh raw
+cd raw
 find . -name "*.gz" -exec gzip -d {} \;
 tar xzf commoncrawl/training-parallel-commoncrawl.tgz
 rm commoncrawl/training-parallel-commoncrawl.tgz
