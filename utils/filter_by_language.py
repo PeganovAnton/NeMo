@@ -187,23 +187,20 @@ def filter_by_lang(args):
         with open(input_src) as in_f, open(output_src, 'w') as out_f, open(output_src_removed, 'w') as out_r_f:
             in_f.seek(src_edges[0])
             i, line = 0, in_f.readline()
-            #logging.debug(f"line: {repr(line)}")
+            with counter.get_lock():
+                counter.value += 1
             while line:
-                logging.debug(f"print 1 rank {rank} line: {repr(line)}")
                 line = line.strip()
-                logging.debug(f"print 2 rank {rank} line: {repr(line)}")
                 in_lang = get_lang(line, input_src, backend, fasttext_model)
                 if in_lang is None or in_lang != source_lang:
                     out_r_f.write(line + '\n')
                 else:
                     out_f.write(line + '\n')
                 if in_f.tell() >= src_edges[1]:
-                    logging.debug(f"{in_f.tell()} >= {src_edges[1]}")
                     break
                 i, line = i+1, in_f.readline()
-                logging.debug(f"print 3 rank {rank} line: {repr(line)}")
                 with counter.get_lock():
-                    counter += 1
+                    counter.value += 1
     else:
         output_tgt = filtered_dir_tgt / Path(f"rank{rank}")
         output_tgt_removed = removed_dir_tgt / Path(f"rank{rank}")
