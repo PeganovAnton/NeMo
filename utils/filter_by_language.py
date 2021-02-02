@@ -7,6 +7,7 @@ import warnings
 from pathlib import Path
 from time import sleep
 
+import fasttext
 from guess_language import guess_language
 from langdetect import detect
 from langdetect.lang_detect_exception import LangDetectException
@@ -25,8 +26,9 @@ def get_args():
                     "dataset is shuffled and lines with different lengths are distributed evenly in the input file. "
                     "Filtered data is stored into `output_src`[, `--output-tgt`] and removed lines are put into "
                     "`removed_src`[, `--removed-tgt`] files. If language cannot be detected (e.g. date), the line is "
-                    "removed. It took approximately 1 hour to process en-de wikimatrix (6.23M pairs: 700 MB German and "
-                    "625 MB English) from wmt20 on machine with 20 CPU cores. langdetect "
+                    "removed. Working time on en-de wikimatrix (6.23M pairs: 700 MB German and "
+                    "625 MB English) from wmt20 on machine with 20 CPU cores: langdetect backend: 1 hour, "
+                    "guess_language backend: 8 min. langdetect "
                     "https://github.com/Mimino666/langdetect lib is used for language detection."
     )
     parser.add_argument(
@@ -83,9 +85,16 @@ def get_args():
         "-b",
         default="langdetect"
     )
+    parser.add_argument(
+        "--fasttext_model",
+        help="Path to fasttext model.",
+        type=Path,
+    )
     args = parser.parse_args()
-    if not (args.output_tgt is None and args.input_tgt is None and args.source_lang is None and args.removed_src is None \
-            or args.output_tgt is not None and args.input_tgt is not None and args.target_lang is not None and args.removed_tgt is not None):
+    if not (args.output_tgt is None and args.input_tgt is None and args.source_lang is None
+                and args.removed_src is None
+            or args.output_tgt is not None and args.input_tgt is not None and args.target_lang is not None
+                and args.removed_tgt is not None):
         raise ValueError(
             f"Arguments `input_tgt`, `output_tgt`, `target_lang` have to be either `None` simultaneously or not `None`"
             f"simultaneously. Given input_tgt={args.input_tgt}, output_tgt={args.output_tgt}, "
@@ -99,10 +108,12 @@ def get_args():
     args.removed_src = args.removed_src.expanduser()
     if args.removed_tgt is not None:
         args.removed_tgt = args.removed_tgt.expanduser()
+    if args.backend == "fasttext":
+        args.fasttext_model = args.fasttext_model.expanduser()
     return args
 
 
-def get_lang(line, fn, backend):
+def get_lang(line, fn, backend, fasttext_model):
     if backend == "langdetect":
         try:
            lang = detect(line)
@@ -111,6 +122,13 @@ def get_lang(line, fn, backend):
            lang = None
     elif backend == "guess_language":
         lang = guess_language(line)
+    elif backend == "fasttext":
+         model = fasttext.load_model(fasttext_model)
+         labels, probs = model.predict(line, k=3)
+         if probs[0] < 0.5:
+             lang = None
+         else:
+             lang = labels[0].split('__')[-1]
     else:
         raise ValueError(f"Unsupported backend {backend}")
     return lang
@@ -163,6 +181,7 @@ def filter_by_lang(args):
         source_lang,
         target_lang,
         backend,
+        fasttext_model,
         rank,
     ) = args
     global counter
@@ -176,7 +195,7 @@ def filter_by_lang(args):
             i, l = 0, in_f.readline()
             while l:
                 l = l.strip()
-                in_lang = get_lang(l, input_src, backend)
+                in_lang = get_lang(l, input_src, backend, fasttext_model)
                 if in_lang is None or in_lang != source_lang:
                     out_r_f.write(l + '\n')
                 else:
@@ -200,9 +219,9 @@ def filter_by_lang(args):
             while src_l and tgt_l:
                 src_l = src_l.strip()
                 tgt_l = tgt_l.strip()
-                src_lang = get_lang(src_l, input_src, backend)
+                src_lang = get_lang(src_l, input_src, backend, fasttext_model)
                 if src_lang is not None:
-                   tgt_lang = get_lang(tgt_l, input_tgt, backend)
+                   tgt_lang = get_lang(tgt_l, input_tgt, backend, fasttext_model)
                 if src_lang is None or tgt_lang is None or src_lang != source_lang or tgt_lang != target_lang:
                     out_r_src.write(src_l + '\n')
                     out_r_tgt.write(tgt_l + '\n')
@@ -300,6 +319,7 @@ def main():
                     args.source_lang,
                     args.target_lang,
                     args.backend,
+                    args.fasttext_model,
                     rank,
                 )
                 for rank, (se, te) in enumerate(zip(src_edges, tgt_edges))
