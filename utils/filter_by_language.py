@@ -1,21 +1,45 @@
+# Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import argparse
 import logging
 import multiprocessing as mp
 import re
 import shutil
-import sys
 import warnings
 from pathlib import Path
 from time import sleep
 
 import fasttext
-from guess_language import guess_language
-from langdetect import detect
-from langdetect.lang_detect_exception import LangDetectException
 from tqdm import tqdm
 
 
-logging.basicConfig(level=logging.DEBUG)
+"""
+Usage:
+python filter_by_language.py --input-src train.en \
+    --input-tgt train.de \
+    --output-src train_lang_filtered.en \
+    --output-tgt train_lang_filtered.de \
+    --source-lang en \
+    --target-lang de \
+    --removed-src train_garbage.en \
+    --removed-tgt train_garbage.de \
+    --fasttext-model lid.176.bin
+"""
+
+
+logging.basicConfig(level=logging.INFO)
 
 
 def get_args():
@@ -90,7 +114,7 @@ def get_args():
         help="Number of jobs. By default, the number of jobs is equal to the number of CPU cores."
     )
     parser.add_argument(
-        "--fasttext_model",
+        "--fasttext-model",
         "-m",
         help="Path to fasttext model. The description and download links are here "
              "https://fasttext.cc/docs/en/language-identification.html",
