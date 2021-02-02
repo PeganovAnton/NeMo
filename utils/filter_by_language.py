@@ -28,50 +28,58 @@ def get_args():
                     "Filtered data is stored into `output_src`[, `--output-tgt`] and removed lines are put into "
                     "`removed_src`[, `--removed-tgt`] files. If language cannot be detected (e.g. date), the line is "
                     "removed. Working time on en-de wikimatrix (6.23M pairs: 700 MB German and "
-                    "625 MB English) from wmt20 on machine with 20 CPU cores: langdetect backend: 1 hour, "
-                    "guess_language backend: 8 min. langdetect "
-                    "https://github.com/Mimino666/langdetect lib is used for language detection."
+                    "625 MB English) from wmt20 on machine with 20 CPU cores: less than 1 minute."
     )
     parser.add_argument(
-        "input_src",
+        "--input-src",
+        "-s",
         help="Path to the input file which has to contain text in language `source_lang`.",
+        required=True,
         type=Path,
     )
     parser.add_argument(
         "--input-tgt",
-        "-i",
+        "-t",
         help="Path to the input file which has to contain text in language `target_lang`. If not provided, data is "
              "processed as monolingual.",
         type=Path,
     )
     parser.add_argument(
-        "output_src",
+        "--output-src",
+        "-S",
         help="Path to the file where filtered `input_src` will be saved.",
+        required=True,
         type=Path,
     )
     parser.add_argument(
         "--output-tgt",
-        "-o",
+        "-T",
+        required=True,
         help="Path to the output target file",
         type=Path,
     )
     parser.add_argument(
-        "source_lang",
-        help="Input language. See https://github.com/Mimino666/langdetect."
+        "--source-lang",
+        "-l",
+        required=True,
+        help="Input language. For options see https://fasttext.cc/docs/en/language-identification.html."
     )
     parser.add_argument(
         "--target-lang",
         "-L",
-        help="Output language. See https://github.com/Mimino666/langdetect."
+        help="Output language. For options see https://fasttext.cc/docs/en/language-identification.html."
     )
     parser.add_argument(
-        "removed_src",
+        "--removed-src",
+        "-r",
+        required=True,
         help="Path to file where removed source lines will be saved",
         type=Path,
     )
     parser.add_argument(
         "--removed-tgt",
-        "-r",
+        "-R",
+        required=True,
         help="Path to file where removed target lines will be saved",
         type=Path,
     )
@@ -82,13 +90,10 @@ def get_args():
         help="Number of jobs. By default, the number of jobs is equal to the number of CPU cores."
     )
     parser.add_argument(
-        "--backend",
-        "-b",
-        default="langdetect"
-    )
-    parser.add_argument(
         "--fasttext_model",
-        help="Path to fasttext model.",
+        "-m",
+        help="Path to fasttext model. The description and download links are here "
+             "https://fasttext.cc/docs/en/language-identification.html",
         type=Path,
     )
     args = parser.parse_args()
@@ -110,25 +115,13 @@ def get_args():
     args.removed_src = args.removed_src.expanduser()
     if args.removed_tgt is not None:
         args.removed_tgt = args.removed_tgt.expanduser()
-    if args.backend == "fasttext":
-        args.fasttext_model = args.fasttext_model.expanduser()
+    args.fasttext_model = args.fasttext_model.expanduser()
     return args
 
 
-def get_lang(line, fn, backend, fasttext_model):
-    if backend == "langdetect":
-        try:
-           lang = detect(line)
-        except LangDetectException:
-           #warnings.warn(f"No features found in line {repr(line)} in file {fn}")
-           lang = None
-    elif backend == "guess_language":
-        lang = guess_language(line)
-    elif backend == "fasttext":
-         labels, _ = fasttext_model.predict(line, k=1)
-         lang = labels[0].split('__')[-1]
-    else:
-        raise ValueError(f"Unsupported backend {backend}")
+def get_lang(line, fasttext_model):
+    labels, _ = fasttext_model.predict(line, k=1)
+    lang = labels[0].split('__')[-1]
     return lang
 
 
@@ -173,7 +166,6 @@ def filter_by_lang(args):
         removed_dir_tgt,
         source_lang,
         target_lang,
-        backend,
         fasttext_model,
         rank,
     ) = args
@@ -191,7 +183,7 @@ def filter_by_lang(args):
                 counter.value += 1
             while line:
                 line = line.strip()
-                in_lang = get_lang(line, input_src, backend, fasttext_model)
+                in_lang = get_lang(line, fasttext_model)
                 if in_lang is None or in_lang != source_lang:
                     out_r_f.write(line + '\n')
                 else:
@@ -215,9 +207,9 @@ def filter_by_lang(args):
             while src_l and tgt_l:
                 src_l = src_l.strip()
                 tgt_l = tgt_l.strip()
-                src_lang = get_lang(src_l, input_src, backend, fasttext_model)
+                src_lang = get_lang(src_l, fasttext_model)
                 if src_lang is not None:
-                   tgt_lang = get_lang(tgt_l, input_tgt, backend, fasttext_model)
+                   tgt_lang = get_lang(tgt_l, fasttext_model)
                 if src_lang is None or tgt_lang is None or src_lang != source_lang or tgt_lang != target_lang:
                     out_r_src.write(src_l + '\n')
                     out_r_tgt.write(tgt_l + '\n')
@@ -315,7 +307,6 @@ def main():
                     tmp_removed_tgt,
                     args.source_lang,
                     args.target_lang,
-                    args.backend,
                     args.fasttext_model,
                     rank,
                 )
