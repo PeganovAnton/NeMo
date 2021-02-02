@@ -4,7 +4,7 @@
 set -x -e
 mkdir -p raw
 rm -r raw/*
-source ~/PeganovNeMo/coommands/download_wmt20_parallel.sh raw
+source ~/PeganovNeMo/commands/download_wmt20_parallel.sh raw
 cd raw
 find . -name "*.gz" -exec gzip -d {} \;
 tar xzf commoncrawl/training-parallel-commoncrawl.tgz
