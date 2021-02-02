@@ -32,9 +32,16 @@ def main():
             n = l.count(args.sep)
             if n > max_num_sep:
                 max_num_sep = n
-    with args.input_file.open() as in_f, args.output_file.open('w') as out_f:
+    if args.input_file == args.output_file:
+        res_file = Path(str(args.output_file) + '.tmp')
+    else:
+        res_file = args.output_file
+    with args.input_file.open() as in_f, res_file.open('w') as out_f:
         for l in in_f:
             out_f.write(l.rstrip('\n') + args.sep * (max_num_sep - l.count(args.sep)) + '\n')
+    if args.input_file == args.output_file:
+        args.input_file.unlink()
+        res_file.rename(args.output_file)
 
 
 if __name__ == "__main__":
