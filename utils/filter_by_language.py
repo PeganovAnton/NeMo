@@ -178,6 +178,97 @@ def get_edges_and_num_lines(src_fn, tgt_fn, num_parts):
     return src_edges, tgt_edges, src_num_lines
 
 
+def filter_pairs(
+        src_edges,
+        tgt_edges,
+        input_src,
+        input_tgt,
+        filtered_dir_src,
+        filtered_dir_tgt,
+        removed_dir_src,
+        removed_dir_tgt,
+        source_lang,
+        target_lang,
+        fasttext_model,
+        rank,
+):
+    global counter
+    fasttext_model = fasttext.load_model(str(fasttext_model))
+    output_src = filtered_dir_src / Path(f"rank{rank}")
+    output_src_removed = removed_dir_src / Path(f"rank{rank}")
+    output_tgt = filtered_dir_tgt / Path(f"rank{rank}")
+    output_tgt_removed = removed_dir_tgt / Path(f"rank{rank}")
+    with open(input_src) as in_src, open(input_tgt) as in_tgt, open(output_src, 'w') as out_src, \
+            open(output_tgt, 'w') as out_tgt, open(output_src_removed, 'w') as out_r_src, \
+            open(output_tgt_removed, 'w') as out_r_tgt:
+        in_src.seek(src_edges[0])
+        in_tgt.seek(tgt_edges[0])
+        src_l, tgt_l, i = in_src.readline(), in_tgt.readline(), 0
+        with counter.get_lock():
+            counter.value += 1
+        while src_l and tgt_l:
+            src_l = src_l.strip()
+            tgt_l = tgt_l.strip()
+            src_lang = get_lang(src_l, fasttext_model)
+            if src_lang is not None:
+                tgt_lang = get_lang(tgt_l, fasttext_model)
+            if src_lang is None or tgt_lang is None or src_lang != source_lang or tgt_lang != target_lang:
+                out_r_src.write(src_l + '\n')
+                out_r_tgt.write(tgt_l + '\n')
+            else:
+                out_src.write(src_l + '\n')
+                out_tgt.write(tgt_l + '\n')
+            if in_src.tell() >= src_edges[1]:
+                if in_tgt.tell() < tgt_edges[1]:
+                    raise ValueError(
+                        f"Edges of target and source has to be reached simultaneously, whereas "
+                        f"in_src.tell()={in_src.tell()}, in_tgt.tell()={in_tgt.tell()}, "
+                        f"src_edges[1]={src_edges[1]}, tgt_edges[1]={tgt_edges[1]}."
+                    )
+                break
+            if in_tgt.tell() >= tgt_edges[1]:
+                raise ValueError(
+                    f"Edges of target and source has to be reached simultaneously, whereas "
+                    f"in_src.tell()={in_src.tell()}, in_tgt.tell()={in_tgt.tell()}, "
+                    f"src_edges[1]={src_edges[1]}, tgt_edges[1]={tgt_edges[1]}."
+                )
+            src_l, tgt_l, i = in_src.readline(), in_tgt.readline(), i + 1
+            with counter.get_lock():
+                counter.value += 1
+
+
+def filter_singles(
+        src_edges,
+        input_src,
+        filtered_dir_src,
+        removed_dir_src,
+        source_lang,
+        fasttext_model,
+        rank,
+):
+    global counter
+    fasttext_model = fasttext.load_model(str(fasttext_model))
+    output_src = filtered_dir_src / Path(f"rank{rank}")
+    output_src_removed = removed_dir_src / Path(f"rank{rank}")
+    with open(input_src) as in_f, open(output_src, 'w') as out_f, open(output_src_removed, 'w') as out_r_f:
+        in_f.seek(src_edges[0])
+        i, line = 0, in_f.readline()
+        with counter.get_lock():
+            counter.value += 1
+        while line:
+            line = line.strip()
+            in_lang = get_lang(line, fasttext_model)
+            if in_lang is None or in_lang != source_lang:
+                out_r_f.write(line + '\n')
+            else:
+                out_f.write(line + '\n')
+            if in_f.tell() >= src_edges[1]:
+                break
+            i, line = i + 1, in_f.readline()
+            with counter.get_lock():
+                counter.value += 1
+
+
 def filter_by_lang(args):
     (
         src_edges,
@@ -193,70 +284,35 @@ def filter_by_lang(args):
         fasttext_model,
         rank,
     ) = args
-    global counter
-    fasttext_model = fasttext.load_model(str(fasttext_model))
-    output_src = filtered_dir_src / Path(f"rank{rank}")
-    output_src_removed = removed_dir_src / Path(f"rank{rank}")
+    
     if input_tgt is None:
         if tgt_edges is not None:
             warnings.warn("If input target is not provided `tgt_edges` argument is expected to be `None`")
-        with open(input_src) as in_f, open(output_src, 'w') as out_f, open(output_src_removed, 'w') as out_r_f:
-            in_f.seek(src_edges[0])
-            i, line = 0, in_f.readline()
-            with counter.get_lock():
-                counter.value += 1
-            while line:
-                line = line.strip()
-                in_lang = get_lang(line, fasttext_model)
-                if in_lang is None or in_lang != source_lang:
-                    out_r_f.write(line + '\n')
-                else:
-                    out_f.write(line + '\n')
-                if in_f.tell() >= src_edges[1]:
-                    break
-                i, line = i+1, in_f.readline()
-                with counter.get_lock():
-                    counter.value += 1
+            filter_singles(
+                src_edges,
+                input_src,
+                filtered_dir_src,
+                removed_dir_src,
+                source_lang,
+                fasttext_model,
+                rank,
+            )
     else:
-        output_tgt = filtered_dir_tgt / Path(f"rank{rank}")
-        output_tgt_removed = removed_dir_tgt / Path(f"rank{rank}")
-        with open(input_src) as in_src, open(input_tgt) as in_tgt, open(output_src, 'w') as out_src, \
-                open(output_tgt, 'w') as out_tgt, open(output_src_removed, 'w') as out_r_src, \
-                open(output_tgt_removed, 'w') as out_r_tgt:
-            in_src.seek(src_edges[0])
-            in_tgt.seek(tgt_edges[0])
-            src_l, tgt_l, i = in_src.readline(), in_tgt.readline(), 0
-            with counter.get_lock():
-                counter.value += 1
-            while src_l and tgt_l:
-                src_l = src_l.strip()
-                tgt_l = tgt_l.strip()
-                src_lang = get_lang(src_l, fasttext_model)
-                if src_lang is not None:
-                   tgt_lang = get_lang(tgt_l, fasttext_model)
-                if src_lang is None or tgt_lang is None or src_lang != source_lang or tgt_lang != target_lang:
-                    out_r_src.write(src_l + '\n')
-                    out_r_tgt.write(tgt_l + '\n')
-                else:
-                    out_src.write(src_l + '\n')
-                    out_tgt.write(tgt_l + '\n')
-                if in_src.tell() >= src_edges[1]:
-                    if in_tgt.tell() < tgt_edges[1]:
-                        raise ValueError(
-                            f"Edges of target and source has to be reached simultaneously, whereas "
-                            f"in_src.tell()={in_src.tell()}, in_tgt.tell()={in_tgt.tell()}, "
-                            f"src_edges[1]={src_edges[1]}, tgt_edges[1]={tgt_edges[1]}."
-                        )
-                    break
-                if in_tgt.tell() >= tgt_edges[1]:
-                    raise ValueError(
-                        f"Edges of target and source has to be reached simultaneously, whereas "
-                        f"in_src.tell()={in_src.tell()}, in_tgt.tell()={in_tgt.tell()}, "
-                        f"src_edges[1]={src_edges[1]}, tgt_edges[1]={tgt_edges[1]}."
-                    )
-                src_l, tgt_l, i = in_src.readline(), in_tgt.readline(), i + 1
-                with counter.get_lock():
-                    counter.value += 1
+        filter_pairs(
+            src_edges,
+            tgt_edges,
+            input_src,
+            input_tgt,
+            filtered_dir_src,
+            filtered_dir_tgt,
+            removed_dir_src,
+            removed_dir_tgt,
+            source_lang,
+            target_lang,
+            fasttext_model,
+            rank,
+        )
+
 
 def _cat_results(out_file, tmp_dir):
     file_name_pattern = re.compile(r"/rank([1-9][0-9]*)|0$")
