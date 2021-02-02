@@ -3,6 +3,7 @@ import logging
 import multiprocessing as mp
 import re
 import shutil
+import sys
 import warnings
 from pathlib import Path
 from time import sleep
@@ -91,14 +92,15 @@ def get_args():
         type=Path,
     )
     args = parser.parse_args()
-    if not (args.output_tgt is None and args.input_tgt is None and args.source_lang is None
-                and args.removed_src is None
+    if not (args.output_tgt is None and args.input_tgt is None and args.target_lang is None
+                and args.removed_tgt is None
             or args.output_tgt is not None and args.input_tgt is not None and args.target_lang is not None
                 and args.removed_tgt is not None):
         raise ValueError(
-            f"Arguments `input_tgt`, `output_tgt`, `target_lang` have to be either `None` simultaneously or not `None`"
-            f"simultaneously. Given input_tgt={args.input_tgt}, output_tgt={args.output_tgt}, "
-            f"target_lang={args.target_lang}")
+            f"Arguments `input_tgt`, `output_tgt`, `target_lang`, `removed_tgt` have to be either `None` "
+            f"simultaneously or not `None` simultaneously. Given "
+            f"input_tgt={args.input_tgt}, output_tgt={args.output_tgt}, target_lang={args.target_lang}, "
+            f"removed_tgt={args.removed_tgt}")
     args.input_src = args.input_src.expanduser()
     if args.input_tgt is not None:
         args.input_tgt = args.input_tgt.expanduser()
@@ -123,12 +125,8 @@ def get_lang(line, fn, backend, fasttext_model):
     elif backend == "guess_language":
         lang = guess_language(line)
     elif backend == "fasttext":
-         model = fasttext.load_model(fasttext_model)
-         labels, probs = model.predict(line, k=3)
-         if probs[0] < 0.5:
-             lang = None
-         else:
-             lang = labels[0].split('__')[-1]
+         labels, _ = fasttext_model.predict(line, k=1)
+         lang = labels[0].split('__')[-1]
     else:
         raise ValueError(f"Unsupported backend {backend}")
     return lang
@@ -138,15 +136,10 @@ def get_edges_in_1_file(fn, num_parts):
     num_lines = 0
     edges = [0]
     with open(fn) as f:
-        while True:
-            c = f.read(1)
-            if not c:
-                break
-            if c == '\n':
-                num_lines += 1
-                edges.append(f.tell())
-        if edges[-1] < f.tell():
-            edges.append(f.tell())
+        i = 0
+        for l in f:
+            i += len(l.encode('utf-8'))
+            edges.append(i)
             num_lines += 1
     return [edges[int(i*num_lines/num_parts)] for i in range(num_parts)] + [edges[-1]], num_lines
 
@@ -185,6 +178,7 @@ def filter_by_lang(args):
         rank,
     ) = args
     global counter
+    fasttext_model = fasttext.load_model(str(fasttext_model))
     output_src = filtered_dir_src / Path(f"rank{rank}")
     output_src_removed = removed_dir_src / Path(f"rank{rank}")
     if input_tgt is None:
@@ -192,17 +186,22 @@ def filter_by_lang(args):
             warnings.warn("If input target is not provided `tgt_edges` argument is expected to be `None`")
         with open(input_src) as in_f, open(output_src, 'w') as out_f, open(output_src_removed, 'w') as out_r_f:
             in_f.seek(src_edges[0])
-            i, l = 0, in_f.readline()
-            while l:
-                l = l.strip()
-                in_lang = get_lang(l, input_src, backend, fasttext_model)
+            i, line = 0, in_f.readline()
+            #logging.debug(f"line: {repr(line)}")
+            while line:
+                logging.debug(f"print 1 rank {rank} line: {repr(line)}")
+                line = line.strip()
+                logging.debug(f"print 2 rank {rank} line: {repr(line)}")
+                in_lang = get_lang(line, input_src, backend, fasttext_model)
                 if in_lang is None or in_lang != source_lang:
-                    out_r_f.write(l + '\n')
+                    out_r_f.write(line + '\n')
                 else:
-                    out_f.write(l + '\n')
+                    out_f.write(line + '\n')
                 if in_f.tell() >= src_edges[1]:
+                    logging.debug(f"{in_f.tell()} >= {src_edges[1]}")
                     break
-                i, l = i+1, in_f.readline()
+                i, line = i+1, in_f.readline()
+                logging.debug(f"print 3 rank {rank} line: {repr(line)}")
                 with counter.get_lock():
                     counter += 1
     else:
@@ -249,7 +248,7 @@ def filter_by_lang(args):
 def _cat_results(out_file, tmp_dir):
     file_name_pattern = re.compile(r"/rank([1-9][0-9]*)|0$")
     with out_file.open('w') as out_f:
-        for f in tmp_dir.iterdir():
+        for f in sorted(tmp_dir.iterdir()):
             if not f.is_file():
                 warnings.warn(f"Unexpected not file {f}")
             elif not file_name_pattern.search(str(f)):
@@ -265,10 +264,11 @@ def cat_results(out_files, tmp_dirs):
         if o_f is None or t_d is None:
             if o_f is not None or t_d is not None:
                 warnings.warn(
-                    f"Both output file and tmp directory expected to be `None` whereas tmp directory is {t_d} "
-                    f"and output file is {o_f}."
+                    f"Output file and tmp directory are expected to be `None` simultaneously whereas tmp directory "
+                    f"is {t_d} and output file is {o_f}."
                 )
-        _cat_results(o_f, t_d)
+        else:
+            _cat_results(o_f, t_d)
 
 
 counter = None
