@@ -2,7 +2,8 @@
 
 #Run in directory where dataset will be saved
 set -x -e
-mkdir raw
+mkdir -p raw
+rm -r raw/*
 source ~/PeganovNeMo/coommands/download_wmt20_parallel.sh raw
 cd raw
 find . -name "*.gz" -exec gzip -d {} \;
