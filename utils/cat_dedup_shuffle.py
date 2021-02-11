@@ -54,7 +54,8 @@ def main():
                     pairs.add((ss.strip(), ts.strip()))
         pairs = list(pairs)
         random.shuffle(pairs)
-        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output_src.parent.mkdir(parents=True, exist_ok=True)
+        args.output_tgt.parent.mkdir(parents=True, exist_ok=True)
         with args.output_src.open() as sf, args.output_tgt.open() as tf:
             for p in pairs:
                 sf.write(p[0] + '\n')
