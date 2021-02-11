@@ -56,12 +56,12 @@ start_i=($(seq 0 ${num_lines_per_core} $((${num_lines} - ${num_lines_per_core}))
 end_i=($(seq ${num_lines_per_core} ${num_lines_per_core} $((${num_lines} - ${num_lines_per_core}))) ${num_lines})
 for i in ${!start_i[@]}; do echo ${start_i[i]} ${end_i[i]} $i; done | \
   xargs -n 3 -P "${num_cores}" \
-    sh -c 'bash ~/PeganovNeMo/commands/normalize_punkt.sh cat_shuffled/en normalized/en "$1" "$2" en "$3"' sh
+    sh -c 'bash ~/PeganovNeMo/commands/normalize_punkt.sh normalized/en "$1" "$2" en "$3"' sh
 cat tmp/rank* > normalized/en
 rm -r tmp
 for i in ${!start_i[@]}; do echo ${start_i[i]} ${end_i[i]} $i; done | \
   xargs -n 3 -P "${num_cores}" \
-    sh -c 'bash ~/PeganovNeMo/commands/normalize_punkt.sh cat_shuffled/de normalized/de "$1" "$2" en "$3"' sh
+    sh -c 'bash ~/PeganovNeMo/commands/normalize_punkt.sh normalized/de "$1" "$2" en "$3"' sh
 cat tmp/rank* > normalized/de $2
 rm -r tmp
 set +x +e
