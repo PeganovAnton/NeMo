@@ -1,3 +1,4 @@
+set -x
 moses_path=~/mosesdecoder
 mkdir tmp
 sed -n "$3,$4p" $1 | \
@@ -6,3 +7,4 @@ sed -n "$3,$4p" $1 | \
   tmp/rank$6
 cat tmp/rank* > $2
 rm -r tmp
+set +x

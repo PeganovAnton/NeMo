@@ -43,7 +43,10 @@ for d in *; do
 done
 cd ../
 mkdir -p cat_shuffled normalized
-python ~/PeganovNeMo/utils/cat_dedup_shuffle.py -s raw/*/en -t raw/*/de -o cat_shuffled/en -r cat_shuffled/de
+good_data=(commoncrawl europarl news-commentary rapid wikimatrix)
+good_sources=($(for d in ${good_data[@]}; do echo raw/${d}/en; done))
+good_targets=($(for d in ${good_data[@]}; do echo raw/${d}/de; done))
+python ~/PeganovNeMo/utils/cat_dedup_shuffle.py -s ${good_sources[@]} -t ${good_targets[@]} -o cat_shuffled/en -r cat_shuffled/de
 
 num_lines=$(wc -l cat_shuffled/en)
 num_cores=$(grep -c ^processor /proc/cpuinfo)
@@ -52,7 +55,10 @@ num_lines_per_core=$((${num_lines} / ${num_cores}))
 start_i=($(seq 0 ${num_lines_per_core} $((${num_lines} - ${num_lines_per_core}))))
 end_i=($(seq ${num_lines_per_core} ${num_lines_per_core} ${{${num_lines} - ${num_lines_per_core}}}) ${num_lines})
 for i in ${!start_i[@]}; do echo ${start_i[i]} ${end_i[i]} $i; done | \
-  xargs -n 2 -P "${num_cores}" \
+  xargs -n 3 -P "${num_cores}" \
     sh -c 'bash ~/PeganovNeMo/commands/normalize_punkt.sh cat_shuffled/en normalized/en "$1" "$2" en "$3"' sh
-  xargs -n 2 -P "${num_cores}" \
+for i in ${!start_i[@]}; do echo ${start_i[i]} ${end_i[i]} $i; done | \
+  xargs -n 3 -P "${num_cores}" \
     sh -c 'bash ~/PeganovNeMo/commands/normalize_punkt.sh cat_shuffled/de normalized/de "$1" "$2" en "$3"' sh
+
+set +x +e
