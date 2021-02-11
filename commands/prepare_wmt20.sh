@@ -42,7 +42,7 @@ for d in *; do
     -m ../../lid.176.bin
 done
 cd ../
-mkdir cat_shuffled normalized
+mkdir -p cat_shuffled normalized
 python ~/PeganovNeMo/utils/cat_dedup_shuffle.py -s raw/*/en -t raw/*/de -o cat_shuffled/en -r cat_shuffled/de
 
 num_lines=$(wc -l cat_shuffled/en)

@@ -56,7 +56,7 @@ def main():
         random.shuffle(pairs)
         args.output_src.parent.mkdir(parents=True, exist_ok=True)
         args.output_tgt.parent.mkdir(parents=True, exist_ok=True)
-        with args.output_src.open() as sf, args.output_tgt.open() as tf:
+        with args.output_src.open('w') as sf, args.output_tgt.open('w') as tf:
             for p in pairs:
                 sf.write(p[0] + '\n')
                 tf.write(p[1] + '\n')
