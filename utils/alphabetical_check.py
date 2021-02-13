@@ -58,6 +58,13 @@ def get_args():
         help="The target language. Possible options are listed here https://github.com/life4/homoglyphs or with "
              "`homoglyphs.Languages.get_all()`."
     )
+    parser.add_argument(
+        "--fraction",
+        "-f",
+        help="The fraction of characters which have to belong to the specified language. By default, there have to be "
+             "at least 1 character belonging to the specified language.",
+        type=float,
+    )
     args = parser.parse_args()
     args.input_src = args.input_src.expanduser()
     args.output_src = args.output_src.expanduser()
@@ -71,21 +78,22 @@ def get_args():
     return args
 
 
-def filter_singles(input, output, removed, lang):
+def filter_singles(input, output, removed, lang, fraction):
     alphabet = set(hg.Languages.get_alphabet([lang]))
     out_dir = output.parent
     out_dir.mkdir(parents=True, exist_ok=True)
     tmp_file = out_dir / Path('.tmp')
     with tmp_file.open('w') as out_f, input.open() as in_f, removed.open('w') as r_f:
         for l in in_f:
-            if set(l) & alphabet:
+            intersection = set(l) & alphabet
+            if fraction is None and intersection or len(intersection) / len(l) > fraction:
                 out_f.write(l)
             else:
                 r_f.write(l)
     tmp_file.rename(output)
 
 
-def filter_pairs(input_src, input_tgt, output_src, output_tgt, removed_src, removed_tgt, src_lang, tgt_lang):
+def filter_pairs(input_src, input_tgt, output_src, output_tgt, removed_src, removed_tgt, src_lang, tgt_lang, fraction):
     src_alph = set(hg.Languages.get_alphabet([src_lang]))
     tgt_alph = set(hg.Languages.get_alphabet([tgt_lang]))
     out_src_dir = output_src.parent
@@ -97,7 +105,10 @@ def filter_pairs(input_src, input_tgt, output_src, output_tgt, removed_src, remo
     with tmp_src.open('w') as out_s_f, tmp_tgt.open('w') as out_t_f, input_src.open() as in_s_f, \
             input_tgt.open() as in_t_f, removed_src.open('w') as r_s_f, removed_tgt.open('w') as r_t_f:
         for s_l, t_l in zip(in_s_f, in_t_f):
-            if set(s_l) & src_alph and set(t_l) & tgt_alph:
+            s_int = set(s_l) & src_alph
+            t_int = set(t_l) & tgt_alph
+            if fraction is None and s_int and t_int or \
+                    len(s_int) / len(s_l) > fraction and len(t_int) / len(t_l) > fraction:
                 out_s_f.write(s_l)
                 out_t_f.write(t_l)
             else:
@@ -110,7 +121,7 @@ def filter_pairs(input_src, input_tgt, output_src, output_tgt, removed_src, remo
 def main():
     args = get_args()
     if args.input_tgt is None:
-        filter_singles(args.input_src, args.output_src, args.removed_src, args.src_lang)
+        filter_singles(args.input_src, args.output_src, args.removed_src, args.src_lang, args.fraction)
     else:
         filter_pairs(
             args.input_src,
@@ -120,7 +131,9 @@ def main():
             args.removed_src,
             args.removed_tgt,
             args.src_lang,
-            args.tgt_lang)
+            args.tgt_lang,
+            args.fraction,
+        )
 
 
 if __name__ == "__main__":
