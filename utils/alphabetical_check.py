@@ -61,7 +61,7 @@ def get_args():
     args = parser.parse_args()
     args.input_src = args.input_src.expanduser()
     args.output_src = args.output_src.expanduser()
-    args.removed_src = args.removed_input.expanduser()
+    args.removed_src = args.removed_src.expanduser()
     if args.input_tgt is not None:
         args.input_tgt = args.input_target.expanduser()
         args.output_tgt = args.output_target.expanduser()
