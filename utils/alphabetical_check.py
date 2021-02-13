@@ -92,7 +92,7 @@ def main():
     if args.input_target is None:
         filter_singles(args.input_src, args.output_src, args.src_lang)
     else:
-        filter_pairs(args.input_src, args.input_tgt, args.output_src, args.src_lang, args.tgt_lang)
+        filter_pairs(args.input_src, args.input_tgt, args.output_src, args.output_tgt, args.src_lang, args.tgt_lang)
 
 
 if __name__ == "__main__":
