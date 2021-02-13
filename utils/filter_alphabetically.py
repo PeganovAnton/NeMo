@@ -78,6 +78,14 @@ def get_args():
     return args
 
 
+def count_correct_chars(line, alphabet):
+    count = 0
+    for c in line:
+        if c in alphabet:
+            count += 1
+    return count
+
+
 def filter_singles(input, output, removed, lang, fraction):
     alphabet = set(hg.Languages.get_alphabet([lang]))
     out_dir = output.parent
@@ -85,11 +93,12 @@ def filter_singles(input, output, removed, lang, fraction):
     tmp_file = out_dir / Path('.tmp')
     with tmp_file.open('w') as out_f, input.open() as in_f, removed.open('w') as r_f:
         for l in in_f:
-            intersection = set(l) & alphabet
-            if fraction is None and intersection or len(intersection) / len(l) > fraction:
-                out_f.write(l)
+            l = l.strip()
+            count = count_correct_chars(l, alphabet)
+            if fraction is None and count > 0 or count / len(l) > fraction:
+                out_f.write(l + '\n')
             else:
-                r_f.write(l)
+                r_f.write(l + '\n')
     tmp_file.rename(output)
 
 
@@ -105,15 +114,17 @@ def filter_pairs(input_src, input_tgt, output_src, output_tgt, removed_src, remo
     with tmp_src.open('w') as out_s_f, tmp_tgt.open('w') as out_t_f, input_src.open() as in_s_f, \
             input_tgt.open() as in_t_f, removed_src.open('w') as r_s_f, removed_tgt.open('w') as r_t_f:
         for s_l, t_l in zip(in_s_f, in_t_f):
-            s_int = set(s_l) & src_alph
-            t_int = set(t_l) & tgt_alph
-            if fraction is None and s_int and t_int or \
-                    len(s_int) / len(s_l) > fraction and len(t_int) / len(t_l) > fraction:
-                out_s_f.write(s_l)
-                out_t_f.write(t_l)
+            s_l = s_l.strip()
+            t_l = t_l.strip()
+            s_count = count_correct_chars(s_l, src_alph)
+            t_count = count_correct_chars(t_l, tgt_alph)
+            if fraction is None and s_count > 0 and t_count > 0 or \
+                    s_count / len(s_l) > fraction and t_count / len(t_l) > fraction:
+                out_s_f.write(s_l + '\n')
+                out_t_f.write(t_l + '\n')
             else:
-                r_s_f.write(s_l)
-                r_t_f.write(t_l)
+                r_s_f.write(s_l + '\n')
+                r_t_f.write(t_l + '\n')
     tmp_src.rename(output_src)
     tmp_tgt.rename(output_tgt)
 
