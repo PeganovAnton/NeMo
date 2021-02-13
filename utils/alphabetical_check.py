@@ -61,11 +61,11 @@ def get_args():
     args = parser.parse_args()
     args.input_src = args.input_src.expanduser()
     args.output_src = args.output_src.expanduser()
-    args.removed_input = args.removed_input.expanduser()
-    if args.input_target is not None:
-        args.input_target = args.input_target.expanduser()
-        args.output_target = args.output_target.expanduser()
-        args.removed_target = args.removed_target.expanduser()
+    args.removed_src = args.removed_input.expanduser()
+    if args.input_tgt is not None:
+        args.input_tgt = args.input_target.expanduser()
+        args.output_tgt = args.output_target.expanduser()
+        args.removed_tgt = args.removed_target.expanduser()
         if args.tgt_lang is None:
             raise ValueError("If input target is provided than target language should be provided.")
     return args
