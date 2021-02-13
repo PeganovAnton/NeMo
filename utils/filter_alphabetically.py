@@ -118,7 +118,7 @@ def filter_pairs(input_src, input_tgt, output_src, output_tgt, removed_src, remo
             t_l = t_l.strip()
             s_count = count_correct_chars(s_l, src_alph)
             t_count = count_correct_chars(t_l, tgt_alph)
-            if fraction is None and s_count > 0 or t_count > 0 \
+            if fraction is None and (s_count > 0 or t_count > 0) \
                     or fraction is not None and s_count / len(s_l) > fraction and t_count / len(t_l) > fraction:
                 out_s_f.write(s_l + '\n')
                 out_t_f.write(t_l + '\n')
