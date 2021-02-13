@@ -32,7 +32,11 @@ def main():
     alphabet = set(hg.Languages.get_alphabet([args.lang]))
     with args.input.open() as in_f, args.output.open('w') as out_f:
         for l in in_f:
-            out_f.write(str(len(alphabet & set(l)) / len(l)) + '\n')
+            count = 0
+            for c in l:
+                if c in alphabet:
+                    count += 1
+            out_f.write(str(count / len(l)) + '\n')
 
 
 if __name__ == "__main__":
