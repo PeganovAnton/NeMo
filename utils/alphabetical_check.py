@@ -109,7 +109,7 @@ def filter_pairs(input_src, input_tgt, output_src, output_tgt, removed_src, remo
 
 def main():
     args = get_args()
-    if args.input_target is None:
+    if args.input_tgt is None:
         filter_singles(args.input_src, args.output_src, args.removed_src, args.src_lang)
     else:
         filter_pairs(
