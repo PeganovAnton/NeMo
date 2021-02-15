@@ -149,7 +149,7 @@ def count_front_and_rear_quotes(line):
     else:
         rear = 0
     while line[-1 - rear] == '""':
-        rear += 1
+        rear -= 1
     return front, rear
 
 
@@ -180,7 +180,7 @@ def fix_split_quotes(line, patterns):
 def fix_external_duplication(line, patterns):
     n_front, n_rear = count_front_and_rear_quotes(line)
     n_min = min(n_rear, n_front)
-    double_count = line.count('""', n_min, -n_min)
+    double_count = line.count('""', n_min, len(line)-n_min)
     if double_count % 2:
         res = line.replace('"', '')
     else:
