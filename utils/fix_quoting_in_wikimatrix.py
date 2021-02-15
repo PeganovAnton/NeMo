@@ -1,8 +1,10 @@
 import argparse
+import string
 import warnings
 from pathlib import Path
 
 import regex
+from tqdm import tqdm
 
 
 def get_args():
@@ -90,8 +92,8 @@ def get_args():
 def get_patterns():
     nqt = r'[^"]*[a-zA-Z][^"]*'
     part = fr'(?P<part>(""(?P<additional_quoted>{nqt})"")?(?P<outside_quoted>{nqt}))+'
-    with_punctuation = regex.compile(fr'^"{part}(?P<punctuation>( that )|(: )|(, ))""{part}"$')
-    no_punctuation = regex.compile(fr'^"(?P<part>{nqt})""(?P<part>{nqt})"')
+    with_punctuation = regex.compile(fr'^"{part}(?P<punctuation>( that)|(: *)|(, *))""{part}"$')
+    no_punctuation = regex.compile(fr'^"(?P<part>{nqt})""(?P<part>{nqt})"$')
     said_words_re = regex.compile(
         r"(sa[(id)(ys)y])|(answer[(ed)s]?)|(state[ds]?)|(wrote)|(writes?)(written)|(words were)|(gave an interview)|"
         r"(argue[sd]?)|(announce[sd]?)|(describe[sd]?)|(repl[(ies)(ied)y])|(claim[(ed)s]?)|"
@@ -107,13 +109,14 @@ def get_patterns():
         r"(boast[s(ed)]?)|(confirm[(ed)s]?)|(teach(es)?)|(taught)|(mummble[sd]?)|(insist[(ed)s]?)|(reject[(ed)s]?)|"
         r"(suppose[sd]?)|(testif[y(ied)(ies)]?)|(vote[sd]?)|(reveal[(ed)s]?)|(promote[sd]?)|(speaks?)|(spoken?)|"
         r"(beg[iau]n)|(finish[(es)(ed)]?)|(slip[(ped)s]?[^,:;-]+word)|(emphasize[sd]?)|(demand[(ed)s]?)|(swear)|"
-        r"(swor[en])|(ma[(de)(ke)][^,:;-]+[(statement)(remark)])|(spell[s(ed)]?)")
+        r"(swor[en])|(ma[(de)(ke)][^,:;-]+[(statement)(remark)])|(spell[s(ed)]?)|(quip[(ed)s]?)")
     return {
         "with_punctuation": with_punctuation,
         "no_punctuation": no_punctuation,
         "said_words": said_words_re,
         "double": regex.compile('""'),
         "remove_double_quoting": regex.compile(' *"" *'),
+        "repeated_punkt_mark": regex.compile('(?P<punkt_mark>[\.,;-])( *(?P=punkt_mark))+'),
     }
 
 
@@ -130,7 +133,10 @@ def fix_with_citation_no_punctuation(match, patterns, lang):
     parts = match.capturesdict()["part"]
     if lang == 'en':
         if patterns["said_words"].search(parts[0]):
-            res = parts[0].strip() + ', "' + parts[1].strip() + '".'
+            res = parts[0].strip() + ', "' + parts[1].strip()
+            if res[-1] not in "?!',.-":
+                res += '.'
+            res += '"'
         elif patterns["said_words"].search(parts[1]):
             res = '"' + parts[0].strip() + '" ' + parts[1].strip()
         else:
@@ -148,8 +154,8 @@ def count_front_and_rear_quotes(line):
         rear = 3
     else:
         rear = 0
-    while line[-1 - rear] == '""':
-        rear -= 1
+    while line[-1 - rear] == '"':
+        rear += 1
     return front, rear
 
 
@@ -159,7 +165,13 @@ def fix_split_quotes(line, patterns):
         warnings.warn(f"The line of the unknown type: '{line}'")
         res = line.replace('"', '')
     elif n_front == 1:
-        res = patterns['double'].sub('"', line[1:-1])
+        double_count = line.count('""', 1, -1)
+        if double_count % 2:
+            res = line[1:-1].replace('"', '')
+        else:
+            res = patterns['double'].sub('"', line[1:-1])
+            if res.count('"') == 2 and res.count('""') == 1:
+                res = patterns['double'].sub('"', res)
     elif n_front == 2:
         warnings.warn(f"The line of the unknown type: '{line}'")
         res = line.replace('"', '')
@@ -170,8 +182,9 @@ def fix_split_quotes(line, patterns):
         elif double_count % 2 > 0:
             res = line.replace('"', '')
         else:
-            warnings.warn(f"Unsure about line {line}")
             res = line[3:-4].replace('""', '"') + '.'
+            if res.count('"') in [2, 3] and res.count('""') == 1:
+                res = patterns['double'].sub('"', res)
     else:
         assert False
     return res
@@ -184,7 +197,11 @@ def fix_external_duplication(line, patterns):
     if double_count % 2:
         res = line.replace('"', '')
     else:
-        res = line[n_min:-len(line)-n_min].replace('""', '"')
+        res = line[n_min:len(line)-n_min].replace('""', '"')
+        one_count = res.count('"')
+        double_count = res.count('""')
+        if one_count in [2, 3] and double_count == 1 or one_count == double_count * 2:
+            res = patterns['double'].sub('"', res)
     return res
 
 
@@ -200,11 +217,12 @@ def fix(line, patterns, lang):
             res = fix_split_quotes(line, patterns)
         else:
             res = fix_external_duplication(line, patterns)
+    res = patterns["repeated_punkt_mark"].subf('{punkt_mark}', res)
     return res
 
 
 def fix_is_needed(line):
-    return line[0] == '"' and line[1] == '"'
+    return line[0] == '"' and line[-1] == '"' and '""' in line
 
 
 def main():
@@ -220,7 +238,8 @@ def main():
     tgt_after = None if args.tgt_after is None else args.tgt_after.open('w')
     with args.input_src.open() as in_s, args.input_tgt.open() as in_t, out_src_tmp.open('w') as out_s, \
             out_tgt_tmp.open('w') as out_t:
-        for s_l, t_l in zip(in_s, in_t):
+        in_s, in_t = in_s.readlines(), in_t.readlines()
+        for s_l, t_l in tqdm(zip(in_s, in_t), total=len(in_s)):
             s_l, t_l = s_l.strip(), t_l.strip()
             if fix_is_needed(s_l):
                 if src_before is not None:
