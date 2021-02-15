@@ -75,7 +75,7 @@ def get_args():
         type=Path,
     )
     parser.add_argument(
-        "--output-tgt", "-T", required=True, help="Path to the output target file", type=Path,
+        "--output-tgt", "-T", help="Path to the output target file", type=Path,
     )
     parser.add_argument(
         "--source-lang",
@@ -92,7 +92,7 @@ def get_args():
         "--removed-src", "-r", required=True, help="Path to file where removed source lines will be saved", type=Path,
     )
     parser.add_argument(
-        "--removed-tgt", "-R", required=True, help="Path to file where removed target lines will be saved", type=Path,
+        "--removed-tgt", "-R", help="Path to file where removed target lines will be saved", type=Path,
     )
     parser.add_argument(
         "--num-jobs",
@@ -236,6 +236,7 @@ def filter_pairs(
 def filter_singles(
     src_edges, input_src, filtered_dir_src, removed_dir_src, source_lang, fasttext_model, rank,
 ):
+    logging.debug("filter singles")
     global counter
     fasttext_model = fasttext.load_model(str(fasttext_model))
     output_src = filtered_dir_src / Path(f"rank{rank}")
@@ -274,13 +275,13 @@ def filter_by_lang(args):
         fasttext_model,
         rank,
     ) = args
-
+    logging.debug(f"filter by lang input_tgt: {input_tgt}")
     if input_tgt is None:
         if tgt_edges is not None:
             warnings.warn("If input target is not provided `tgt_edges` argument is expected to be `None`")
-            filter_singles(
-                src_edges, input_src, filtered_dir_src, removed_dir_src, source_lang, fasttext_model, rank,
-            )
+        filter_singles(
+            src_edges, input_src, filtered_dir_src, removed_dir_src, source_lang, fasttext_model, rank,
+        )
     else:
         filter_pairs(
             src_edges,
@@ -354,8 +355,10 @@ def main():
     num_jobs = mp.cpu_count() if args.num_jobs is None else args.num_jobs
     src_edges, tgt_edges, num_lines = get_edges_and_num_lines(args.input_src, args.input_tgt, num_jobs)
     global counter
+    logging.debug(f"src_edges: {src_edges}")
     counter = mp.Value('i', 0)
     t = tqdm(total=num_lines, desc="processed lines / total number of lines")
+    logging.debug(f"input target: {args.input_tgt}")
     with mp.Pool(num_jobs, initializer=init, initargs=(counter,)) as pool:
         async_result = pool.map_async(
             filter_by_lang,
