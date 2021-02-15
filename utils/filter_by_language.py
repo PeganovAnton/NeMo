@@ -200,9 +200,11 @@ def filter_pairs(
         in_src.seek(src_edges[0])
         in_tgt.seek(tgt_edges[0])
         src_l, tgt_l, i = in_src.readline(), in_tgt.readline(), 0
-        with counter.get_lock():
-            counter.value += 1
+        if in_src.tell() > src_edges[1] or in_tgt.tell() > tgt_edges[1]:
+            return
         while src_l and tgt_l:
+            with counter.get_lock():
+                counter.value += 1
             src_l = src_l.strip()
             tgt_l = tgt_l.strip()
             src_lang = get_lang(src_l, fasttext_model)
@@ -229,8 +231,8 @@ def filter_pairs(
                     f"src_edges[1]={src_edges[1]}, tgt_edges[1]={tgt_edges[1]}."
                 )
             src_l, tgt_l, i = in_src.readline(), in_tgt.readline(), i + 1
-            with counter.get_lock():
-                counter.value += 1
+        with counter.get_lock():
+            counter.value += 1
 
 
 def filter_singles(
@@ -244,9 +246,11 @@ def filter_singles(
     with open(input_src) as in_f, open(output_src, 'w') as out_f, open(output_src_removed, 'w') as out_r_f:
         in_f.seek(src_edges[0])
         i, line = 0, in_f.readline()
-        with counter.get_lock():
-            counter.value += 1
+        if in_f.tell() > src_edges[1]:
+            return
         while line:
+            with counter.get_lock():
+                counter.value += 1
             line = line.strip()
             in_lang = get_lang(line, fasttext_model)
             if in_lang is None or in_lang != source_lang:
@@ -256,8 +260,8 @@ def filter_singles(
             if in_f.tell() >= src_edges[1]:
                 break
             i, line = i + 1, in_f.readline()
-            with counter.get_lock():
-                counter.value += 1
+        with counter.get_lock():
+            counter.value += 1
 
 
 def filter_by_lang(args):
@@ -336,6 +340,9 @@ def init(args):
 def main():
     args = get_args()
     tmp_dir = Path("tmp")
+    i = 0
+    while tmp_dir.exists():
+        tmp_dir = Path(str(tmp_dir) + str(i))
     tmp_filtered = tmp_dir / Path("filtered")
     tmp_filtered_src = tmp_filtered / Path("src")
     tmp_filtered_src.mkdir(parents=True, exist_ok=True)
