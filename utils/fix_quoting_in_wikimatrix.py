@@ -47,11 +47,43 @@ def get_args():
         help="Language of the target file",
         required=True,
     )
+    parser.add_argument(
+        "--src-before",
+        help="Path to a file where source sentences as they were before transformation are saved. Only transformed "
+             "sentences are saved.",
+        type=Path,
+    )
+    parser.add_argument(
+        "--src-after",
+        help="Path to a file where source sentences as they were after transformation are saved. Only transformed "
+             "sentences are saved.",
+        type=Path,
+    )
+    parser.add_argument(
+        "--tgt-before",
+        help="Path to a file where target sentences as they were before transformation are saved. Only transformed "
+             "sentences are saved.",
+        type=Path,
+    )
+    parser.add_argument(
+        "--tgt-after",
+        help="Path to a file where target sentences as they were after transformation are saved. Only transformed "
+             "sentences are saved.",
+        type=Path,
+    )
     args = parser.parse_args()
     args.input_src = args.input_src.expanduser()
     args.input_tgt = args.input_tgt.expanduser()
     args.output_src = args.output_src.expanduser()
     args.output_tgt = args.output_tgt.expanduser()
+    if args.src_before is not None:
+        args.src_before = args.src_before.expanduser()
+    if args.src_after is not None:
+        args.src_after = args.src_after.expanduser()
+    if args.tgt_before is not None:
+        args.tgt_before = args.tgt_before.expanduser()
+    if args.tgt_after is not None:
+        args.tgt_after = args.tgt_after.expanduser()
     return args
 
 
@@ -182,16 +214,42 @@ def main():
     out_src_tmp = out_src_dir / Path(".tmp_src")
     out_tgt_tmp = out_tgt_dir / Path(".tmp_tgt")
     patterns = get_patterns()
+    src_before = None if args.src_before is None else args.src_before.open('w')
+    src_after = None if args.src_after is None else args.src_after.open('w')
+    tgt_before = None if args.tgt_before is None else args.tgt_before.open('w')
+    tgt_after = None if args.tgt_after is None else args.tgt_after.open('w')
     with args.input_src.open() as in_s, args.input_tgt.open() as in_t, out_src_tmp.open('w') as out_s, \
             out_tgt_tmp.open('w') as out_t:
         for s_l, t_l in zip(in_s, in_t):
             s_l, t_l = s_l.strip(), t_l.strip()
             if fix_is_needed(s_l):
+                if src_before is not None:
+                    src_before.write(s_l)
+                    src_before.write('\n')
                 s_l = fix(s_l, patterns, args.src_lang)
+                if src_after is not None:
+                    src_after.write(s_l)
+                    src_after.write('\n')
             if fix_is_needed(t_l):
+                if tgt_before is not None:
+                    tgt_before.write(t_l)
+                    tgt_before.write('\n')
                 t_l = fix(t_l, patterns, args.tgt_lang)
+                if tgt_after is not None:
+                    tgt_after.write(t_l)
+                    tgt_after.write('\n')
             out_s.write(s_l)
+            out_s.write('\n')
             out_t.write(t_l)
+            out_t.write('\n')
+    if src_before is not None:
+        src_before.close()
+    if src_after is not None:
+        src_after.close()
+    if tgt_before is not None:
+        tgt_before.close()
+    if tgt_after is not None:
+        tgt_after.close()
     out_src_tmp.rename(args.output_src)
     out_tgt_tmp.rename(args.output_tgt)
 
