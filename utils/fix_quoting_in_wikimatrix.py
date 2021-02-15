@@ -184,7 +184,7 @@ def fix_external_duplication(line, patterns):
     if double_count % 2:
         res = line.replace('"', '')
     else:
-        res = line[n_min:-n_min].replace('""', '"')
+        res = line[n_min:-len(line)-n_min].replace('""', '"')
     return res
 
 
