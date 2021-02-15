@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 
 import homoglyphs as hg
+from tqdm import tqdm
 
 
 def get_args():
@@ -86,13 +87,26 @@ def count_correct_chars(line, alphabet):
     return count
 
 
-def filter_singles(input, output, removed, lang, fraction):
+def count_lines(file_name):
+    nl = 0
+    with file_name.open() as f:
+        for line in f:
+            nl += 1
+    return nl
+
+
+def filter_singles(input_, output, removed, lang, fraction):
+    num_lines = count_lines(input_)
     alphabet = set(hg.Languages.get_alphabet([lang]))
     out_dir = output.parent
     out_dir.mkdir(parents=True, exist_ok=True)
     tmp_file = out_dir / Path('.tmp')
-    with tmp_file.open('w') as out_f, input.open() as in_f, removed.open('w') as r_f:
-        for l in in_f:
+    i = 0
+    while tmp_file.exists():
+        tmp_file = out_dir / Path('.tmp' + str(i))
+        i += 1
+    with tmp_file.open('w') as out_f, input_.open() as in_f, removed.open('w') as r_f:
+        for l in tqdm(in_f, total=num_lines):
             l = l.strip()
             count = count_correct_chars(l, alphabet)
             if fraction is None and count > 0 or fraction is not None and count / len(l) > fraction:
@@ -105,15 +119,24 @@ def filter_singles(input, output, removed, lang, fraction):
 def filter_pairs(input_src, input_tgt, output_src, output_tgt, removed_src, removed_tgt, src_lang, tgt_lang, fraction):
     src_alph = set(hg.Languages.get_alphabet([src_lang]))
     tgt_alph = set(hg.Languages.get_alphabet([tgt_lang]))
+    num_lines = count_lines(input_src)
     out_src_dir = output_src.parent
     out_tgt_dir = output_tgt.parent
     out_src_dir.mkdir(parents=True, exist_ok=True)
     out_tgt_dir.mkdir(parents=True, exist_ok=True)
     tmp_src = out_src_dir / Path('.tmp_src')
+    i = 0
+    while tmp_src.exists():
+        tmp_src = out_src_dir / Path('.tmp_src' + str(i))
+        i += 1
     tmp_tgt = out_tgt_dir / Path('.tmp_tgt')
+    i = 0
+    while tmp_tgt.exists():
+        tmp_tgt = out_tgt_dir / Path('.tmp_tgt' + str(i))
+        i += 1
     with tmp_src.open('w') as out_s_f, tmp_tgt.open('w') as out_t_f, input_src.open() as in_s_f, \
             input_tgt.open() as in_t_f, removed_src.open('w') as r_s_f, removed_tgt.open('w') as r_t_f:
-        for s_l, t_l in zip(in_s_f, in_t_f):
+        for s_l, t_l in tqdm(zip(in_s_f, in_t_f), total=num_lines):
             s_l = s_l.strip()
             t_l = t_l.strip()
             s_count = count_correct_chars(s_l, src_alph)

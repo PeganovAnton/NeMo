@@ -342,7 +342,8 @@ def main():
     tmp_dir = Path("tmp")
     i = 0
     while tmp_dir.exists():
-        tmp_dir = Path(str(tmp_dir) + str(i))
+        tmp_dir = Path("tmp" + str(i))
+        i += 1
     tmp_filtered = tmp_dir / Path("filtered")
     tmp_filtered_src = tmp_filtered / Path("src")
     tmp_filtered_src.mkdir(parents=True, exist_ok=True)
