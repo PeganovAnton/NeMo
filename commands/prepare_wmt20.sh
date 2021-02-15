@@ -3,6 +3,7 @@
 #Run in directory where dataset will be saved
 set -x -e
 SCRIPTS=~/PeganovNeMo/utils
+moses_path=~/mosesdecoder
 if [ -d raw ]; then
   rm -r raw
 fi
@@ -41,7 +42,18 @@ for d in *; do
     -R $d/garbage.de \
     -m ../../lid.176.bin
 done
-cd ../
+cd wikimatrix
+python ~/PeganovNeMo/utils/fix_quoting_in_wikimatrix.py -s en \
+  -t de \
+  -S en \
+  -T de \
+  -l en \
+  -L de \
+  --src-before en_before \
+  --src-after en_after \
+  --tgt-before de_before \
+  --tgt-after de_after
+cd ../..
 mkdir -p cat_shuffled normalized
 good_data=(commoncrawl europarl news-commentary rapid wikimatrix)
 good_sources=($(for d in ${good_data[@]}; do echo raw/${d}/en; done))
@@ -56,12 +68,22 @@ start_i=($(seq 0 ${num_lines_per_core} $((${num_lines} - ${num_lines_per_core}))
 end_i=($(seq ${num_lines_per_core} ${num_lines_per_core} $((${num_lines} - ${num_lines_per_core}))) ${num_lines})
 for i in ${!start_i[@]}; do echo ${start_i[i]} ${end_i[i]} $i; done | \
   xargs -n 3 -P "${num_cores}" \
-    sh -c 'bash ~/PeganovNeMo/commands/normalize_punkt.sh normalized/en "$1" "$2" en "$3"' sh
+    sh -c 'bash ~/PeganovNeMo/commands/normalize_punkt.sh cat_shuffled/en "$1" "$2" en "$3"' sh
 cat tmp/rank* > normalized/en
 rm -r tmp
 for i in ${!start_i[@]}; do echo ${start_i[i]} ${end_i[i]} $i; done | \
   xargs -n 3 -P "${num_cores}" \
-    sh -c 'bash ~/PeganovNeMo/commands/normalize_punkt.sh normalized/de "$1" "$2" en "$3"' sh
+    sh -c 'bash ~/PeganovNeMo/commands/normalize_punkt.sh cat_shuffled/de "$1" "$2" de "$3"' sh
 cat tmp/rank* > normalized/de $2
 rm -r tmp
+python ~/PeganovNeMo/utils/filter_alphabetically.py -s normalized/en \
+  -t normalized/de \
+  -S alphabetically_filtered/en \
+  -T alphabetically_filtered/de \
+  -r alphabetically_filtered/garbage.en \
+  -R alphabetically_filtered/garbage.de \
+  -l en \
+  -L de \
+  -f 0.5
+$moses_path/scripts/training/clean-corpus-n.perl -ratio 1.3 final/en $lang1 $lang2 ${OUTDIR}/parallel/train.$lang.filter 1 250
 set +x +e
