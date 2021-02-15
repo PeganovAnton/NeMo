@@ -85,5 +85,5 @@ python ~/PeganovNeMo/utils/filter_alphabetically.py -s normalized/en \
   -l en \
   -L de \
   -f 0.5
-$moses_path/scripts/training/clean-corpus-n.perl -ratio 1.3 final/en $lang1 $lang2 ${OUTDIR}/parallel/train.$lang.filter 1 250
+$moses_path/scripts/training/clean-corpus-n.perl -ratio 1.3 final/train en de finalfinal/train 1 250
 set +x +e
