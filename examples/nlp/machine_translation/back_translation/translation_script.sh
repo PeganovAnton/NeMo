@@ -22,9 +22,9 @@ apt-get install -y libsndfile1 ffmpeg
 pip install --upgrade wandb
 pip install Cython
 wandb login ${WANDBLOGIN}
-git clone https://github.com/NVIDIA/NeMo.git
+git clone https://github.com/NVIDIA/PeganovNeMo.git
 cd NeMo
-git checkout nmt_dataset_caching
+git checkout sacreBLEU_pl_metric
 ./reinstall.sh
 mkdir -p ${RAID_MONO} $RAID_TRANSLATED}
 cp -R /data/* ${RAID_MONO}

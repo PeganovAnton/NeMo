@@ -32,7 +32,7 @@ read -r -d '' cmd <<EOF
 set -e -x
 git clone https://github.com/PeganovAnton/NeMo.git
 cd NeMo
-git checkout nmtmodel
+git checkout sacreBLEU_pl_metric
 pip3 install -r requirements/requirements.txt
 pip3 install -r requirements/requirements_nlp.txt
 pip3 install --upgrade wandb
