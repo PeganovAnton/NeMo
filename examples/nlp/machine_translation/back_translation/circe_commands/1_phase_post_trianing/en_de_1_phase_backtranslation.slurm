@@ -1,0 +1,122 @@
+#!/bin/bash
+#SBATCH -A dl-langspeech
+#SBATCH -p batch
+#SBATCH -N 8                    # number of nodes
+#SBATCH -t 8:00:00              # wall time
+#SBATCH -J "en_de_4_staged_back_translation"   # job name
+#SBATCH --exclusive             # exclusive node access
+#SBATCH --mem=0                 # all mem avail
+#SBATCH --mail-type=FAIL        # only send email on failure
+#SBATCH --ntasks-per-node 16    # n tasks per machine (one task per GPU)
+#SBATCH --cores-per-socket 24   # 24 cores per socket
+#SBATCH --threads-per-core 2    # hyperthreading on
+#SBATCH --sockets-per-node 2
+#SBATCH --signal=SIGUSR1@90
+# --overcommit option was removed
+# Hyper params
+# Env Variable Setup
+set -x
+
+WANDB_PROJECT=1_phase_post_training_on_sandeep_back_translated_data
+CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest"
+# Directories for manifests, data, etc.
+DATA_DIR='/gpfs/fs1/apeganov/datasets/en_de_mono_news_data'
+RESULT_DIR='/home/apeganov'
+result_dir=/result
+PRETRAINED_MODELS='/gpfs/fs1/apeganov/models/mt/translation_pretrained_weights'
+pretrained_models='/pretrained'
+EXP_NAME='news_back_translation_training_1_phase'
+export NCCL_DEBUG=INFO
+export PYTHONFAULTHANDLER=1
+#export NCCL_SOCKET_IFNAME=^docker0,lo
+mkdir -p $RESULT_DIR/$EXP_NAME
+MOUNTS="--container-mounts=$DATA_DIR:/data,$RESULT_DIR/$EXP_NAME:${result_dir}:${PRETRAINED_MODELS}:${pretrained_models}"
+# Set up multinode if applicable
+if [[ -z "$SLURM_JOB_ID" ]]; then
+  hosts=( `hostname` )
+else
+  hosts=( `scontrol show hostname |tr "\n" " "` )
+fi
+
+SLURM_NUM_NODES=8
+SLURM_NUM_GPUS=16
+
+BATCH_SIZE=11000
+
+train_n_tokens_in_batch=8000
+max_epochs=100000
+data_path=/data/text
+train_src=${data_path}/train.en
+train_ref=${data_path}/train.de
+valid_src=${data_path}/newstest2013.en
+valid_ref=${data_path}/newstest2013.de
+test_src=${data_path}/newstest2014.en
+test_ref=${data_path}/newstest2014.de
+tok_model=${data_path}//tokenizer.latest.60.32000.BPE.model
+phase0_base_lr=0.0005
+back_translation_phases_base_lr=0.00005
+lr_num_nodes_factor=$(python -c "print(${SLURM_NUM_NODES}**0.5)")
+echo "Learning rate number of nodes factor ${lr_num_nodes_factor}"
+lr=$(python -c "print(${phase0_base_lr} * ${lr_num_nodes_factor})")
+back_translation_phases_lr=$(python -c "print(${back_translation_phases_base_lr} * ${lr_num_nodes_factor})")
+encoder_bpe_dropout=0.1
+decoder_bpe_dropout=0.1
+
+EXP_DIR=${RESULT_DIR}/${EXP_NAME}
+max_steps=100000
+OUTFILE="${RESULT_DIR}/${EXP_NAME}/slurm-%j-%n.out"
+ERRFILE="${RESULT_DIR}/${EXP_NAME}/error-%j-%n.out"
+
+val_check_interval=$(python -c "i=int(round(1000 / ${SLURM_NUM_NODES} / 100) * 100);print(i if i > 0 else 10)")
+
+# Diagnostic prints
+echo "Hosts: $hosts"
+# Command to be run
+echo "Your W&B token is ${WANDB_TOKEN}"
+
+if compgen -G ${EXP_DIR}/TransformerMT/checkpoints/* > /dev/null; then
+  echo "Will try to resume PHASE 0 training from checkpoint"
+  resume=true
+else
+  echo "Checkpoints for PHASE 0 are not found. Training will be started from scratch."
+  resume=false
+fi
+read -r -d '' cmd <<EOF
+set -x -e
+echo "*******STARTING TRAINING********"
+echo "---------------"
+set -x -e
+if [ "\${SLURM_PROCID}" -eq "0" ]; then wandb login ${WANDB_TOKEN}; fi
+export nemo_path=/workspace/NeMo
+echo "NeMo path: ${nemo_path}"
+export PYTHONPATH="${nemo_path}"
+cd "${nemo_path}/examples/nlp/machine_translation"
+python enc_dec_nmt.py --config-name=aayn_base \
+  trainer.num_nodes=${SLURM_NUM_NODES} \
+  trainer.gpus=${SLURM_NUM_GPUS} \
+  ~trainer.max_epochs \
+  +trainer.max_steps=${max_steps}  \
+  model.encoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.encoder_tokenizer.bpe_dropout=${encoder_bpe_dropout} \
+  model.decoder_tokenizer.tokenizer_model=${tok_model}  \
+  model.decoder_tokenizer.bpe_dropout=${decoder_bpe_dropout} \
+  model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
+  model.train_ds.src_file_name=${train_src} \
+  model.train_ds.tgt_file_name=${train.ref} \
+  model.validation_ds.src_file_name=${valid_src} \
+  model.validation_ds.tgt_file_name=${valid_ref} \
+  model.test_ds.src_file_name=${test_src} \
+  model.test_ds.tgt_file_name=${test_ref} \
+  model.optim.lr=${lr}  \
+  exp_manager.wandb_logger_kwargs.name=circe_1st_trial \
+  exp_manager.wandb_logger_kwargs.project=${WANDB_PROJECT} \
+  +exp_manager.exp_dir=${result_dir} \
+  +exp_manager.resume_if_exists=${resume}
+echo  "*******FINISHING TRAINING********"
+set +x +e
+EOF
+  srun -o $OUTFILE -e $ERRFILE \
+    --container-image="$CONTAINER" \
+    $MOUNTS \
+    bash -c "${cmd}"
+fi
