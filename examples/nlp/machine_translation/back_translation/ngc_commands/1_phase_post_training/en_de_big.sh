@@ -48,7 +48,7 @@ num_gpus=\$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
 
 python train.py --config-name=aayn_big \
   trainer.gpus=\${num_gpus} \
-  ~trainer.MAX_EPOCHS \
+  ~trainer.max_epochs \
   +trainer.max_steps=${MAX_STEPS}  \
   +model.weights_checkpoin=${PRETRAINED_PATH}/model_weights.ckpt \
   model.encoder_tokenizer.tokenizer_model=${TOK_MODEL}  \
