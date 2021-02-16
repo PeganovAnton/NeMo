@@ -109,7 +109,7 @@ def filter_singles(input_, output, removed, lang, fraction):
         for l in tqdm(in_f, total=num_lines):
             l = l.strip()
             count = count_correct_chars(l, alphabet)
-            if fraction is None and count > 0 or fraction is not None and count / len(l) > fraction:
+            if l and (fraction is None and count > 0 or fraction is not None and count / len(l) > fraction):
                 out_f.write(l + '\n')
             else:
                 r_f.write(l + '\n')
@@ -141,8 +141,8 @@ def filter_pairs(input_src, input_tgt, output_src, output_tgt, removed_src, remo
             t_l = t_l.strip()
             s_count = count_correct_chars(s_l, src_alph)
             t_count = count_correct_chars(t_l, tgt_alph)
-            if fraction is None and (s_count > 0 or t_count > 0) \
-                    or fraction is not None and s_count / len(s_l) > fraction and t_count / len(t_l) > fraction:
+            if s_l and t_l and (fraction is None and (s_count > 0 or t_count > 0) \
+                    or fraction is not None and s_count / len(s_l) > fraction and t_count / len(t_l) > fraction):
                 out_s_f.write(s_l + '\n')
                 out_t_f.write(t_l + '\n')
             else:
