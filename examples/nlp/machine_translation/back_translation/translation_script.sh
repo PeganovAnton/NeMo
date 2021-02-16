@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e -x
+
 INSTANCE=dgx1v.32g.8.norm
 PROJECT=back_translation_de_en
 DATAID=74340
@@ -38,6 +38,7 @@ python examples/nlp/machine_translation/translate_ddp.py \
 tar czf ${RESULTS_DIR}/translated.tar.gz ${RAID_TRANSLATED}
 set +e +x
 EOF
+echo $cmd
 
 ngc batch run --name "backtranslation_en_de_wmt20" --preempt RUNONCE \
     --image "nvcr.io/nvidia/pytorch:20.11-py3" \
@@ -46,8 +47,8 @@ ngc batch run --name "backtranslation_en_de_wmt20" --preempt RUNONCE \
     --commandline "" \
     --result /results/ \
     --org nvidian \
-    --team swdl-ai-apps \
+    --team ac-aiapps \
     --datasetid $DATAID:/data/ \
     --workspace $WORKSPACE:/models/
 
-set +e +x
+
