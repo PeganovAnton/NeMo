@@ -21,7 +21,7 @@ def get_args():
 
 
 def main():
-    pattern = regex.compile(r'^<seg id="(?P<line_number>[1-9][0-9]*)">(?P<text>[^<])</seg>$')
+    pattern = regex.compile(r'^<seg id="(?P<line_number>[1-9][0-9]*)">(?P<text>[^<]*)</seg>$')
     args = get_args()
     with args.input.open() as in_f, args.output.open('w') as out_f:
         for line in in_f:
