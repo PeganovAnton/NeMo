@@ -80,6 +80,7 @@ def write_batches_to_tarfiles(
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='NMT dataset pre-processing')
     parser.add_argument('--shared_tokenizer', action="store_true", help='Whether to share encoder/decoder tokenizers')
+    parser.add_argument('--tokenizer_model', help="Path to the tokenizer model.")
     parser.add_argument('--clean', action="store_true", help='Whether to clean dataset based on length diff')
     parser.add_argument('--bpe_dropout', type=float, default=0.1, help='Whether to share encoder/decoder tokenizers')
     parser.add_argument('--src_fname', type=str, required=True, help='Path to the source file')
@@ -105,30 +106,34 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if not os.path.exists(args.out_dir):
         os.mkdir(args.out_dir)
-    if args.shared_tokenizer:
-        os.system('cat %s %s > %s' % (args.src_fname, args.tgt_fname, '/tmp/concat_dataset.txt'))
-        yttm.BPE.train(
-            data='/tmp/concat_dataset.txt',
-            vocab_size=args.vocab_size,
-            model=os.path.join(args.out_dir, 'tokenizer.%d.BPE.model' % (args.vocab_size)),
-        )
-        encoder_tokenizer_model = os.path.join(args.out_dir, 'tokenizer.%d.BPE.model' % (args.vocab_size))
-        decoder_tokenizer_model = os.path.join(args.out_dir, 'tokenizer.%d.BPE.model' % (args.vocab_size))
-        os.remove('/tmp/concat_dataset.txt')
-    else:
-        yttm.BPE.train(
-            data=args.src_fname,
-            vocab_size=args.vocab_size,
-            model=os.path.join(args.out_dir, 'tokenizer.encoder.%d.BPE.model' % (args.vocab_size)),
-        )
+    if args.tokenizer_model is None:
+        if args.shared_tokenizer:
+            os.system('cat %s %s > %s' % (args.src_fname, args.tgt_fname, '/tmp/concat_dataset.txt'))
+            yttm.BPE.train(
+                data='/tmp/concat_dataset.txt',
+                vocab_size=args.vocab_size,
+                model=os.path.join(args.out_dir, 'tokenizer.%d.BPE.model' % (args.vocab_size)),
+            )
+            encoder_tokenizer_model = os.path.join(args.out_dir, 'tokenizer.%d.BPE.model' % (args.vocab_size))
+            decoder_tokenizer_model = os.path.join(args.out_dir, 'tokenizer.%d.BPE.model' % (args.vocab_size))
+            os.remove('/tmp/concat_dataset.txt')
+        else:
+            yttm.BPE.train(
+                data=args.src_fname,
+                vocab_size=args.vocab_size,
+                model=os.path.join(args.out_dir, 'tokenizer.encoder.%d.BPE.model' % (args.vocab_size)),
+            )
 
-        yttm.BPE.train(
-            data=args.tgt_fname,
-            vocab_size=args.vocab_size,
-            model=os.path.join(args.out_dir, 'tokenizer.decoder.%d.BPE.model' % (args.vocab_size)),
-        )
-        encoder_tokenizer_model = os.path.join(args.out_dir, 'tokenizer.encoder.%d.BPE.model' % (args.vocab_size))
-        decoder_tokenizer_model = os.path.join(args.out_dir, 'tokenizer.decoder.%d.BPE.model' % (args.vocab_size))
+            yttm.BPE.train(
+                data=args.tgt_fname,
+                vocab_size=args.vocab_size,
+                model=os.path.join(args.out_dir, 'tokenizer.decoder.%d.BPE.model' % (args.vocab_size)),
+            )
+            encoder_tokenizer_model = os.path.join(args.out_dir, 'tokenizer.encoder.%d.BPE.model' % (args.vocab_size))
+            decoder_tokenizer_model = os.path.join(args.out_dir, 'tokenizer.decoder.%d.BPE.model' % (args.vocab_size))
+    else:
+        encoder_tokenizer_model = args.tokenizer_model
+        decoder_tokenizer_model = args.tokenizer_model
 
     encoder_tokenizer = get_tokenizer(
         tokenizer_name='yttm', tokenizer_model=encoder_tokenizer_model, bpe_dropout=args.bpe_dropout
