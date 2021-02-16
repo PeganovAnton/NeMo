@@ -2,9 +2,9 @@
 # The only argument is wandb token.
 
 WANDB_PROJECT=1_phase_post_training_on_sandeep_back_translated_data
-TRANSLATE_MODELS_WS=translation_pretrained_weights
+TRANSLATE_MODELS_WS=trainslation_pretrained_weights
 TRANSLATE_MODELS_PATH=/wmt_translate_models
-BACK_TRANSLATION_DS_ID=74337
+DS_ID=74337
 DATA_PATH=/data
 
 TRAIN_N_TOKENS_IN_BATCH=16000
@@ -92,6 +92,6 @@ ngc batch run \
   --result /result \
   --org nvidian \
   --team ac-aiapps \
-  --datasetid ${BACK_TRANSLATION_DS_ID}:${BACK_TRANSLATED_PATH} \
+  --datasetid ${DS_ID}:${DATA_PATH} \
   --workspace ${TRANSLATE_MODELS_WS}:${TRANSLATE_MODELS_PATH}:RO
 
