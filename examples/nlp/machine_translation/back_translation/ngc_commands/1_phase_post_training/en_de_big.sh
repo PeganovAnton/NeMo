@@ -80,6 +80,7 @@ python3 nmt_transformer_infer.py \
   --tgtout "${WMT14_TRANSLATED}" \
   --target_lang de
 cat "${WMT14_TRANSLATED}" | sacrebleu -t wmt14 -l en-de
+set +e +x
 EOF
 
 ngc batch run \
