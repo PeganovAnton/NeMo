@@ -49,6 +49,7 @@ export PYTHONPATH="\${nemo_path}"
 cd "\${nemo_path}/examples/nlp/machine_translation"
 num_gpus=\$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
 cp -rv ${TEXT_PATH}/newstest* ${RAID}/
+mkdir -p ${RAID_TRAIN_PATH}
 cp -rv ${TARRED_PATH}/* ${RAID_TRAIN_PATH}/
 
 python train.py --config-name=aayn_big \
