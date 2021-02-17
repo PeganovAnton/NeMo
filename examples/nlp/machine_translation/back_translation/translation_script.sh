@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-INSTANCE=dgx1v.16g.8.norm
+INSTANCE=dgx1v.32g.8.norm
 PROJECT=back_translation_de_en
 DATAID=74340
 WORKSPACE=wmt_translate_models
@@ -13,6 +13,8 @@ WORKSPACE_POINT=/models
 MODEL=$2
 TAR_TEMPLATE=$3
 METADATA=$4
+SOURCE_LANG=$5
+TARGET_LANG=$6
 
 read -r -d '' cmd <<EOF
 set -e -x
@@ -36,7 +38,9 @@ python examples/nlp/machine_translation/translate_ddp.py \
   --model=${WORKSPACE_POINT}/rc1/${MODEL} \
   --text2translate=${RAID_MONO}/${TAR_TEMPLATE} \
   --metadata_path ${METADATA} \
-  --result_dir ${RAID_TRANSLATED}
+  --result_dir ${RAID_TRANSLATED} \
+  --source_lang ${SOURCE_LANG} \
+  --target_lang ${TARGET_LANG}
 tar czf ${RESULTS_DIR}/translated.tar.gz ${RAID_TRANSLATED}
 set +e +x
 EOF
