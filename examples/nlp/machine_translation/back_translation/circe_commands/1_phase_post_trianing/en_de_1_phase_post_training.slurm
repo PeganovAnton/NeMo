@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -A dl-langspeech
 #SBATCH -p batch
-#SBATCH -N 8                    # number of nodes
+#SBATCH -N 1                    # number of nodes
 #SBATCH -t 8:00:00              # wall time
 #SBATCH -J "en_de_4_staged_back_translation"   # job name
 #SBATCH --exclusive             # exclusive node access
@@ -38,7 +38,7 @@ else
   hosts=( `scontrol show hostname |tr "\n" " "` )
 fi
 
-SLURM_NUM_NODES=8
+SLURM_NUM_NODES=1
 SLURM_NUM_GPUS=16
 
 BATCH_SIZE=11000
@@ -48,6 +48,7 @@ max_epochs=100000
 data_path=/data/text
 train_src=${data_path}/train/batches.tokens.16000._OP_1..71_CL_.tar
 train_ref=${data_path}/train/batches.tokens.16000._OP_1..71_CL_.tar
+train_metadata=${data_path}/train/metadata.json
 valid_src=${data_path}/newstest2013.en
 valid_ref=${data_path}/newstest2013.de
 test_src=${data_path}/newstest2014.en
@@ -103,6 +104,7 @@ python enc_dec_nmt.py --config-name=aayn_base \
   model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
   model.train_ds.src_file_name=${train_src} \
   model.train_ds.tgt_file_name=${train.ref} \
+  +model.train_ds.metadata_path=${train_metadata} \
   model.validation_ds.src_file_name=${valid_src} \
   model.validation_ds.tgt_file_name=${valid_ref} \
   model.test_ds.src_file_name=${test_src} \
