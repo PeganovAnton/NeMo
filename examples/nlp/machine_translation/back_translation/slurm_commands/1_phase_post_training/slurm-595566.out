@@ -1,0 +1,75 @@
++ WANDB_PROJECT=1_phase_post_training_on_sandeep_back_translated_data
++ CONTAINER=rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest
++ DATA_DIR=/gpfs/fs1/apeganov/datasets/wmt20_en_de_with_back_translated
++ RESULT_DIR=/home/apeganov
++ result_dir=/result
++ PRETRAINED_MODELS=/gpfs/fs1/apeganov/models/mt/translation_pretrained_weights/large_en_de
++ pretrained_models=/pretrained
++ EXP_NAME=news_back_translation_training_1_phase
++ export NCCL_DEBUG=INFO
++ NCCL_DEBUG=INFO
++ export PYTHONFAULTHANDLER=1
++ PYTHONFAULTHANDLER=1
++ mkdir -p /home/apeganov/news_back_translation_training_1_phase
++ MOUNTS=--container-mounts=/gpfs/fs1/apeganov/datasets/wmt20_en_de_with_back_translated:/data,/home/apeganov/news_back_translation_training_1_phase:/result,/gpfs/fs1/apeganov/models/mt/translation_pretrained_weights/large_en_de:/pretrained
++ [[ -z 595566 ]]
++ hosts=(`scontrol show hostname |tr "\n" " "`)
+++ scontrol show hostname
+++ tr '\n' ' '
++ SLURM_NUM_NODES=1
++ SLURM_NUM_GPUS=16
++ BATCH_SIZE=11000
++ max_epochs=100000
++ data_path=/data/text
++ train_tar_files=/data/text/train/batches.tokens.16000._OP_1..71_CL_.tar
++ train_metadata=/data/text/train/metadata.json
++ valid_src=/data/text/newstest2013.en
++ valid_ref=/data/text/newstest2013.de
++ test_src=/data/text/newstest2014.en
++ test_ref=/data/text/newstest2014.de
++ tok_model=/pretrained/tokenizer.latest.60.32000.BPE.model
++ phase0_base_lr=0.0005
++ back_translation_phases_base_lr=0.00005
+++ python -c 'print(1**0.5)'
++ lr_num_nodes_factor=1.0
++ echo 'Learning rate number of nodes factor 1.0'
+Learning rate number of nodes factor 1.0
+++ python -c 'print(0.0005 * 1.0)'
++ lr=0.0005
+++ python -c 'print(0.00005 * 1.0)'
++ back_translation_phases_lr=5e-05
++ encoder_bpe_dropout=0.1
++ decoder_bpe_dropout=0.1
++ EXP_DIR=/home/apeganov/news_back_translation_training_1_phase
++ max_steps=100000
++ OUTFILE=/home/apeganov/news_back_translation_training_1_phase/slurm-%j-%n.out
++ ERRFILE=/home/apeganov/news_back_translation_training_1_phase/error-%j-%n.out
+++ python -c 'i=int(round(1000 / 1 / 100) * 100);print(i if i > 0 else 10)'
++ val_check_interval=1000
++ echo 'Hosts: circe-n040'
+Hosts: circe-n040
++ echo 'Your W&B token is 1bb67bd54fa2a217c525ed67f1afa47ab0502040'
+Your W&B token is 1bb67bd54fa2a217c525ed67f1afa47ab0502040
++ compgen -G '/home/apeganov/news_back_translation_training_1_phase/TransformerMT/checkpoints/*'
++ echo 'Checkpoints are not found. Training will be started from scratch.'
+Checkpoints are not found. Training will be started from scratch.
++ resume=false
++ read -r -d '' cmd
++ srun -o /home/apeganov/news_back_translation_training_1_phase/slurm-%j-%n.out -e /home/apeganov/news_back_translation_training_1_phase/error-%j-%n.out --container-image=rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest --container-mounts=/gpfs/fs1/apeganov/datasets/wmt20_en_de_with_back_translated:/data,/home/apeganov/news_back_translation_training_1_phase:/result,/gpfs/fs1/apeganov/models/mt/translation_pretrained_weights/large_en_de:/pretrained bash -c 'set -x -e
+echo "*******STARTING TRAINING********"
+echo "---------------"
+set -x -e
+if [ "${SLURM_PROCID}" -eq "0" ]; then wandb login 1bb67bd54fa2a217c525ed67f1afa47ab0502040; fi
+nemo_path=/workspace/NeMo
+echo "NeMo path: "
+export PYTHONPATH="${nemo_path}"
+cd "${nemo_path}/examples/nlp/machine_translation"
+ls /pretrained
+python train.py --config-name=aayn_big   trainer.num_nodes=1   trainer.gpus=16   ~trainer.max_epochs   +trainer.max_steps=100000    +model.weights_checkpoint=/pretrained/model_weights.ckpt   model.encoder_tokenizer.tokenizer_model=/pretrained/tokenizer.latest.60.32000.BPE.model    model.encoder_tokenizer.bpe_dropout=0.1   model.decoder_tokenizer.tokenizer_model=/pretrained/tokenizer.latest.60.32000.BPE.model    model.decoder_tokenizer.bpe_dropout=0.1   +model.train_ds.tar_files=/data/text/train/batches.tokens.16000._OP_1..71_CL_.tar   +model.train_ds.use_tarred_dataset=true   +model.train_ds.metadata_file=/data/text/train/metadata.json   model.validation_ds.src_file_name=/data/text/newstest2013.en   model.validation_ds.tgt_file_name=/data/text/newstest2013.de   model.test_ds.src_file_name=/data/text/newstest2014.en   model.test_ds.tgt_file_name=/data/text/newstest2014.de   model.optim.lr=0.0005    exp_manager.wandb_logger_kwargs.name=circe_1st_trial   exp_manager.wandb_logger_kwargs.project=1_phase_post_training_on_sandeep_back_translated_data   +exp_manager.exp_dir=/result   +exp_manager.resume_if_exists=false   +model.find_unused_parameters=true
+echo  "*******FINISHING TRAINING********"
+set +x +e'
+srun: error: circe-n040: task 13: Exited with exit code 1
+srun: Terminating job step 595566.0
+srun: error: circe-n040: tasks 0-12,14-15: Terminated
+srun: Force Terminated job step 595566.0
++ set +x

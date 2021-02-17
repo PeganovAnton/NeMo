@@ -1,0 +1,59 @@
++ WANDB_PROJECT=1_phase_post_training_on_sandeep_back_translated_data
++ CONTAINER=rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest
++ DATA_DIR=/gpfs/fs1/apeganov/datasets/news_en_de_mono
++ RESULT_DIR=/home/apeganov
++ result_dir=/result
++ PRETRAINED_MODELS=/gpfs/fs1/apeganov/models/mt/translation_pretrained_weights
++ pretrained_models=/pretrained
++ EXP_NAME=news_back_translation_training_1_phase
++ export NCCL_DEBUG=INFO
++ NCCL_DEBUG=INFO
++ export PYTHONFAULTHANDLER=1
++ PYTHONFAULTHANDLER=1
++ mkdir -p /home/apeganov/news_back_translation_training_1_phase
++ MOUNTS=--container-mounts=/gpfs/fs1/apeganov/datasets/news_en_de_mono:/data,/home/apeganov/news_back_translation_training_1_phase:/result:/gpfs/fs1/apeganov/models/mt/translation_pretrained_weights:/pretrained
++ [[ -z 595032 ]]
++ hosts=(`scontrol show hostname |tr "\n" " "`)
+++ scontrol show hostname
+++ tr '\n' ' '
++ SLURM_NUM_NODES=1
++ SLURM_NUM_GPUS=16
++ BATCH_SIZE=11000
++ train_n_tokens_in_batch=8000
++ max_epochs=100000
++ data_path=/data/text
++ train_src=/data/text/train/batches.tokens.16000._OP_1..71_CL_.tar
++ train_ref=/data/text/train/batches.tokens.16000._OP_1..71_CL_.tar
++ train_metadata=/data/text/train/metadata.json
++ valid_src=/data/text/newstest2013.en
++ valid_ref=/data/text/newstest2013.de
++ test_src=/data/text/newstest2014.en
++ test_ref=/data/text/newstest2014.de
++ tok_model=/data/text//tokenizer.latest.60.32000.BPE.model
++ phase0_base_lr=0.0005
++ back_translation_phases_base_lr=0.00005
+++ python -c 'print(1**0.5)'
++ lr_num_nodes_factor=1.0
++ echo 'Learning rate number of nodes factor 1.0'
+Learning rate number of nodes factor 1.0
+++ python -c 'print(0.0005 * 1.0)'
++ lr=0.0005
+++ python -c 'print(0.00005 * 1.0)'
++ back_translation_phases_lr=5e-05
++ encoder_bpe_dropout=0.1
++ decoder_bpe_dropout=0.1
++ EXP_DIR=/home/apeganov/news_back_translation_training_1_phase
++ max_steps=100000
++ OUTFILE=/home/apeganov/news_back_translation_training_1_phase/slurm-%j-%n.out
++ ERRFILE=/home/apeganov/news_back_translation_training_1_phase/error-%j-%n.out
+++ python -c 'i=int(round(1000 / 1 / 100) * 100);print(i if i > 0 else 10)'
++ val_check_interval=1000
++ echo 'Hosts: circe-n092'
+Hosts: circe-n092
++ echo 'Your W&B token is 1bb67bd54fa2a217c525ed67f1afa47ab0502040'
+Your W&B token is 1bb67bd54fa2a217c525ed67f1afa47ab0502040
++ compgen -G '/home/apeganov/news_back_translation_training_1_phase/TransformerMT/checkpoints/*'
++ echo 'Checkpoints for PHASE 0 are not found. Training will be started from scratch.'
+Checkpoints for PHASE 0 are not found. Training will be started from scratch.
++ resume=false
++ read -r -d '' cmd
