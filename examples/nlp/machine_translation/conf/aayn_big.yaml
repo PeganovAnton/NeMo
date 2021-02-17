@@ -5,8 +5,6 @@ model:
   label_smoothing: 0.1
 
   train_ds:
-    src_file_name: ???
-    tgt_file_name: ???
     tokens_in_batch: 10240
     clean: true
     max_seq_length: 512
