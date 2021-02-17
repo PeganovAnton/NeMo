@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+import torch
 from hydra.utils import instantiate
 
 from nemo.collections.nlp.models.machine_translation.mt_enc_dec_config import AAYNBaseConfig
@@ -44,11 +45,13 @@ def main(cfg: MTEncDecConfig) -> None:
     if "exp_manager" in cfg and cfg.get("exp_manager") is not None:
         exp_manager(trainer, cfg.get("exp_manager", None))
     if "weights_checkpoint" in cfg.model and cfg.model.weights_checkpoint is not None:
-        transformer_mt = MTEncDecModel.load_from_checkpoint(cfg.model.weights_checkpoint, cfg=cfg.model, trainer=trainer)
+        transformer_mt = MTEncDecModel(cfg=cfg.model, trainer=trainer)
+        transformer_mt.load_state_dict(torch.load(cfg.model.weights_checkpoint))
+        #transformer_mt = MTEncDecModel.load_from_checkpoint(cfg.model.weights_checkpoint, cfg=cfg.model, trainer=trainer)
         #transformer_mt._trainer = trainer
-        transformer_mt.setup_training_data(cfg.model.train_ds)
-        transformer_mt.setup_validation_data(cfg.model.validation_ds)
-        transformer_mt.setup_test_data(cfg.model.test_ds)
+        # transformer_mt.setup_training_data(cfg.model.train_ds)
+        # transformer_mt.setup_validation_data(cfg.model.validation_ds)
+        # transformer_mt.setup_test_data(cfg.model.test_ds)
     else:
         transformer_mt = MTEncDecModel(cfg.model, trainer=trainer)
     trainer.fit(transformer_mt)
