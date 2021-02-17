@@ -37,7 +37,7 @@ shuf --random-source=/raid/monolingual.news.dedup.clean.tok.de /raid/monolingual
 python examples/nlp/machine_translation/translate_ddp.py \
   --model=${WORKSPACE_POINT}/rc1/${MODEL} \
   --text2translate=${RAID_MONO}/${TAR_TEMPLATE} \
-  --metadata_path ${METADATA} \
+  --metadata_path ${RAID_MONO}/${METADATA} \
   --result_dir ${RAID_TRANSLATED} \
   --source_lang ${SOURCE_LANG} \
   --target_lang ${TARGET_LANG}
