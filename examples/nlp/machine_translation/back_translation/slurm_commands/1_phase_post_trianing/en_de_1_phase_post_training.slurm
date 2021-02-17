@@ -90,7 +90,7 @@ nemo_path=/workspace/NeMo
 echo "NeMo path: ${nemo_path}"
 export PYTHONPATH="\${nemo_path}"
 cd "\${nemo_path}/examples/nlp/machine_translation"
-python enc_dec_nmt.py --config-name=aayn_base \
+python enc_dec_nmt.py --config-name=aayn_big \
   trainer.num_nodes=${SLURM_NUM_NODES} \
   trainer.gpus=${SLURM_NUM_GPUS} \
   ~trainer.max_epochs \
@@ -101,7 +101,7 @@ python enc_dec_nmt.py --config-name=aayn_base \
   model.decoder_tokenizer.bpe_dropout=${decoder_bpe_dropout} \
   +model.train_ds.tar_files=${train_tar_files} \
   +model.train_ds.use_tarred_dataset=true \
-  +model.train_ds.metadata_path=${train_metadata} \
+  +model.train_ds.metadata_file=${train_metadata} \
   model.validation_ds.src_file_name=${valid_src} \
   model.validation_ds.tgt_file_name=${valid_ref} \
   model.test_ds.src_file_name=${test_src} \

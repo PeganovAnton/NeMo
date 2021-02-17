@@ -1,19 +1,50 @@
 #!/bin/bash
-# The only argument is wandb token.
+#SBATCH -A dl-langspeech
+#SBATCH -p batch
+#SBATCH -N 1                    # number of nodes
+#SBATCH -t 8:00:00              # wall time
+#SBATCH -J "en_de_4_staged_back_translation"   # job name
+#SBATCH --exclusive             # exclusive node access
+#SBATCH --mem=0                 # all mem avail
+#SBATCH --mail-type=FAIL        # only send email on failure
+#SBATCH --ntasks-per-node 16    # n tasks per machine (one task per GPU)
+#SBATCH --cores-per-socket 24   # 24 cores per socket
+#SBATCH --threads-per-core 2    # hyperthreading on
+#SBATCH --sockets-per-node 2
+#SBATCH --signal=SIGUSR1@90
+# --overcommit option was removed
+# Hyper params
+# Env Variable Setup
 
-WANDB_PROJECT=1_phase_post_training_on_sandeep_back_translated_data
+WANDB_PROJECT=back_translation_de_en
+CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest"
+DATA_DIR='/gpfs/fs1/apeganov/datasets/news_en_de_mono'
+RESULT_DIR='/home/apeganov'
+result_dir=/result
+PRETRAINED_MODELS='/gpfs/fs1/apeganov/models/mt/wmt_translate_models/rc1'
+pretrained_models='/pretrained'
+EXP_NAME='translate_de_en'
+export NCCL_DEBUG=INFO
+export PYTHONFAULTHANDLER=1
+#export NCCL_SOCKET_IFNAME=^docker0,lo
+mkdir -p $RESULT_DIR/$EXP_NAME
+MOUNTS="--container-mounts=$DATA_DIR:/data,$RESULT_DIR/$EXP_NAME:${result_dir}:${PRETRAINED_MODELS}:${pretrained_models}"
+
+
 TRANSLATE_MODELS_WS=trainslation_pretrained_weights
 TRANSLATE_MODELS_PATH=/wmt_translate_models
 DS_ID=74337
 DATA_PATH=/data
 
+TRAIN_N_TOKENS_IN_BATCH=16000
 MAX_EPOCHS=100000
 MAX_STEPS=100000
 TEXT_PATH=${DATA_PATH}/text
 TARRED_PATH=${DATA_PATH}/tarred
 RAID=/raid
 RAID_TRAIN_PATH=${RAID}/train
-TRAIN_TAR_FILES=${RAID_TRAIN_PATH}/batches.tokens.16000._OP_1..71_CL_.tar
+TRAIN_SRC=${RAID_TRAIN_PATH}/batches.tokens.16000._OP_1..71_CL_.tar
+TRAIN_REF=${RAID_TRAIN_PATH}/batches.tokens.16000._OP_1..71_CL_.tar
 TRAIN_METADATA=${RAID_TRAIN_PATH}/metadata.json
 VALID_SRC=${RAID}/newstest2013.en
 VALID_REF=${RAID}/newstest2013.de
@@ -59,9 +90,11 @@ python train.py --config-name=aayn_big \
   model.encoder_tokenizer.bpe_dropout=${ENCODER_BPE_DROPOUT} \
   model.decoder_tokenizer.tokenizer_model=${TOK_MODEL}  \
   model.decoder_tokenizer.bpe_dropout=${DECODER_BPE_DROPOUT} \
-  +model.train_ds.tar_files=${TRAIN_TAR_FILES} \
-  +model.train_ds.use_tarred_dataset=true \
-  +model.train_ds.metadata_file=${TRAIN_METADATA} \
+  model.train_ds.tokens_in_batch=${TRAIN_N_TOKENS_IN_BATCH} \
+  model.train_ds.src_file_name=${TRAIN_SRC} \
+  model.train_ds.tgt_file_name=${TRAIN_REF} \
+  +model.train_ds.load_from_tarred_dataset=true \
+  +model.train_ds.metadata_path=${TRAIN_METADATA} \
   model.validation_ds.src_file_name=${VALID_SRC} \
   model.validation_ds.tgt_file_name=${VALID_REF} \
   model.test_ds.src_file_name=${TEST_SRC} \
