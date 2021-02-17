@@ -2,8 +2,9 @@
 
 
 INSTANCE=dgx1v.32g.8.norm
-PROJECT=back_translation_de_en
+PROJECT=z
 DATAID=74384
+DATA_PATH=/data
 WORKSPACE=wmt_translate_models
 WANDBLOGIN=$1
 RAID_MONO=/raid/mono
@@ -31,7 +32,9 @@ cd NeMo
 git checkout sacreBLEU_pl_metric
 ./reinstall.sh
 mkdir -p ${RAID_MONO} $RAID_TRANSLATED}
-cp -R /data/* ${RAID_MONO}
+cp -R ${DATA_PATH}/* ${RAID_MONO}
+tree -hs ${DATA_PATH}
+tree -hs ${RAID_MONO}
 python examples/nlp/machine_translation/translate_ddp.py \
   --model=${WORKSPACE_POINT}/rc1/${MODEL} \
   --text2translate=${RAID_MONO}/${TAR_TEMPLATE} \
@@ -52,7 +55,7 @@ ngc batch run --name "backtranslation_en_de_wmt20" --preempt RUNONCE \
     --result /results/ \
     --org nvidian \
     --team ac-aiapps \
-    --datasetid $DATAID:/data/ \
+    --datasetid $DATAID:${DATA_PATH}/ \
     --workspace $WORKSPACE:${WORKSPACE_POINT}:RO
 
 
