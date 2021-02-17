@@ -41,7 +41,7 @@ from nemo.collections.nlp.data import TarredTranslationDataset, TranslationDatas
 from nemo.collections.nlp.models.enc_dec_nlp_model import EncDecNLPModel
 from nemo.collections.nlp.models.machine_translation.mt_enc_dec_config import MTEncDecModelConfig
 from nemo.collections.nlp.modules.common import TokenClassifier
-from nemo.collections.nlp.modules.common.transformer import BeamSearchSequenceGenerator
+from nemo.collections.nlp.modules.common.transformer import BeamSearchSequenceGenerator, TopKSequenceGenerator
 from nemo.collections.nlp.modules.common.transformer.transformer import TransformerDecoderNM, TransformerEncoderNM
 from nemo.core.classes.common import typecheck
 from nemo.utils import logging, model_utils
@@ -179,6 +179,10 @@ class MTEncDecModel(EncDecNLPModel):
 
         """
         src_hiddens = self.encoder(src, src_mask)
+        if tgt is None:
+            beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
+            beam_results = self.filter_predicted_ids(beam_results)
+            return beam_results
         tgt_hiddens = self.decoder(tgt, tgt_mask, src_hiddens, src_mask)
         log_probs = self.log_softmax(hidden_states=tgt_hiddens)
         return log_probs
@@ -369,6 +373,18 @@ class MTEncDecModel(EncDecNLPModel):
             num_workers=cfg.get("num_workers", 2),
             pin_memory=cfg.get("pin_memory", False),
             drop_last=cfg.get("drop_last", False),
+        )
+
+    def replace_beam_with_sampling(self, topk=500):
+        self.beam_search = TopKSequenceGenerator(
+            embedding=self.decoder.embedding,
+            decoder=self.decoder.decoder,
+            log_softmax=self.log_softmax,
+            max_sequence_length=self.beam_search.max_seq_length,
+            beam_size=topk,  # hyperparam from https://arxiv.org/pdf/1808.09381.pdf
+            bos=self.decoder_tokenizer.bos_id,
+            pad=self.decoder_tokenizer.pad_id,
+            eos=self.decoder_tokenizer.eos_id,
         )
 
     @torch.no_grad()
