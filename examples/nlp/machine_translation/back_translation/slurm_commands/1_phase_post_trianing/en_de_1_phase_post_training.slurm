@@ -90,7 +90,7 @@ nemo_path=/workspace/NeMo
 echo "NeMo path: ${nemo_path}"
 export PYTHONPATH="\${nemo_path}"
 cd "\${nemo_path}/examples/nlp/machine_translation"
-python enc_dec_nmt.py --config-name=aayn_big \
+python train.py --config-name=aayn_big \
   trainer.num_nodes=${SLURM_NUM_NODES} \
   trainer.gpus=${SLURM_NUM_GPUS} \
   ~trainer.max_epochs \

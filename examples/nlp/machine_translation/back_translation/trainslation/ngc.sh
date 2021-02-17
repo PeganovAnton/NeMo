@@ -33,6 +33,7 @@ git checkout sacreBLEU_pl_metric
 ./reinstall.sh
 mkdir -p ${RAID_MONO} $RAID_TRANSLATED}
 cp -R ${DATA_PATH}/* ${RAID_MONO}
+apt update && apt install tree
 tree -hs ${DATA_PATH}
 tree -hs ${RAID_MONO}
 python examples/nlp/machine_translation/translate_ddp.py \
