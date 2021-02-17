@@ -20,17 +20,18 @@ set -x
 WANDB_PROJECT=1_phase_post_training_on_sandeep_back_translated_data
 CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest"
 # Directories for manifests, data, etc.
-DATA_DIR='/gpfs/fs1/apeganov/datasets/wmt20_en_de_with_back_translated'
-RESULT_DIR='/home/apeganov'
+DATA_DIR=/gpfs/fs1/apeganov/datasets/wmt20_en_de_with_back_translated
+data_dir=/data
+RESULT_DIR=/home/apeganov
 result_dir=/result
-PRETRAINED_MODELS='/gpfs/fs1/apeganov/models/mt/translation_pretrained_weights/large_en_de'
-pretrained_models='/pretrained'
-EXP_NAME='news_back_translation_training_1_phase'
+PRETRAINED_MODELS=/gpfs/fs1/apeganov/models/mt/translation_pretrained_weights/large_en_de
+pretrained_models=/pretrained
+EXP_NAME=news_back_translation_training_1_phase
 export NCCL_DEBUG=INFO
 export PYTHONFAULTHANDLER=1
 #export NCCL_SOCKET_IFNAME=^docker0,lo
 mkdir -p $RESULT_DIR/$EXP_NAME
-MOUNTS="--container-mounts=$DATA_DIR:/data,$RESULT_DIR/$EXP_NAME:${result_dir}:${PRETRAINED_MODELS}:${pretrained_models}"
+MOUNTS="--container-mounts=$DATA_DIR:$data_dir,$RESULT_DIR/$EXP_NAME:${result_dir},${PRETRAINED_MODELS}:${pretrained_models}"
 # Set up multinode if applicable
 if [[ -z "$SLURM_JOB_ID" ]]; then
   hosts=( `hostname` )
@@ -44,14 +45,15 @@ SLURM_NUM_GPUS=16
 BATCH_SIZE=11000
 
 max_epochs=100000
-data_path=/data/text
-train_tar_files=${data_path}/train/batches.tokens.16000._OP_1..71_CL_.tar
-train_metadata=${data_path}/train/metadata.json
-valid_src=${data_path}/newstest2013.en
-valid_ref=${data_path}/newstest2013.de
-test_src=${data_path}/newstest2014.en
-test_ref=${data_path}/newstest2014.de
-tok_model=${pretrained}/tokenizer.latest.60.32000.BPE.model
+text_data=${data_dir}/text
+tarred_data=${data_dir}/tarred
+train_tar_files=${tarred_data}/train/batches.tokens.16000._OP_1..71_CL_.tar
+train_metadata=${tarred_data}/train/metadata.json
+valid_src=${text_data}/newstest2013.en
+valid_ref=${text_data}/newstest2013.de
+test_src=${text_data}/newstest2014.en
+test_ref=${text_data}/newstest2014.de
+tok_model=${pretrained_models}/tokenizer.latest.60.32000.BPE.model
 phase0_base_lr=0.0005
 back_translation_phases_base_lr=0.00005
 lr_num_nodes_factor=$(python -c "print(${SLURM_NUM_NODES}**0.5)")
@@ -90,12 +92,13 @@ nemo_path=/workspace/NeMo
 echo "NeMo path: ${nemo_path}"
 export PYTHONPATH="\${nemo_path}"
 cd "\${nemo_path}/examples/nlp/machine_translation"
+ls ${pretrained_models}
 python train.py --config-name=aayn_big \
   trainer.num_nodes=${SLURM_NUM_NODES} \
   trainer.gpus=${SLURM_NUM_GPUS} \
   ~trainer.max_epochs \
   +trainer.max_steps=${max_steps}  \
-  +model.weights_checkpoint=${pretrained}/model_weights.ckpt \
+  +model.weights_checkpoint=${pretrained_models}/model_weights.ckpt \
   model.encoder_tokenizer.tokenizer_model=${tok_model}  \
   model.encoder_tokenizer.bpe_dropout=${encoder_bpe_dropout} \
   model.decoder_tokenizer.tokenizer_model=${tok_model}  \
