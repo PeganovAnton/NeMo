@@ -3,7 +3,7 @@
 
 INSTANCE=dgx1v.32g.8.norm
 PROJECT=back_translation_de_en
-DATAID=74340
+DATAID=74379
 WORKSPACE=wmt_translate_models
 WANDBLOGIN=$1
 RAID_MONO=/raid/mono
