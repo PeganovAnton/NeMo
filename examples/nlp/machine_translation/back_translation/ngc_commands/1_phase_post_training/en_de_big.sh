@@ -10,15 +10,15 @@ DATA_PATH=/data
 TRAIN_N_TOKENS_IN_BATCH=16000
 MAX_EPOCHS=100000
 MAX_STEPS=100000
-DATA_PATH=${DATA}/text
-TRAIN_SRC=${DATA_PATH}/train.en
-TRAIN_REF=${DATA_PATH}/train.de
-VALID_SRC=${DATA_PATH}/newstest2013.en
-VALID_REF=${DATA_PATH}/newstest2013.de
-TEST_SRC=${DATA_PATH}/newstest2014.en
-TEST_REF=${DATA_PATH}/newstest2014.de
+PARALLEL_PATH=${DATA_PATH}/text
+TRAIN_SRC=${PARALLEL_PATH}/train.en
+TRAIN_REF=${PARALLEL_PATH}/train.de
+VALID_SRC=${PARALLEL_PATH}/newstest2013.en
+VALID_REF=${PARALLEL_PATH}/newstest2013.de
+TEST_SRC=${PARALLEL_PATH}/newstest2014.en
+TEST_REF=${PARALLEL_PATH}/newstest2014.de
 RESULT_DIR=/result
-PRETRAINED_PATH=${TRANSLATE_MODELS_PATH}/en_de_large
+PRETRAINED_PATH=${TRANSLATE_MODELS_PATH}/large_en_de
 TOK_MODEL=${PRETRAINED_PATH}/tokenizer.latest.60.32000.BPE.model
 BASE_LR=0.0005
 ENCODER_BPE_DROPOUT=0.1
@@ -87,7 +87,7 @@ ngc batch run \
   --preempt RUNONCE \
   --image nvidia/pytorch:20.11-py3 \
   --ace nv-us-west-2 \
-  --instance dgx1v.32g.8.norm \
+  --instance dgx1v.16g.8.norm \
   --commandline "${cmd}" \
   --result /result \
   --org nvidian \
