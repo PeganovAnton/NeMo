@@ -11,7 +11,8 @@ RAID_TRANSLATED=/raid/translated
 RESULTS_DIR=/results
 WORKSPACE_POINT=/models
 MODEL=$2
-FILE=$3
+TAR_TEMPLATE=$3
+METADATA=$4
 
 read -r -d '' cmd <<EOF
 set -e -x
@@ -33,8 +34,8 @@ shuf --random-source=/raid/monolingual.news.dedup.clean.tok.de /raid/monolingual
   | head -10000000 > /raid/monolingual.news.dedup.clean.tok.de.sample
 python examples/nlp/machine_translation/translate_ddp.py \
   --model=${WORKSPACE_POINT}/rc1/${MODEL} \
-  --text2translate=${RAID_MONO}/${FILE} \
-  --max_num_tokens_in_batch 16000 \
+  --text2translate=${RAID_MONO}/${TAR_TEMPLATE} \
+  --metadata_path ${METADATA} \
   --result_dir ${RAID_TRANSLATED}
 tar czf ${RESULTS_DIR}/translated.tar.gz ${RAID_TRANSLATED}
 set +e +x
