@@ -13,9 +13,10 @@ MAX_STEPS=100000
 TEXT_PATH=${DATA_PATH}/text
 TARRED_PATH=${DATA_PATH}/tarred
 RAID=/raid
-TRAIN_SRC=${RAID}/train/batches.tokens.16000._OP_1..71_CL_.tar
-TRAIN_REF=${RAID}/train/batches.tokens.16000._OP_1..71_CL_.tar
-TRAIN_METADATA=${RAID}/train/metadata.json
+RAID_TRAIN_PATH=${RAID}/train
+TRAIN_SRC=${RAID_TRAIN_PATH}/batches.tokens.16000._OP_1..71_CL_.tar
+TRAIN_REF=${RAID_TRAIN_PATH}/batches.tokens.16000._OP_1..71_CL_.tar
+TRAIN_METADATA=${RAID_TRAIN_PATH}/metadata.json
 VALID_SRC=${RAID}/newstest2013.en
 VALID_REF=${RAID}/newstest2013.de
 TEST_SRC=${RAID}/newstest2014.en
@@ -48,7 +49,7 @@ export PYTHONPATH="\${nemo_path}"
 cd "\${nemo_path}/examples/nlp/machine_translation"
 num_gpus=\$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
 cp -rv ${TEXT_PATH}/newstest* ${RAID}/
-cp -rv ${TARRED_PATH}/* ${RAID}/
+cp -rv ${TARRED_PATH}/* ${RAID_TRAIN_PATH}/
 
 python train.py --config-name=aayn_big \
   trainer.gpus=\${num_gpus} \

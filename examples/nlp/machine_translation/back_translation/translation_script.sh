@@ -32,8 +32,6 @@ git checkout sacreBLEU_pl_metric
 ./reinstall.sh
 mkdir -p ${RAID_MONO} $RAID_TRANSLATED}
 cp -R /data/* ${RAID_MONO}
-shuf --random-source=/raid/monolingual.news.dedup.clean.tok.de /raid/monolingual.news.dedup.clean.tok.de \
-  | head -10000000 > /raid/monolingual.news.dedup.clean.tok.de.sample
 python examples/nlp/machine_translation/translate_ddp.py \
   --model=${WORKSPACE_POINT}/rc1/${MODEL} \
   --text2translate=${RAID_MONO}/${TAR_TEMPLATE} \
