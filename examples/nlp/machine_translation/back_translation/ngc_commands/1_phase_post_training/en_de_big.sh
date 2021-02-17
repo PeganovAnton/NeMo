@@ -54,7 +54,7 @@ python train.py --config-name=aayn_big \
   trainer.gpus=\${num_gpus} \
   ~trainer.max_epochs \
   +trainer.max_steps=${MAX_STEPS}  \
-  +model.weights_checkpoin=${PRETRAINED_PATH}/model_weights.ckpt \
+  +model.weights_checkpoint=${PRETRAINED_PATH}/model_weights.ckpt \
   model.encoder_tokenizer.tokenizer_model=${TOK_MODEL}  \
   model.encoder_tokenizer.bpe_dropout=${ENCODER_BPE_DROPOUT} \
   model.decoder_tokenizer.tokenizer_model=${TOK_MODEL}  \
