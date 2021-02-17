@@ -20,7 +20,7 @@ set -x
 WANDB_PROJECT=1_phase_post_training_on_sandeep_back_translated_data
 CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest"
 # Directories for manifests, data, etc.
-DATA_DIR='/gpfs/fs1/apeganov/datasets/en_de_mono_news_data'
+DATA_DIR='/gpfs/fs1/apeganov/datasets/wmt20_en_de_with_back_translated'
 RESULT_DIR='/home/apeganov'
 result_dir=/result
 PRETRAINED_MODELS='/gpfs/fs1/apeganov/models/mt/translation_pretrained_weights'
@@ -43,11 +43,9 @@ SLURM_NUM_GPUS=16
 
 BATCH_SIZE=11000
 
-train_n_tokens_in_batch=8000
 max_epochs=100000
 data_path=/data/text
-train_src=${data_path}/train/batches.tokens.16000._OP_1..71_CL_.tar
-train_ref=${data_path}/train/batches.tokens.16000._OP_1..71_CL_.tar
+train_tar_files=${data_path}/train/batches.tokens.16000._OP_1..71_CL_.tar
 train_metadata=${data_path}/train/metadata.json
 valid_src=${data_path}/newstest2013.en
 valid_ref=${data_path}/newstest2013.de
@@ -76,10 +74,10 @@ echo "Hosts: $hosts"
 echo "Your W&B token is ${WANDB_TOKEN}"
 
 if compgen -G ${EXP_DIR}/TransformerMT/checkpoints/* > /dev/null; then
-  echo "Will try to resume PHASE 0 training from checkpoint"
+  echo "Will try to resume training from checkpoint"
   resume=true
 else
-  echo "Checkpoints for PHASE 0 are not found. Training will be started from scratch."
+  echo "Checkpoints are not found. Training will be started from scratch."
   resume=false
 fi
 read -r -d '' cmd <<EOF
@@ -88,10 +86,10 @@ echo "*******STARTING TRAINING********"
 echo "---------------"
 set -x -e
 if [ "\${SLURM_PROCID}" -eq "0" ]; then wandb login ${WANDB_TOKEN}; fi
-export nemo_path=/workspace/NeMo
+nemo_path=/workspace/NeMo
 echo "NeMo path: ${nemo_path}"
-export PYTHONPATH="${nemo_path}"
-cd "${nemo_path}/examples/nlp/machine_translation"
+export PYTHONPATH="\${nemo_path}"
+cd "\${nemo_path}/examples/nlp/machine_translation"
 python enc_dec_nmt.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_NUM_NODES} \
   trainer.gpus=${SLURM_NUM_GPUS} \
@@ -101,9 +99,8 @@ python enc_dec_nmt.py --config-name=aayn_base \
   model.encoder_tokenizer.bpe_dropout=${encoder_bpe_dropout} \
   model.decoder_tokenizer.tokenizer_model=${tok_model}  \
   model.decoder_tokenizer.bpe_dropout=${decoder_bpe_dropout} \
-  model.train_ds.tokens_in_batch=${train_n_tokens_in_batch} \
-  model.train_ds.src_file_name=${train_src} \
-  model.train_ds.tgt_file_name=${train.ref} \
+  +model.train_ds.tar_files=${train_tar_files} \
+  +model.train_ds.use_tarred_dataset=true \
   +model.train_ds.metadata_path=${train_metadata} \
   model.validation_ds.src_file_name=${valid_src} \
   model.validation_ds.tgt_file_name=${valid_ref} \
@@ -122,4 +119,5 @@ EOF
     --container-image="$CONTAINER" \
     $MOUNTS \
     bash -c "${cmd}"
-fi
+
+set +x
