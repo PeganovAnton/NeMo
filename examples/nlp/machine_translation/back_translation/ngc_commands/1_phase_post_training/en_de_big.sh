@@ -93,7 +93,7 @@ ngc batch run \
   --preempt RUNONCE \
   --image nvidia/pytorch:20.11-py3 \
   --ace nv-us-west-2 \
-  --instance dgx1v.16g.8.norm \
+  --instance dgx1v.32g.8.norm \
   --commandline "${cmd}" \
   --result /result \
   --org nvidian \
