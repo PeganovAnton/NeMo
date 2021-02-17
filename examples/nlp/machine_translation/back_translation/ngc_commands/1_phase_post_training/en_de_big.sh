@@ -10,10 +10,12 @@ DATA_PATH=/data
 TRAIN_N_TOKENS_IN_BATCH=16000
 MAX_EPOCHS=100000
 MAX_STEPS=100000
-PARALLEL_PATH=${DATA_PATH}/text
+TEXT_PATH=${DATA_PATH}/text
+TARRED_PATH=${DATA_PATH}/tarred
 RAID=/raid
-TRAIN_SRC=${RAID}/train.en
-TRAIN_REF=${RAID}/train.de
+TRAIN_SRC=${RAID}/train/batches.tokens.16000._OP_1..71_CL_.tar
+TRAIN_REF=${RAID}/train/batches.tokens.16000._OP_1..71_CL_.tar
+TRAIN_METADATA=${RAID}/train/metadata.json
 VALID_SRC=${RAID}/newstest2013.en
 VALID_REF=${RAID}/newstest2013.de
 TEST_SRC=${RAID}/newstest2014.en
@@ -45,13 +47,14 @@ echo "NeMo path: \${nemo_path}"
 export PYTHONPATH="\${nemo_path}"
 cd "\${nemo_path}/examples/nlp/machine_translation"
 num_gpus=\$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
-cp -rv ${PARALLEL_PATH}/* ${RAID}/
+cp -rv ${TEXT_PATH}/newstest* ${RAID}/
+cp -rv ${TARRED_PATH}/* ${RAID}/
 
 python train.py --config-name=aayn_big \
   trainer.gpus=\${num_gpus} \
   ~trainer.max_epochs \
   +trainer.max_steps=${MAX_STEPS}  \
-  +model.weights_checkpoin=${PRETRAINED_PATH}/model_weights.ckpt \
+  +model.weights_checkpoint=${PRETRAINED_PATH}/model_weights.ckpt \
   model.encoder_tokenizer.tokenizer_model=${TOK_MODEL}  \
   model.encoder_tokenizer.bpe_dropout=${ENCODER_BPE_DROPOUT} \
   model.decoder_tokenizer.tokenizer_model=${TOK_MODEL}  \
@@ -59,11 +62,14 @@ python train.py --config-name=aayn_big \
   model.train_ds.tokens_in_batch=${TRAIN_N_TOKENS_IN_BATCH} \
   model.train_ds.src_file_name=${TRAIN_SRC} \
   model.train_ds.tgt_file_name=${TRAIN_REF} \
+  +model.train_ds.load_from_tarred_dataset=true \
+  +model.train_ds.metadata_path=${TRAIN_METADATA} \
   model.validation_ds.src_file_name=${VALID_SRC} \
   model.validation_ds.tgt_file_name=${VALID_REF} \
   model.test_ds.src_file_name=${TEST_SRC} \
   model.test_ds.tgt_file_name=${TEST_REF} \
   model.optim.lr=${BASE_LR}  \
+  +model.find_unused_parameters=true \
   exp_manager.wandb_logger_kwargs.name=1st_trial \
   exp_manager.wandb_logger_kwargs.project=${WANDB_PROJECT} \
   +exp_manager.exp_dir=${EXP_DIR}
