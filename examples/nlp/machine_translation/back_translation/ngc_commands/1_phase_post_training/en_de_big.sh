@@ -11,12 +11,13 @@ TRAIN_N_TOKENS_IN_BATCH=16000
 MAX_EPOCHS=100000
 MAX_STEPS=100000
 PARALLEL_PATH=${DATA_PATH}/text
-TRAIN_SRC=${PARALLEL_PATH}/train.en
-TRAIN_REF=${PARALLEL_PATH}/train.de
-VALID_SRC=${PARALLEL_PATH}/newstest2013.en
-VALID_REF=${PARALLEL_PATH}/newstest2013.de
-TEST_SRC=${PARALLEL_PATH}/newstest2014.en
-TEST_REF=${PARALLEL_PATH}/newstest2014.de
+RAID=/raid
+TRAIN_SRC=${RAID}/train.en
+TRAIN_REF=${RAID}/train.de
+VALID_SRC=${RAID}/newstest2013.en
+VALID_REF=${RAID}/newstest2013.de
+TEST_SRC=${RAID}/newstest2014.en
+TEST_REF=${RAID}/newstest2014.de
 RESULT_DIR=/result
 PRETRAINED_PATH=${TRANSLATE_MODELS_PATH}/large_en_de
 TOK_MODEL=${PRETRAINED_PATH}/tokenizer.latest.60.32000.BPE.model
@@ -44,7 +45,7 @@ echo "NeMo path: \${nemo_path}"
 export PYTHONPATH="\${nemo_path}"
 cd "\${nemo_path}/examples/nlp/machine_translation"
 num_gpus=\$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
-
+cp -rv ${PARALLEL_PATH}/* ${RAID}/
 
 python train.py --config-name=aayn_big \
   trainer.gpus=\${num_gpus} \
