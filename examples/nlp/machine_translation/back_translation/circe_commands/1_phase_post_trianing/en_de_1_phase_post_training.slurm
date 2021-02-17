@@ -46,8 +46,8 @@ BATCH_SIZE=11000
 train_n_tokens_in_batch=8000
 max_epochs=100000
 data_path=/data/text
-train_src=${data_path}/train.en
-train_ref=${data_path}/train.de
+train_src=${data_path}/train/batches.tokens.16000._OP_1..71_CL_.tar
+train_ref=${data_path}/train/batches.tokens.16000._OP_1..71_CL_.tar
 valid_src=${data_path}/newstest2013.en
 valid_ref=${data_path}/newstest2013.de
 test_src=${data_path}/newstest2014.en
@@ -111,7 +111,8 @@ python enc_dec_nmt.py --config-name=aayn_base \
   exp_manager.wandb_logger_kwargs.name=circe_1st_trial \
   exp_manager.wandb_logger_kwargs.project=${WANDB_PROJECT} \
   +exp_manager.exp_dir=${result_dir} \
-  +exp_manager.resume_if_exists=${resume}
+  +exp_manager.resume_if_exists=${resume} \
+  +model.find_unused_parameters=true
 echo  "*******FINISHING TRAINING********"
 set +x +e
 EOF
