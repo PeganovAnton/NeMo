@@ -5,7 +5,7 @@ set -e -x
 
 WANDB_PROJECT=1_phase_post_training_on_sandeep_back_translated_data
 TRANSLATE_MODELS_WS=trainslation_pretrained_weights
-TRANSLATE_MODELS_PATH=/wmt_translate_models
+TRANSLATE_MODELS_PATH=~/workspaces/translation_pretrained_weights
 DS_ID=74337
 DATA_PATH=~/datasets/wmt20_en_de_with_back_translated
 
@@ -19,7 +19,8 @@ VALID_SRC=${TEXT_PATH}/newstest2013.en
 VALID_REF=${TEXT_PATH}/newstest2013.de
 TEST_SRC=${TEXT_PATH}/newstest2014.en
 TEST_REF=${TEXT_PATH}/newstest2014.de
-RESULT_DIR=/result
+RESULT_DIR=debug_result
+mkdir -p ${RESULT_DIR}
 PRETRAINED_PATH=${TRANSLATE_MODELS_PATH}/large_en_de
 TOK_MODEL=${PRETRAINED_PATH}/tokenizer.latest.60.32000.BPE.model
 BASE_LR=0.0005
@@ -30,7 +31,7 @@ EXP_DIR=${RESULT_DIR}/exp_dir
 WMT13_TRANSLATED=${RESULT_DIR}/newstest2013_en_translated.txt
 WMT14_TRANSLATED=${RESULT_DIR}/newstest2014_en_translated.txt
 
-cd ~PeganovNeMo
+cd ~/PeganovNeMo
 git checkout sacreBLEU_pl_metric
 wandb login $1
 export nemo_path="$(pwd)"
@@ -39,12 +40,8 @@ echo "NeMo path: ${nemo_path}"
 export PYTHONPATH="${nemo_path}"
 cd "${nemo_path}/examples/nlp/machine_translation"
 num_gpus=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
-cp -rv ${TEXT_PATH}/newstest* ${RAID}/
-mkdir -p ${RAID_TRAIN_PATH}
-cp -rv ${TARRED_PATH}/* ${RAID_TRAIN_PATH}/
-
 python train.py --config-name=aayn_big \
-  trainer.gpus=\${num_gpus} \
+  trainer.gpus=${num_gpus} \
   ~trainer.max_epochs \
   +trainer.max_steps=${MAX_STEPS}  \
   +model.weights_checkpoint=${PRETRAINED_PATH}/model_weights.ckpt \
