@@ -3,7 +3,7 @@
 #SBATCH -p batch
 #SBATCH -N 1                    # number of nodes
 #SBATCH -t 8:00:00              # wall time
-#SBATCH -J "en_de_4_staged_back_translation"   # job name
+#SBATCH -J "translate"   # job name
 #SBATCH --exclusive             # exclusive node access
 #SBATCH --mem=0                 # all mem avail
 #SBATCH --mail-type=FAIL        # only send email on failure
@@ -47,7 +47,9 @@ OUTFILE="${RESULT_DIR}/${EXP_NAME}/slurm-%j-%n.out"
 ERRFILE="${RESULT_DIR}/${EXP_NAME}/error-%j-%n.out"
 
 read -r -d '' cmd <<EOF
+set -e -x
 if [ "\${SLURM_PROCID}" -eq "0" ]; then wandb login ${WANDB_TOKEN}; fi
+cd NeMo
 nemo_path="\$(pwd)"
 echo "NeMo path: \${nemo_path}"
 export PYTHONPATH="\${nemo_path}"

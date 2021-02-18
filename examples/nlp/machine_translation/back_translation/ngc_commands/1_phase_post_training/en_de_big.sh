@@ -4,7 +4,7 @@
 WANDB_PROJECT=1_phase_post_training_on_sandeep_back_translated_data
 TRANSLATE_MODELS_WS=trainslation_pretrained_weights
 TRANSLATE_MODELS_PATH=/wmt_translate_models
-DS_ID=74432
+DS_ID=74456
 DATA_PATH=/data
 
 MAX_EPOCHS=100000
@@ -13,7 +13,7 @@ TEXT_PATH=${DATA_PATH}/text
 TARRED_PATH=${DATA_PATH}/tarred
 RAID=/raid
 RAID_TRAIN_PATH=${RAID}/train
-TRAIN_TAR_FILES=${RAID_TRAIN_PATH}/batches.tokens.16000._OP_1..71_CL_.tar
+TRAIN_TAR_FILES=${RAID_TRAIN_PATH}/batches.tokens.16000._OP_1..145_CL_.tar
 TRAIN_METADATA=${RAID_TRAIN_PATH}/metadata.json
 VALID_SRC=${RAID}/newstest2013.en
 VALID_REF=${RAID}/newstest2013.de
