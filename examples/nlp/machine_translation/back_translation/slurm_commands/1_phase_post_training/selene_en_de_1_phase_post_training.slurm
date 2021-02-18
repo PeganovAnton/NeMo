@@ -93,7 +93,7 @@ export PYTHONPATH="\${nemo_path}"
 cd "\${nemo_path}/examples/nlp/machine_translation"
 ls ${pretrained_models}
 python train.py --config-name=aayn_big \
-  trainer.num_nodes=${SLURM_JOB_NODES} \
+  trainer.num_nodes=\${SLURM_JOB_NODES} \
   trainer.gpus=${SLURM_NUM_GPUS} \
   ~trainer.max_epochs \
   +trainer.max_steps=${max_steps}  \
