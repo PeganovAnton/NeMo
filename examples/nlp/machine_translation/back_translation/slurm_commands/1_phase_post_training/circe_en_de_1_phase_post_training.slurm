@@ -86,7 +86,7 @@ set -x -e
 echo "*******STARTING TRAINING********"
 echo "---------------"
 set -x -e
-if [ "\${SLURM_PROCID}" -eq "0" ]; then wandb login ${WANDB_TOKEN}; fi
+if [ "\${SLURM_PROCID}" -eq "0" ]; then rm -rf ~/.netrc; wandb login ${WANDB_TOKEN}; fi
 nemo_path=/workspace/NeMo
 echo "NeMo path: \${nemo_path}"
 export PYTHONPATH="\${nemo_path}"
