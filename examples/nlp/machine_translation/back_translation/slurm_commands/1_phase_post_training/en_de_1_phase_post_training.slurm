@@ -46,7 +46,7 @@ BATCH_SIZE=11000
 
 max_epochs=100000
 text_data=${data_dir}/text
-tarred_data=${data_dir}/tarred
+tarred_data=${data_dir}/tarred_8k
 train_tar_files=${tarred_data}/train/batches.tokens.16000._OP_1..71_CL_.tar
 train_metadata=${tarred_data}/train/metadata.json
 valid_src=${text_data}/newstest2013.en
