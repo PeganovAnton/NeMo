@@ -47,7 +47,9 @@ OUTFILE="${RESULT_DIR}/${EXP_NAME}/slurm-%j-%n.out"
 ERRFILE="${RESULT_DIR}/${EXP_NAME}/error-%j-%n.out"
 
 read -r -d '' cmd <<EOF
+set -e -x
 if [ "\${SLURM_PROCID}" -eq "0" ]; then wandb login ${WANDB_TOKEN}; fi
+cd NeMo
 nemo_path="\$(pwd)"
 echo "NeMo path: \${nemo_path}"
 export PYTHONPATH="\${nemo_path}"
