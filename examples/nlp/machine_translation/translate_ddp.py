@@ -64,10 +64,10 @@ def find_free_port():
         return s.getsockname()[1]
 
 
-def setup(rank, world_size, args):
+def setup(rank, world_size, args, port_num):
     os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = str(find_free_port())
-
+    os.environ['MASTER_PORT'] = str(port_num)
+    logging.info(f"The process with rank {rank} tries to use port {port_num}")
     # initialize the process group
     dist.init_process_group("gloo", rank=rank, world_size=world_size)
 
@@ -76,8 +76,8 @@ def cleanup():
     dist.destroy_process_group()
 
 
-def translate(rank, world_size, args):
-    setup(rank, world_size, args)
+def translate(rank, world_size, args, port_num):
+    setup(rank, world_size, args, port_num)
     torch.set_grad_enabled(False)
     if args.model.endswith(".nemo"):
         logging.info("Attempting to initialize from .nemo file")
@@ -166,7 +166,9 @@ def translate(rank, world_size, args):
 def main() -> None:
     world_size = torch.cuda.device_count()
     args = get_args()
-    mp.spawn(translate, args=(world_size, args), nprocs=world_size, join=True)
+    port_num = find_free_port()
+    logging.info(f"Using port {port_num} for ddp communication.")
+    mp.spawn(translate, args=(world_size, args, port_num), nprocs=world_size, join=True)
 
 
 if __name__ == '__main__':
