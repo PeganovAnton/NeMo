@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH -A dl-langspeech
-#SBATCH -p batch
+#SBATCH -A swdl
+#SBATCH -p backfill
 #SBATCH -N 1                    # number of nodes
 #SBATCH -t 8:00:00              # wall time
-#SBATCH -J "en_de_4_staged_back_translation"   # job name
+#SBATCH -J "en_de_1_phase_back_translation"   # job name
 #SBATCH --exclusive             # exclusive node access
 #SBATCH --mem=0                 # all mem avail
 #SBATCH --mail-type=FAIL        # only send email on failure
@@ -20,11 +20,11 @@ set -x
 WANDB_PROJECT=1_phase_post_training_on_sandeep_back_translated_data
 CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest"
 # Directories for manifests, data, etc.
-DATA_DIR=/gpfs/fs1/apeganov/datasets/wmt20_en_de_with_back_translated
+DATA_DIR=/lustre/fsw/swdl/swdl-langspeech/apeganov/datasets/wmt20_en_de_with_back_translated
 data_dir=/data
 RESULT_DIR=/home/apeganov
 result_dir=/result
-PRETRAINED_MODELS=/gpfs/fs1/apeganov/models/mt/translation_pretrained_weights/large_en_de
+PRETRAINED_MODELS=/lustre/fsw/swdl/swdl-langspeech/apeganov/models/translation_pretrained_weights/large_en_de
 pretrained_models=/pretrained
 EXP_NAME=news_back_translation_training_1_phase
 export NCCL_DEBUG=INFO
@@ -45,7 +45,7 @@ BATCH_SIZE=11000
 
 max_epochs=100000
 text_data=${data_dir}/text
-tarred_data=${data_dir}/tarred
+tarred_data=${data_dir}/tarred_8k
 train_tar_files=${tarred_data}/train/batches.tokens.16000._OP_1..145_CL_.tar
 train_metadata=${tarred_data}/train/metadata.json
 valid_src=${text_data}/newstest2013.en
@@ -86,9 +86,10 @@ set -x -e
 echo "*******STARTING TRAINING********"
 echo "---------------"
 set -x -e
+rm -r ~/.netrc
 if [ "\${SLURM_PROCID}" -eq "0" ]; then wandb login ${WANDB_TOKEN}; fi
 nemo_path=/workspace/NeMo
-echo "NeMo path: ${nemo_path}"
+echo "NeMo path: \${nemo_path}"
 export PYTHONPATH="\${nemo_path}"
 cd "\${nemo_path}/examples/nlp/machine_translation"
 ls ${pretrained_models}

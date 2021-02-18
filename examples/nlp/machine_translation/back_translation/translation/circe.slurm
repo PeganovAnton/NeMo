@@ -19,6 +19,7 @@
 # You have to provide following variables:
 # DATA_DIR -- path to tar files
 # WANDB_TOKEN
+# PRETRAINED_MODELS -- a path to the directory where model MODEL lays
 # MODEL -- the name of a model from rc1 folder
 # TAR_TEMPLATE -- template of tar files (see tarred dataset documentation)
 # SOURCE_LANG
@@ -31,7 +32,6 @@ CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest"
 data_dir=/data
 RESULT_DIR='/home/apeganov'
 result_dir=/result
-PRETRAINED_MODELS='/gpfs/fs1/apeganov/models/mt/wmt_translate_models/rc1'
 pretrained_models='/pretrained'
 EXP_NAME='translate_de_en'
 export NCCL_DEBUG=INFO

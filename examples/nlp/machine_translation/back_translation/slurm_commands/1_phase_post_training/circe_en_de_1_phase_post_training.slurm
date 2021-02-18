@@ -88,7 +88,7 @@ echo "---------------"
 set -x -e
 if [ "\${SLURM_PROCID}" -eq "0" ]; then wandb login ${WANDB_TOKEN}; fi
 nemo_path=/workspace/NeMo
-echo "NeMo path: ${nemo_path}"
+echo "NeMo path: \${nemo_path}"
 export PYTHONPATH="\${nemo_path}"
 cd "\${nemo_path}/examples/nlp/machine_translation"
 ls ${pretrained_models}
