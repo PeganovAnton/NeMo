@@ -3,7 +3,7 @@
 #SBATCH -p batch
 #SBATCH -N 1                    # number of nodes
 #SBATCH -t 8:00:00              # wall time
-#SBATCH -J "en_de_4_staged_back_translation"   # job name
+#SBATCH -J "translate"   # job name
 #SBATCH --exclusive             # exclusive node access
 #SBATCH --mem=0                 # all mem avail
 #SBATCH --mail-type=FAIL        # only send email on failure
