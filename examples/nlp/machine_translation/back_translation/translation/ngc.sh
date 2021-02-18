@@ -3,7 +3,7 @@
 
 INSTANCE=dgx1v.32g.8.norm
 PROJECT=z
-DATAID=74384
+DATAID=74426
 DATA_PATH=/data
 WORKSPACE=wmt_translate_models
 WANDBLOGIN=$1
