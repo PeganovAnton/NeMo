@@ -39,7 +39,6 @@ else
   hosts=( `scontrol show hostname |tr "\n" " "` )
 fi
 
-SLURM_NUM_NODES=1
 SLURM_NUM_GPUS=16
 
 BATCH_SIZE=11000
@@ -56,7 +55,7 @@ test_ref=${text_data}/newstest2014.de
 tok_model=${pretrained_models}/tokenizer.latest.60.32000.BPE.model
 phase0_base_lr=0.0005
 back_translation_phases_base_lr=0.00005
-lr_num_nodes_factor=$(python -c "print(${SLURM_NUM_NODES}**0.5)")
+lr_num_nodes_factor=$(python -c "print(${SLURM_JOB_NODES}**0.5)")
 echo "Learning rate number of nodes factor ${lr_num_nodes_factor}"
 lr=$(python -c "print(${phase0_base_lr} * ${lr_num_nodes_factor})")
 back_translation_phases_lr=$(python -c "print(${back_translation_phases_base_lr} * ${lr_num_nodes_factor})")
@@ -68,7 +67,7 @@ max_steps=100000
 OUTFILE="${RESULT_DIR}/${EXP_NAME}/slurm-%j-%n.out"
 ERRFILE="${RESULT_DIR}/${EXP_NAME}/error-%j-%n.out"
 
-val_check_interval=$(python -c "i=int(round(1000 / ${SLURM_NUM_NODES} / 100) * 100);print(i if i > 0 else 10)")
+val_check_interval=$(python -c "i=int(round(1000 / ${SLURM_JOB_NODES} / 100) * 100);print(i if i > 0 else 10)")
 
 # Diagnostic prints
 echo "Hosts: $hosts"
@@ -94,7 +93,7 @@ export PYTHONPATH="\${nemo_path}"
 cd "\${nemo_path}/examples/nlp/machine_translation"
 ls ${pretrained_models}
 python train.py --config-name=aayn_big \
-  trainer.num_nodes=${SLURM_NUM_NODES} \
+  trainer.num_nodes=${SLURM_JOB_NODES} \
   trainer.gpus=${SLURM_NUM_GPUS} \
   ~trainer.max_epochs \
   +trainer.max_steps=${max_steps}  \
@@ -119,9 +118,9 @@ python train.py --config-name=aayn_big \
 echo  "*******FINISHING TRAINING********"
 set +x +e
 EOF
-  srun -o $OUTFILE -e $ERRFILE \
-    --container-image="$CONTAINER" \
-    $MOUNTS \
-    bash -c "${cmd}"
+srun -o $OUTFILE -e $ERRFILE \
+  --container-image="$CONTAINER" \
+  $MOUNTS \
+  bash -c "${cmd}"
 
 set +x
