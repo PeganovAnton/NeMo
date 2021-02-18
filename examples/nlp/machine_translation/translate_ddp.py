@@ -14,6 +14,8 @@
 
 
 import os
+import socket
+from contextlib import closing
 from argparse import ArgumentParser
 
 import torch
@@ -55,9 +57,16 @@ def get_args():
     return args
 
 
+def find_free_port():
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]
+
+
 def setup(rank, world_size, args):
     os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '12355'
+    os.environ['MASTER_PORT'] = str(find_free_port())
 
     # initialize the process group
     dist.init_process_group("gloo", rank=rank, world_size=world_size)
