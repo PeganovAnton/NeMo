@@ -96,6 +96,9 @@ python train.py --config-name=aayn_big \
   trainer.gpus=\${num_gpus} \
   ~trainer.max_epochs \
   +trainer.max_steps=${max_steps}  \
+  +trainer.progress_bar_refresh_rate=0 \
+  ~trainer.check_val_every_n_epoch \
+  +trainer.val_check_interval=1000 \
   +model.weights_checkpoint=${pretrained_models}/model_weights.ckpt \
   model.encoder_tokenizer.tokenizer_model=${tok_model}  \
   model.encoder_tokenizer.bpe_dropout=${encoder_bpe_dropout} \
@@ -113,8 +116,7 @@ python train.py --config-name=aayn_big \
   exp_manager.wandb_logger_kwargs.project=${WANDB_PROJECT} \
   +exp_manager.exp_dir=${result_dir} \
   +exp_manager.resume_if_exists=${resume} \
-  +model.find_unused_parameters=true \
-  +trainer.progress_bar_refresh_rate=0
+  +model.find_unused_parameters=true
 echo  "*******FINISHING TRAINING********"
 set +x +e
 EOF
