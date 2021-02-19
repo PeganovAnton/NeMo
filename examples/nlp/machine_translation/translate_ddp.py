@@ -19,6 +19,7 @@ from contextlib import closing
 from argparse import ArgumentParser
 
 import torch
+import torch.cuda as cutorch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from sacremoses import MosesDetokenizer
@@ -86,6 +87,21 @@ def translate(rank, world_size, args, port_num):
         logging.info("Attempting to initialize from .ckpt file")
         model = MTEncDecModel.load_from_checkpoint(checkpoint_path=args.model)
     model.replace_beam_with_sampling(topk=args.topk)
+    try:
+        before_stats = cutorch.memory_stats(rank)
+        before_reserved = cutorch.memory_reserved(rank)
+        before_allocated = cutorch.memory_allocated(rank)
+        model = model.to(rank)
+    except RuntimeError as e:
+        after_stats = cutorch.memory_stats(rank)
+        after_reserved = cutorch.memory_reserved(rank)
+        after_allocated = cutorch.memory_allocated(rank)
+        logging.info(
+            f"Rank {rank}. total={after_reserved}, "
+            f"Before/after: peak={before_stats['allocated_bytes.all.peak']}/{after_stats['allocated_bytes.all.peak']}, "
+            f"current={before_stats['allocated_bytes.all.current']}/{after_stats['allocated_bytes.all.peak']}"
+            f"free={before_reserved - before_allocated}/{after_reserved - after_allocated}")
+        raise e
     ddp_model = DDP(model.to(rank), device_ids=[rank])
     ddp_model.eval()
     if args.twoside:
