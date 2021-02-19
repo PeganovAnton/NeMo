@@ -91,7 +91,7 @@ def translate(rank, world_size, args, port_num):
         before_stats = cutorch.memory_stats(rank)
         before_reserved = cutorch.memory_reserved(rank)
         before_allocated = cutorch.memory_allocated(rank)
-        #model = model.to(rank)
+        model = model.to(rank)
         ddp_model = DDP(model, device_ids=[rank])
     except RuntimeError as e:
         after_stats = cutorch.memory_stats(rank)
