@@ -113,7 +113,8 @@ python train.py --config-name=aayn_big \
   exp_manager.wandb_logger_kwargs.project=${WANDB_PROJECT} \
   +exp_manager.exp_dir=${result_dir} \
   +exp_manager.resume_if_exists=${resume} \
-  +model.find_unused_parameters=true
+  +model.find_unused_parameters=true \
+  +trainer.progress_bar_refresh_rate=0
 echo  "*******FINISHING TRAINING********"
 set +x +e
 EOF
