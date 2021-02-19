@@ -25,7 +25,7 @@
 # SOURCE_LANG
 # TARGET_LANG
 
-
+set -x -e
 WANDB_PROJECT=back_translation_de_en
 CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest"
 # Pass DATA_DIR as a parameter
@@ -38,7 +38,7 @@ export NCCL_DEBUG=INFO
 export PYTHONFAULTHANDLER=1
 #export NCCL_SOCKET_IFNAME=^docker0,lo
 mkdir -p $RESULT_DIR/$EXP_NAME
-MOUNTS="--container-mounts=$DATA_DIR:/data,$RESULT_DIR/$EXP_NAME:${result_dir}:${PRETRAINED_MODELS}:${pretrained_models}"
+MOUNTS="--container-mounts=$DATA_DIR:/data,$RESULT_DIR/$EXP_NAME:${result_dir},${PRETRAINED_MODELS}:${pretrained_models}"
 
 tar_files=${data_dir}/${TAR_TEMPLATE}
 metadata=${data_dir}/metadata.json
@@ -46,6 +46,7 @@ metadata=${data_dir}/metadata.json
 OUTFILE="${RESULT_DIR}/${EXP_NAME}/slurm-%j-%n.out"
 ERRFILE="${RESULT_DIR}/${EXP_NAME}/error-%j-%n.out"
 
+set +e
 read -r -d '' cmd <<EOF
 set -e -x
 if [ "\${SLURM_PROCID}" -eq "0" ]; then rm -rf ~/.netrc; wandb login ${WANDB_TOKEN}; fi
@@ -54,7 +55,8 @@ nemo_path="\$(pwd)"
 echo "NeMo path: \${nemo_path}"
 export PYTHONPATH="\${nemo_path}"
 cd "\${nemo_path}/examples/nlp/machine_translation"
-
+ls -l ${pretrained_models}
+if [ "\${SLURM_PROCID}" -eq "0" ]; then nvidia-smi; fi
 python translate_ddp.py \
   --model=${pretrained_models}/${MODEL} \
   --text2translate=${tar_files} \
@@ -64,9 +66,10 @@ python translate_ddp.py \
   --target_lang ${TARGET_LANG}
 set +e +x
 EOF
-
+set -e
 srun -o $OUTFILE -e $ERRFILE \
   --container-image="$CONTAINER" \
   $MOUNTS \
   bash -c "${cmd}"
+set +x +e
 
