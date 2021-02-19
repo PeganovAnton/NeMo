@@ -100,7 +100,7 @@ python train.py --config-name=aayn_big \
   +trainer.progress_bar_refresh_rate=0 \
   ~trainer.check_val_every_n_epoch \
   +trainer.val_check_interval=${val_check_interval} \
-  checkpoint_callback=true \
+  trainer.checkpoint_callback=true \
   +model.weights_checkpoint=${pretrained_models}/model_weights.ckpt \
   model.encoder_tokenizer.tokenizer_model=${tok_model}  \
   model.encoder_tokenizer.bpe_dropout=${encoder_bpe_dropout} \
