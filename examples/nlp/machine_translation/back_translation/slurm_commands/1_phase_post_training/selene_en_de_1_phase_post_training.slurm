@@ -3,7 +3,7 @@
 #SBATCH -p backfill
 #SBATCH -N 1                    # number of nodes
 #SBATCH -t 8:00:00              # wall time
-#SBATCH -J "en_de_1_phase_back_translation"   # job name
+#SBATCH -J "en_de_1_phase_with_back_translation"   # job name
 #SBATCH --exclusive             # exclusive node access
 #SBATCH --mem=0                 # all mem avail
 #SBATCH --mail-type=FAIL        # only send email on failure
@@ -22,16 +22,24 @@ CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest"
 # Directories for manifests, data, etc.
 DATA_DIR=/lustre/fsw/swdl/swdl-langspeech/apeganov/datasets/wmt20_en_de_with_back_translated
 data_dir=/data
-RESULT_DIR=/home/apeganov
 result_dir=/result
 PRETRAINED_MODELS=/lustre/fsw/swdl/swdl-langspeech/apeganov/models/translation_pretrained_weights/large_en_de
 pretrained_models=/pretrained
 EXP_NAME=news_back_translation_training_1_phase
+launch_prefix=launch
+if [ -z launch_number ]; then
+  launch_number=0
+  while [ -e ${HOME}/${EXP_NAME}/${launch_prefix}${launch_number} ]; do
+    ((++launch_number))
+  done
+fi
+RESULT_DIR=${HOME}/${EXP_NAME}/${launch_prefix}${launch_number}
+mkdir -p ${RESULT_DIR}
+
 export NCCL_DEBUG=INFO
 export PYTHONFAULTHANDLER=1
 #export NCCL_SOCKET_IFNAME=^docker0,lo
-mkdir -p $RESULT_DIR/$EXP_NAME
-MOUNTS="--container-mounts=$DATA_DIR:$data_dir,$RESULT_DIR/$EXP_NAME:${result_dir},${PRETRAINED_MODELS}:${pretrained_models}"
+MOUNTS="--container-mounts=$DATA_DIR:$data_dir,${RESULT_DIR}:${result_dir},${PRETRAINED_MODELS}:${pretrained_models}"
 # Set up multinode if applicable
 if [[ -z "$SLURM_JOB_ID" ]]; then
   hosts=( `hostname` )
@@ -61,10 +69,9 @@ echo "Initial learning rate is ${lr}"
 encoder_bpe_dropout=0.1
 decoder_bpe_dropout=0.1
 
-EXP_DIR=${RESULT_DIR}/${EXP_NAME}
 max_steps=100000
-OUTFILE="${RESULT_DIR}/${EXP_NAME}/slurm-%j-%n.out"
-ERRFILE="${RESULT_DIR}/${EXP_NAME}/error-%j-%n.out"
+OUTFILE="${RESULT_DIR}/slurm-%j-%n.out"
+ERRFILE="${RESULT_DIR}/error-%j-%n.out"
 
 val_check_interval=$(python3 -c "i=int(round(1000 / ${SLURM_JOB_NUM_NODES} / 100) * 100);print(i if i > 0 else 10)")
 
@@ -73,7 +80,7 @@ echo "Hosts: $hosts"
 # Command to be run
 echo "Your W&B token is ${WANDB_TOKEN}"
 
-if compgen -G ${EXP_DIR}/TransformerMT/checkpoints/* > /dev/null; then
+if compgen -G ${RESULT_DIR}/AAYNLarge/checkpoints/* > /dev/null; then
   echo "Will try to resume training from checkpoint"
   resume=true
 else
@@ -113,7 +120,7 @@ python train.py --config-name=aayn_big \
   model.test_ds.src_file_name=${test_src} \
   model.test_ds.tgt_file_name=${test_ref} \
   model.optim.lr=${lr}  \
-  exp_manager.wandb_logger_kwargs.name=circe_1st_trial \
+  exp_manager.wandb_logger_kwargs.name=selene_${launch_prefix}${launch_number} \
   exp_manager.wandb_logger_kwargs.project=${WANDB_PROJECT} \
   +exp_manager.exp_dir=${result_dir} \
   +exp_manager.resume_if_exists=${resume} \

@@ -137,7 +137,7 @@ trainer:
   _target_: pytorch_lightning.Trainer
 
 exp_manager:
-  name: AAYNBase
+  name: AAYNLarge
   files_to_copy: []
   create_checkpoint_callback: true
   create_wandb_logger: true

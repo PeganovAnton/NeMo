@@ -85,7 +85,7 @@ def translate(rank, world_size, args, port_num):
         model = MTEncDecModel.restore_from(restore_path=args.model, map_location=torch.device('cpu'))
     elif args.model.endswith(".ckpt"):
         logging.info("Attempting to initialize from .ckpt file")
-        model = MTEncDecModel.load_from_checkpoint(checkpoint_path=args.model)
+        model = MTEncDecModel.load_from_checkpoint(checkpoint_path=args.model, strict=False)
     model.replace_beam_with_sampling(topk=args.topk)
     try:
         before_stats = cutorch.memory_stats(rank)
@@ -100,7 +100,7 @@ def translate(rank, world_size, args, port_num):
         logging.info(
             f"Rank {rank}. total={after_reserved}, "
             f"Before/after: peak={before_stats['allocated_bytes.all.peak']}/{after_stats['allocated_bytes.all.peak']}, "
-            f"current={before_stats['allocated_bytes.all.current']}/{after_stats['allocated_bytes.all.peak']}"
+            f"current={before_stats['allocated_bytes.all.current']}/{after_stats['allocated_bytes.all.peak']}, "
             f"free={before_reserved - before_allocated}/{after_reserved - after_allocated}")
         raise e
     ddp_model.eval()
