@@ -92,6 +92,7 @@ echo "NeMo path: \${nemo_path}"
 export PYTHONPATH="\${nemo_path}"
 cd "\${nemo_path}/examples/nlp/machine_translation"
 ls ${pretrained_models}
+num_gpus=\$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
 python train.py --config-name=aayn_big \
   trainer.num_nodes=${SLURM_JOB_NUM_NODES} \
   trainer.gpus=\${num_gpus} \
