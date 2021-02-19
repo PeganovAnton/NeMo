@@ -51,10 +51,12 @@ valid_ref=${text_data}/newstest2013.de
 test_src=${text_data}/newstest2014.en
 test_ref=${text_data}/newstest2014.de
 tok_model=${pretrained_models}/tokenizer.latest.60.32000.BPE.model
-base_lr=0.0005
-lr_num_nodes_factor=$(python3 -c "print(${SLURM_NNODES}**0.5)")
-echo "Learning rate number of nodes factor ${lr_num_nodes_factor}"
-lr=$(python3 -c "print(${base_lr} * ${lr_num_nodes_factor})")
+if [ -z lr ]; then
+  base_lr=0.0005
+  lr_num_nodes_factor=$(python3 -c "print(${SLURM_NNODES}**0.5)")
+  echo "Learning rate number of nodes factor ${lr_num_nodes_factor}"
+  lr=$(python3 -c "print(${base_lr} * ${lr_num_nodes_factor})")
+echo "Initial learning rate is ${lr}"
 encoder_bpe_dropout=0.1
 decoder_bpe_dropout=0.1
 
