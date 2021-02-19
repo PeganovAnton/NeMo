@@ -81,7 +81,7 @@ def translate(rank, world_size, args, port_num):
     torch.set_grad_enabled(False)
     if args.model.endswith(".nemo"):
         logging.info("Attempting to initialize from .nemo file")
-        model = MTEncDecModel.restore_from(restore_path=args.model)
+        model = MTEncDecModel.restore_from(restore_path=args.model, map_location=torch.device('cpu'))
     elif args.model.endswith(".ckpt"):
         logging.info("Attempting to initialize from .ckpt file")
         model = MTEncDecModel.load_from_checkpoint(checkpoint_path=args.model)
