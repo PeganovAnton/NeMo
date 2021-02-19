@@ -56,6 +56,7 @@ if [ -z lr ]; then
   lr_num_nodes_factor=$(python3 -c "print(${SLURM_NNODES}**0.5)")
   echo "Learning rate number of nodes factor ${lr_num_nodes_factor}"
   lr=$(python3 -c "print(${base_lr} * ${lr_num_nodes_factor})")
+fi
 echo "Initial learning rate is ${lr}"
 encoder_bpe_dropout=0.1
 decoder_bpe_dropout=0.1
@@ -98,7 +99,7 @@ python train.py --config-name=aayn_big \
   +trainer.max_steps=${max_steps}  \
   +trainer.progress_bar_refresh_rate=0 \
   ~trainer.check_val_every_n_epoch \
-  +trainer.val_check_interval=1000 \
+  +trainer.val_check_interval=${val_check_interval} \
   trainer.checkpoint_callback=true \
   +model.weights_checkpoint=${pretrained_models}/model_weights.ckpt \
   model.encoder_tokenizer.tokenizer_model=${tok_model}  \
