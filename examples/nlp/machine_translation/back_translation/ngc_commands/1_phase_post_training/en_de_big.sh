@@ -48,7 +48,7 @@ cd "\${nemo_path}/examples/nlp/machine_translation"
 num_gpus=\$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
 cp -rv ${TEXT_PATH}/newstest* ${RAID}/
 mkdir -p ${RAID_TRAIN_PATH}
-cp -rv ${TARRED_PATH}/* ${RAID_TRAIN_PATH}/
+cp -rv ${TARRED_PATH}/* ${RAID}/
 
 python train.py --config-name=aayn_big \
   trainer.gpus=\${num_gpus} \
@@ -73,14 +73,14 @@ python train.py --config-name=aayn_big \
   +exp_manager.exp_dir=${EXP_DIR}
 
 python3 nmt_transformer_infer.py \
-  --model ${phase1_dir}/best.ckpt \
+  --model ${EXP_DIR}/AAYNLarge/checkpoints/AAYNLarge.nemo \
   --srctext /data/wmt13_en_de.src \
   --tgtout "${WMT13_TRANSLATED}" \
   --target_lang de
 cat "${WMT13_TRANSLATED}" | sacrebleu -t wmt13 -l en-de
 
 python3 nmt_transformer_infer.py \
-  --model ${phase1_dir}/best.ckpt \
+  --model ${EXP_DIR}/AAYNLarge/checkpoints/AAYNLarge.nemo \
   --srctext /data/wmt14_en_de.src \
   --tgtout "${WMT14_TRANSLATED}" \
   --target_lang de
