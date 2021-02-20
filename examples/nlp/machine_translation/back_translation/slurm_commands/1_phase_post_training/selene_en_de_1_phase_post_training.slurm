@@ -27,7 +27,7 @@ PRETRAINED_MODELS=/lustre/fsw/swdl/swdl-langspeech/apeganov/models/translation_p
 pretrained_models=/pretrained
 EXP_NAME=news_back_translation_training_1_phase
 launch_prefix=launch
-if [ -z launch_number ]; then
+if [ -z ${launch_number} ]; then
   launch_number=0
   while [ -e ${HOME}/${EXP_NAME}/${launch_prefix}${launch_number} ]; do
     ((++launch_number))
