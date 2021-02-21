@@ -14,6 +14,8 @@
 
 
 import os
+import tarfile
+import yaml
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -45,14 +47,52 @@ def main(cfg: MTEncDecConfig) -> None:
     if "exp_manager" in cfg and cfg.get("exp_manager") is not None:
         exp_manager(trainer, cfg.get("exp_manager", None))
     if "weights_checkpoint" in cfg.model and cfg.model.weights_checkpoint is not None:
-        transformer_mt = MTEncDecModel(cfg=cfg.model, trainer=trainer)
-        print("transformer_mt.beam_search:", transformer_mt.beam_search)
-        transformer_mt.load_state_dict(torch.load(cfg.model.weights_checkpoint), strict=False)
-        #transformer_mt = MTEncDecModel.load_from_checkpoint(cfg.model.weights_checkpoint, cfg=cfg.model, trainer=trainer)
-        #transformer_mt._trainer = trainer
-        # transformer_mt.setup_training_data(cfg.model.train_ds)
-        # transformer_mt.setup_validation_data(cfg.model.validation_ds)
-        # transformer_mt.setup_test_data(cfg.model.test_ds)
+        if cfg.model.weights_checkpoint.endswith(".ckpt"):
+            transformer_mt = MTEncDecModel(cfg=cfg.model, trainer=trainer)
+            print("transformer_mt.beam_search:", transformer_mt.beam_search)
+            transformer_mt.load_state_dict(torch.load(cfg.model.weights_checkpoint), strict=False)
+        elif cfg.model.weights_checkpoint.endswith('.nemo'):
+            with tarfile.open(cfg.model.weights_checkpoint, 'r:gz') as tar:
+                names = tar.getnames()
+                logging.info(f"Found names {names} in checkpoint {cfg.model.weights_checkpoint}")
+                tokenizer_models = [n for n in names if n.endswith('.model')]
+                if len(tokenizer_models) > 1:
+                    raise ValueError(f"Found more than 1 tokenizer model: {tokenizer_models}")
+                if len(tokenizer_models) == 0:
+                    raise ValueError(f"Tokenizer model is not found. .nemo file contents are {names}")
+                if "exp_manager" in cfg and cfg.get("exp_manager") is not None and "exp_dir" in cfg.exp_manager \
+                        and cfg.exp_manager.exp_dir is not None:
+                    working_dir = Path(cfg.exp_manager.exp_dir)
+                else:
+                    working_dir = Path('')
+                untarred_tokenizer_and_updated_config = working_dir / Path("tokenizer_dir")
+                i = 0
+                while untarred_tokenizer_and_updated_config.exists():
+                    untarred_tokenizer_and_updated_config = working_dir / Path("tokenizer_dir" + str(i))
+                    i += 1
+                tar.extract(tokenizer_models[0], path=untarred_tokenizer_and_updated_config)
+                nemo_tokenizer_model = untarred_tokenizer_and_updated_config / Path(tokenizer_models[0])
+                if cfg.model.encoder_tokenizer.tokenizer_model is None:
+                    logging.info(
+                        f"There is an encoder tokenizer model specified in the config: "
+                        f"{cfg.model.encoder_tokenizer.tokenizer_model}. Overwriting it with .nemo tokenizer model "
+                        f"{nemo_tokenizer_model}")
+                cfg.model.encoder_tokenizer.tokenizer_model = str(nemo_tokenizer_model)
+                if cfg.model.decoder_tokenizer.tokenizer_model is None:
+                    logging.info(
+                        f"There is an decoder tokenizer model specified in the config: "
+                        f"{cfg.model.decoder_tokenizer.tokenizer_model}. Overwriting it with .nemo tokenizer model "
+                        f"{nemo_tokenizer_model}")
+                cfg.model.decoder_tokenizer.tokenizer_model = str(nemo_tokenizer_model)
+                config_path = untarred_tokenizer_and_updated_config / Path("updated_config.yaml")
+                with config_path.open('w') as f:
+                    yaml.dump(cfg.model, f, default_flow_style=False)
+                transformer_mt = MTEncDecModel.restore_from(
+                    cfg.model.weights_checkpoint,
+                    override_config_path=config_path,
+                    map_location=torch.device('cpu')
+                )
+                transformer_mt._trainer = trainer
     else:
         transformer_mt = MTEncDecModel(cfg.model, trainer=trainer)
     trainer.fit(transformer_mt)
