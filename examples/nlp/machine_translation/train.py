@@ -46,7 +46,6 @@ def main(cfg: MTEncDecConfig) -> None:
         exp_manager(trainer, cfg.get("exp_manager", None))
     if "weights_checkpoint" in cfg.model and cfg.model.weights_checkpoint is not None:
         transformer_mt = MTEncDecModel(cfg=cfg.model, trainer=trainer)
-        print("transformer_mt.beam_search:", transformer_mt.beam_search)
         transformer_mt.load_state_dict(torch.load(cfg.model.weights_checkpoint), strict=False)
         #transformer_mt = MTEncDecModel.load_from_checkpoint(cfg.model.weights_checkpoint, cfg=cfg.model, trainer=trainer)
         #transformer_mt._trainer = trainer
