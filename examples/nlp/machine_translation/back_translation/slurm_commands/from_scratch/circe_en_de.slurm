@@ -46,14 +46,15 @@ fi
 tokenizer_dir=/tokenizer_directory
 EXP_NAME=${WANDB_PROJECT}
 launch_prefix=${LAUNCH_NAME}_launch
+GPFS=/gpfs/fs1/apeganov/results
 if [ -z ${launch_number} ]; then
   launch_number=0
-  while [ -e ${HOME}/${EXP_NAME}/${launch_prefix}${launch_number} ]; do
+  while [ -e ${GPFS}/${EXP_NAME}/${launch_prefix}${launch_number} ]; do
     ((++launch_number))
   done
 fi
 launch_name=${launch_prefix}${launch_number}
-RESULT_DIR=${HOME}/${EXP_NAME}/${launch_name}
+RESULT_DIR=${GPFS}/${EXP_NAME}/${launch_name}
 mkdir -p ${RESULT_DIR}
 
 export NCCL_DEBUG=INFO
