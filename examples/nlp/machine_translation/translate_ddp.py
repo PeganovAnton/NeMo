@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from threadpoolctl import threadpool_limits
+threadpool_limits(limits=96650, user_api='blas')
 
 import os
 import socket
