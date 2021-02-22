@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH -A swdl
-#SBATCH -p backfill
+#SBATCH -A dl-langspeech
+#SBATCH -p batch
 #SBATCH -N 1                    # number of nodes
 #SBATCH -t 8:00:00              # wall time
 #SBATCH -J "from_scratch_back_translation"   # job name
