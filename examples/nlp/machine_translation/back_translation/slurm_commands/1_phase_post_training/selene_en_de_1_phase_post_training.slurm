@@ -56,8 +56,8 @@ train_tar_files=${tarred_data}/train/batches.tokens.8000._OP_1..145_CL_.tar
 train_metadata=${tarred_data}/train/metadata.json
 valid_src=${text_data}/newstest2013.en
 valid_ref=${text_data}/newstest2013.de
-test_src=${text_data}/newstest2014.en
-test_ref=${text_data}/newstest2014.de
+test_src=${text_data}/newstest2014-en-de.en
+test_ref=${text_data}/newstest2014-en-de.de
 tok_model=${pretrained_models}/tokenizer.latest.60.32000.BPE.model
 if [ -z lr ]; then
   base_lr=0.0005

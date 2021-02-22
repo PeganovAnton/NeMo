@@ -85,7 +85,7 @@ def main(cfg: MTEncDecConfig) -> None:
                 cfg.model.decoder_tokenizer.tokenizer_model = str(nemo_tokenizer_model)
                 config_path = untarred_tokenizer_and_updated_config / Path("updated_config.yaml")
                 with config_path.open('w') as f:
-                    yaml.dump(cfg.model, f, default_flow_style=False)
+                    yaml.dump(dict(cfg.model), f, default_flow_style=False)
                 transformer_mt = MTEncDecModel.restore_from(
                     cfg.model.weights_checkpoint,
                     override_config_path=config_path,

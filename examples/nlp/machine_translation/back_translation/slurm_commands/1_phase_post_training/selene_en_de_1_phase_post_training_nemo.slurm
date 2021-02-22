@@ -56,13 +56,14 @@ BATCH_SIZE=11000
 
 max_epochs=100000
 text_data=${data_dir}/text
-tarred_data=${data_dir}/tarred_8k
-train_tar_files=${tarred_data}/train/batches.tokens.8000._OP_1..145_CL_.tar
+TARRED_DIR=tarred_8k
+tarred_data=${data_dir}/${TARRED_DIR}
+train_tar_files="${tarred_data}/train/batches.tokens.8000._OP_1..\$(ls ${DATA_DIR}/${TARRED_DIR}/train/*.tar | wc -l)_CL_.tar"
 train_metadata=${tarred_data}/train/metadata.json
 valid_src=${text_data}/newstest2013.en
 valid_ref=${text_data}/newstest2013.de
-test_src=${text_data}/newstest2014.en
-test_ref=${text_data}/newstest2014.de
+test_src=${text_data}/newstest2014-en-de.en
+test_ref=${text_data}/newstest2014-en-de.de
 if [ -z lr ]; then
   base_lr=0.0005
   lr_num_nodes_factor=$(python3 -c "print(${SLURM_NNODES}**0.5)")
@@ -171,7 +172,7 @@ srun -o ${RESULT_DIR}/slurm-newstest2013-before-training-%j-%n.out \
   $MOUNTS \
   bash -c "${test_cmd_run}"
 
-TEST_SRC_FILE=text/newstest2014.en
+TEST_SRC_FILE=text/newstest2014-en-de.en
 TEST_SCORE=sacreBLEU-newstest2014-before
 TEST_TRANSLATED_PATH=newstest2014-translated-before.txt
 printf -v test_cmd_run "${test_cmd}" "${TEST_SRC_FILE}" "${TEST_TRANSLATED_PATH}" "${TEST_SRC_FILE}" wmt14 "${TEST_SCORE}" "${TEST_SRC_FILE}"
@@ -203,7 +204,7 @@ srun -o ${RESULT_DIR}/slurm-newstest2013-after-training-%j-%n.out \
   bash -c "${test_cmd_run}"
 
 
-TEST_SRC_FILE=text/newstest2014.en
+TEST_SRC_FILE=text/newstest2014-en-de.en
 TEST_SCORE=sacreBLEU-newstest2014-after
 TEST_TRANSLATED_PATH=newstest2014-translated-after.txt
 printf -v test_cmd_run "${test_cmd}" "${TEST_SRC_FILE}" "${TEST_TRANSLATED_PATH}" "${TEST_SRC_FILE}" wmt14 "${TEST_SCORE}" "${TEST_SRC_FILE}"
