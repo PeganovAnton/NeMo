@@ -13,7 +13,8 @@ TEXT_PATH=${DATA_PATH}/text
 TARRED_PATH=${DATA_PATH}/tarred
 RAID=/raid
 RAID_TRAIN_PATH=${RAID}/train
-TRAIN_TAR_FILES=${RAID_TRAIN_PATH}/batches.tokens.16000._OP_1..145_CL_.tar
+TRAIN_TAR_FILES="${RAID_TRAIN_PATH}/batches.tokens.16000._OP_1..\$(ls ${TARRED_PATH}/train/*.tar | wc -l)_CL_.tar"
+echo ${TRAIN_TAR_FILES}
 TRAIN_METADATA=${RAID_TRAIN_PATH}/metadata.json
 VALID_SRC=${RAID}/newstest2013.en
 VALID_REF=${RAID}/newstest2013.de
@@ -54,6 +55,8 @@ python train.py --config-name=aayn_big \
   trainer.gpus=\${num_gpus} \
   ~trainer.max_epochs \
   +trainer.max_steps=${MAX_STEPS}  \
+  +trainer.progress_bar_refresh_rate=0 \
+  +trainer.val_check_interval=200 \
   +model.weights_checkpoint=${PRETRAINED_PATH}/model_weights.ckpt \
   model.encoder_tokenizer.tokenizer_model=${TOK_MODEL}  \
   model.encoder_tokenizer.bpe_dropout=${ENCODER_BPE_DROPOUT} \

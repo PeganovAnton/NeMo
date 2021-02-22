@@ -49,7 +49,6 @@ def main(cfg: MTEncDecConfig) -> None:
     if "weights_checkpoint" in cfg.model and cfg.model.weights_checkpoint is not None:
         if cfg.model.weights_checkpoint.endswith(".ckpt"):
             transformer_mt = MTEncDecModel(cfg=cfg.model, trainer=trainer)
-            print("transformer_mt.beam_search:", transformer_mt.beam_search)
             transformer_mt.load_state_dict(torch.load(cfg.model.weights_checkpoint), strict=False)
         elif cfg.model.weights_checkpoint.endswith('.nemo'):
             with tarfile.open(cfg.model.weights_checkpoint, 'r:gz') as tar:
