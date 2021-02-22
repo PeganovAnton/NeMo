@@ -14,8 +14,8 @@
 
 
 import os
+import shutil
 import tarfile
-import yaml
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -67,7 +67,7 @@ def main(cfg: MTEncDecConfig) -> None:
                     working_dir = Path('')
                 untarred_tokenizer_and_updated_config = working_dir / Path("tokenizer_dir")
                 if is_global_rank_zero() and untarred_tokenizer_and_updated_config.exists():
-                    untarred_tokenizer_and_updated_config.unlink()
+                    shutil.rmtree(untarred_tokenizer_and_updated_config)
                     untarred_tokenizer_and_updated_config.mkdir()
                 if is_global_rank_zero():
                     tar.extract(tokenizer_models[0], path=untarred_tokenizer_and_updated_config)
@@ -94,6 +94,9 @@ def main(cfg: MTEncDecConfig) -> None:
                     map_location=torch.device('cpu')
                 )
                 transformer_mt._trainer = trainer
+                transformer_mt.setup_training_data(cfg.model.train_ds)
+                transformer_mt.setup_multiple_validation_data(None)
+                transformer_mt.setup_multiple_test_data(None)
     else:
         transformer_mt = MTEncDecModel(cfg.model, trainer=trainer)
     trainer.fit(transformer_mt)
