@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from threadpoolctl import threadpool_limits
+from nemo.utils import logging
+from threadpoolctl import threadpool_info, threadpool_limits
 threadpool_limits(limits=96650, user_api='blas')
+for info in threadpool_info():
+    logging.info(f"{info}")
 
 import os
 import socket
@@ -32,7 +35,6 @@ from nemo.collections.common.tokenizers.pangu_jieba_detokenizer import PanguJieb
 from nemo.collections.common.tokenizers.sentencepiece_detokenizer import SentencePieceDetokenizer
 from nemo.collections.nlp.data.machine_translation import TarredOneSideTranslationDataset, TarredTranslationDataset
 from nemo.collections.nlp.models.machine_translation.mt_enc_dec_model import MTEncDecModel
-from nemo.utils import logging
 
 
 def get_args():
