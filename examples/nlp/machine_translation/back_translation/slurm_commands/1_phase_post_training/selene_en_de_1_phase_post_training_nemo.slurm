@@ -23,8 +23,8 @@ CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest"
 DATA_DIR=/lustre/fsw/swdl/swdl-langspeech/apeganov/datasets/wmt20_en_de_with_back_translated
 data_dir=/data
 result_dir=/result
-if [ -z ${PRETRAINED_MODELS} ]; then
-  PRETRAINED_MODELS=/lustre/fsw/swdl/swdl-langspeech/apeganov/models/wmt_translate_models/rc1
+if [ -z ${PREtrained_modelS} ]; then
+  PREtrained_modelS=/lustre/fsw/swdl/swdl-langspeech/apeganov/models/wmt_translate_models/rc1
 fi
 if [ -z ${MODEL_NAME} ]; then
   MODEL_NAME=TransformerLargeEn-De.nemo
@@ -44,7 +44,7 @@ mkdir -p ${RESULT_DIR}
 export NCCL_DEBUG=INFO
 export PYTHONFAULTHANDLER=1
 #export NCCL_SOCKET_IFNAME=^docker0,lo
-MOUNTS="--container-mounts=$DATA_DIR:$data_dir,${RESULT_DIR}:${result_dir},${PRETRAINED_MODELS}:${pretrained_models}"
+MOUNTS="--container-mounts=$DATA_DIR:$data_dir,${RESULT_DIR}:${result_dir},${PREtrained_modelS}:${pretrained_models}"
 # Set up multinode if applicable
 if [[ -z ${SLURM_JOB_ID} ]]; then
   hosts=( `hostname` )
@@ -148,7 +148,7 @@ if [ "\${SLURM_PROCID}" -eq "0" ]; then
   cd "\${nemo_path}/examples/nlp/machine_translation"
   translated_file=${result_dir}/%s
   python3 nmt_transformer_infer.py \
-    --model ${pretrained_models}/${MODEL_NAME} \
+    --model %s \
     --srctext ${data_dir}/%s \
     --tgtout \${translated_file} \
     --target_lang de
@@ -160,10 +160,18 @@ EOF
 
 set -e
 
+pretrained_model="${pretrained_models}/${MODEL_NAME}"
 TEST_SRC_FILE=text/newstest2013.en
 TEST_SCORE=sacreBLEU-newstest2013-before
 TEST_TRANSLATED_PATH=newstest2013-translated-before.txt
-printf -v test_cmd_run "${test_cmd}" "${TEST_SRC_FILE}" "${TEST_TRANSLATED_PATH}" "${TEST_SRC_FILE}" wmt13 "${TEST_SCORE}" "${TEST_SRC_FILE}"
+printf -v test_cmd_run "${test_cmd}" \
+  "${TEST_SRC_FILE}" \
+  "${TEST_TRANSLATED_PATH}" \
+  "${pretrained_model}" \
+  "${TEST_SRC_FILE}" \
+  wmt13 \
+  "${TEST_SCORE}" \
+  "${TEST_SRC_FILE}"
 echo ${test_cmd_run}
 srun -o ${RESULT_DIR}/slurm-newstest2013-before-training-%j-%n.out \
   -e ${RESULT_DIR}/error-newstest2013-before-training-%j-%n.out \
@@ -175,7 +183,14 @@ srun -o ${RESULT_DIR}/slurm-newstest2013-before-training-%j-%n.out \
 TEST_SRC_FILE=text/newstest2014-en-de.en
 TEST_SCORE=sacreBLEU-newstest2014-before
 TEST_TRANSLATED_PATH=newstest2014-translated-before.txt
-printf -v test_cmd_run "${test_cmd}" "${TEST_SRC_FILE}" "${TEST_TRANSLATED_PATH}" "${TEST_SRC_FILE}" wmt14 "${TEST_SCORE}" "${TEST_SRC_FILE}"
+printf -v test_cmd_run "${test_cmd}" \
+  "${TEST_SRC_FILE}" \
+  "${TEST_TRANSLATED_PATH}" \
+  "${pretrained_model}" \
+  "${TEST_SRC_FILE}" \
+  wmt14 \
+  "${TEST_SCORE}" \
+  "${TEST_SRC_FILE}"
 echo ${test_cmd_run}
 srun -o ${RESULT_DIR}/slurm-newstest2014-before-training-%j-%n.out \
   -e ${RESULT_DIR}/error-newstest2014-before-training-%j-%n.out \
@@ -190,11 +205,18 @@ srun -o $OUTFILE -e $ERRFILE \
   $MOUNTS \
   bash -c "${cmd}"
 
-
+trained_model=${result_dir}/AAYNLarge/checkpoints/AAYNLarge.nemo
 TEST_SRC_FILE=text/newstest2013.en
 TEST_SCORE=sacreBLEU-newstest2013-after
 TEST_TRANSLATED_PATH=newstest2013-translated-after.txt
-printf -v test_cmd_run "${test_cmd}" "${TEST_SRC_FILE}" "${TEST_TRANSLATED_PATH}" "${TEST_SRC_FILE}" wmt13 "${TEST_SCORE}" "${TEST_SRC_FILE}"
+printf -v test_cmd_run "${test_cmd}" \
+  "${TEST_SRC_FILE}" \
+  "${TEST_TRANSLATED_PATH}" \
+  "${trained_model}" \
+  "${TEST_SRC_FILE}" \
+  wmt13 \
+  "${TEST_SCORE}" \
+  "${TEST_SRC_FILE}"
 echo ${test_cmd_run}
 srun -o ${RESULT_DIR}/slurm-newstest2013-after-training-%j-%n.out \
   -e ${RESULT_DIR}/error-newstest2013-after-training-%j-%n.out \
@@ -207,7 +229,14 @@ srun -o ${RESULT_DIR}/slurm-newstest2013-after-training-%j-%n.out \
 TEST_SRC_FILE=text/newstest2014-en-de.en
 TEST_SCORE=sacreBLEU-newstest2014-after
 TEST_TRANSLATED_PATH=newstest2014-translated-after.txt
-printf -v test_cmd_run "${test_cmd}" "${TEST_SRC_FILE}" "${TEST_TRANSLATED_PATH}" "${TEST_SRC_FILE}" wmt14 "${TEST_SCORE}" "${TEST_SRC_FILE}"
+printf -v test_cmd_run "${test_cmd}" \
+  "${TEST_SRC_FILE}" \
+  "${TEST_TRANSLATED_PATH}" \
+  "${trained_model}" \
+  "${TEST_SRC_FILE}" \
+  wmt14 \
+  "${TEST_SCORE}" \
+  "${TEST_SRC_FILE}"
 echo ${test_cmd_run}
 srun -o ${RESULT_DIR}/slurm-newstest2014-after-training-%j-%n.out \
   -e ${RESULT_DIR}/error-newstest2014-after-training-%j-%n.out \
