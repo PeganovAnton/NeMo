@@ -20,31 +20,39 @@ set -x -e
 WANDB_PROJECT=1_phase_post_training_on_sandeep_back_translated_data
 CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest"
 # Directories for manifests, data, etc.
-DATA_DIR=/lustre/fsw/swdl/swdl-langspeech/apeganov/datasets/wmt20_en_de_with_back_translated
+DATASETS_PATH=/lustre/fsw/swdl/swdl-langspeech/apeganov/datasets
+if [ -z ${DATASET_NAME} ]; then
+  DATASET_NAME=wmt20_en_de_with_back_translated
+fi
+DATA_DIR=${DATASETS_PATH}/${DATASET_NAME}
+if [ -z ${LAUNCH_NAME} ]; then
+  LAUNCH_NAME=wmt20_8M_plus_10M_back_translated
+fi
 data_dir=/data
 result_dir=/result
-if [ -z ${PREtrained_modelS} ]; then
-  PREtrained_modelS=/lustre/fsw/swdl/swdl-langspeech/apeganov/models/wmt_translate_models/rc1
+if [ -z ${PRETRAINED_MODElS} ]; then
+  PRETRAINED_MODElS=/lustre/fsw/swdl/swdl-langspeech/apeganov/models/wmt_translate_models/rc1
 fi
 if [ -z ${MODEL_NAME} ]; then
   MODEL_NAME=TransformerLargeEn-De.nemo
 fi
+launch_name=${launch_prefix}${launch_number}
 pretrained_models=/pretrained
 EXP_NAME=news_back_translation_training_1_phase
-launch_prefix=launch
+launch_prefix=${LAUNCH_NAME}_launch
 if [ -z ${launch_number} ]; then
   launch_number=0
   while [ -e ${HOME}/${EXP_NAME}/${launch_prefix}${launch_number} ]; do
     ((++launch_number))
   done
 fi
-RESULT_DIR=${HOME}/${EXP_NAME}/${launch_prefix}${launch_number}
+RESULT_DIR=${HOME}/${EXP_NAME}/${launch_name}
 mkdir -p ${RESULT_DIR}
 
 export NCCL_DEBUG=INFO
 export PYTHONFAULTHANDLER=1
 #export NCCL_SOCKET_IFNAME=^docker0,lo
-MOUNTS="--container-mounts=$DATA_DIR:$data_dir,${RESULT_DIR}:${result_dir},${PREtrained_modelS}:${pretrained_models}"
+MOUNTS="--container-mounts=$DATA_DIR:$data_dir,${RESULT_DIR}:${result_dir},${PRETRAINED_MODElS}:${pretrained_models}"
 # Set up multinode if applicable
 if [[ -z ${SLURM_JOB_ID} ]]; then
   hosts=( `hostname` )
@@ -128,7 +136,7 @@ python train.py --config-name=aayn_big \
   model.test_ds.src_file_name=${test_src} \
   model.test_ds.tgt_file_name=${test_ref} \
   model.optim.lr=${lr}  \
-  exp_manager.wandb_logger_kwargs.name=selene_${launch_prefix}${launch_number} \
+  exp_manager.wandb_logger_kwargs.name=selene_${launch_name} \
   exp_manager.wandb_logger_kwargs.project=${WANDB_PROJECT} \
   +exp_manager.exp_dir=${result_dir} \
   +exp_manager.resume_if_exists=${resume} \
@@ -160,45 +168,46 @@ EOF
 
 set -e
 
-pretrained_model="${pretrained_models}/${MODEL_NAME}"
-TEST_SRC_FILE=text/newstest2013.en
-TEST_SCORE=sacreBLEU-newstest2013-before
-TEST_TRANSLATED_PATH=newstest2013-translated-before.txt
-printf -v test_cmd_run "${test_cmd}" \
-  "${TEST_SRC_FILE}" \
-  "${TEST_TRANSLATED_PATH}" \
-  "${pretrained_model}" \
-  "${TEST_SRC_FILE}" \
-  wmt13 \
-  "${TEST_SCORE}" \
-  "${TEST_SRC_FILE}"
-echo ${test_cmd_run}
-srun -o ${RESULT_DIR}/slurm-newstest2013-before-training-%j-%n.out \
-  -e ${RESULT_DIR}/error-newstest2013-before-training-%j-%n.out \
-  --container-image="$CONTAINER" \
-  -N 1-1 \
-  $MOUNTS \
-  bash -c "${test_cmd_run}"
+if [ ${resume} -eq false ];then
+  pretrained_model="${pretrained_models}/${MODEL_NAME}"
+  TEST_SRC_FILE=text/newstest2013.en
+  TEST_SCORE=sacreBLEU-newstest2013-before
+  TEST_TRANSLATED_PATH=newstest2013-translated-before.txt
+  printf -v test_cmd_run "${test_cmd}" \
+    "${TEST_SRC_FILE}" \
+    "${TEST_TRANSLATED_PATH}" \
+    "${pretrained_model}" \
+    "${TEST_SRC_FILE}" \
+    wmt13 \
+    "${TEST_SCORE}" \
+    "${TEST_SRC_FILE}"
+  echo ${test_cmd_run}
+  srun -o ${RESULT_DIR}/slurm-newstest2013-before-training-%j-%n.out \
+    -e ${RESULT_DIR}/error-newstest2013-before-training-%j-%n.out \
+    --container-image="$CONTAINER" \
+    -N 1-1 \
+    $MOUNTS \
+    bash -c "${test_cmd_run}"
 
-TEST_SRC_FILE=text/newstest2014-en-de.en
-TEST_SCORE=sacreBLEU-newstest2014-before
-TEST_TRANSLATED_PATH=newstest2014-translated-before.txt
-printf -v test_cmd_run "${test_cmd}" \
-  "${TEST_SRC_FILE}" \
-  "${TEST_TRANSLATED_PATH}" \
-  "${pretrained_model}" \
-  "${TEST_SRC_FILE}" \
-  wmt14 \
-  "${TEST_SCORE}" \
-  "${TEST_SRC_FILE}"
-echo ${test_cmd_run}
-srun -o ${RESULT_DIR}/slurm-newstest2014-before-training-%j-%n.out \
-  -e ${RESULT_DIR}/error-newstest2014-before-training-%j-%n.out \
-  --container-image="$CONTAINER" \
-  -N 1-1 \
-  $MOUNTS \
-  bash -c "${test_cmd_run}"
-
+  TEST_SRC_FILE=text/newstest2014-en-de.en
+  TEST_SCORE=sacreBLEU-newstest2014-before
+  TEST_TRANSLATED_PATH=newstest2014-translated-before.txt
+  printf -v test_cmd_run "${test_cmd}" \
+    "${TEST_SRC_FILE}" \
+    "${TEST_TRANSLATED_PATH}" \
+    "${pretrained_model}" \
+    "${TEST_SRC_FILE}" \
+    wmt14 \
+    "${TEST_SCORE}" \
+    "${TEST_SRC_FILE}"
+  echo ${test_cmd_run}
+  srun -o ${RESULT_DIR}/slurm-newstest2014-before-training-%j-%n.out \
+    -e ${RESULT_DIR}/error-newstest2014-before-training-%j-%n.out \
+    --container-image="$CONTAINER" \
+    -N 1-1 \
+    $MOUNTS \
+    bash -c "${test_cmd_run}"
+fi
 
 srun -o $OUTFILE -e $ERRFILE \
   --container-image="$CONTAINER" \
