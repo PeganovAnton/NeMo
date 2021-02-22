@@ -31,6 +31,7 @@ from nemo.core.config.pytorch_lightning import TrainerConfig
 from nemo.utils import logging
 from nemo.utils.exp_manager import ExpManagerConfig, exp_manager
 from nemo.utils.get_rank import is_global_rank_zero
+from omegaconf import DictConfig, OmegaConf
 
 
 @dataclass
@@ -65,11 +66,11 @@ def main(cfg: MTEncDecConfig) -> None:
                 else:
                     working_dir = Path('')
                 untarred_tokenizer_and_updated_config = working_dir / Path("tokenizer_dir")
-                i = 0
-                while untarred_tokenizer_and_updated_config.exists():
-                    untarred_tokenizer_and_updated_config = working_dir / Path("tokenizer_dir" + str(i))
-                    i += 1
-                tar.extract(tokenizer_models[0], path=untarred_tokenizer_and_updated_config)
+                if is_global_rank_zero() and untarred_tokenizer_and_updated_config.exists():
+                    untarred_tokenizer_and_updated_config.unlink()
+                    untarred_tokenizer_and_updated_config.mkdir()
+                if is_global_rank_zero():
+                    tar.extract(tokenizer_models[0], path=untarred_tokenizer_and_updated_config)
                 nemo_tokenizer_model = untarred_tokenizer_and_updated_config / Path(tokenizer_models[0])
                 if cfg.model.encoder_tokenizer.tokenizer_model is None:
                     logging.info(
@@ -84,8 +85,9 @@ def main(cfg: MTEncDecConfig) -> None:
                         f"{nemo_tokenizer_model}")
                 cfg.model.decoder_tokenizer.tokenizer_model = str(nemo_tokenizer_model)
                 config_path = untarred_tokenizer_and_updated_config / Path("updated_config.yaml")
-                with config_path.open('w') as f:
-                    yaml.dump(dict(cfg.model), f, default_flow_style=False)
+                if is_global_rank_zero():
+                    with config_path.open('w') as f:
+                        f.write(OmegaConf.to_yaml(cfg.model))
                 transformer_mt = MTEncDecModel.restore_from(
                     cfg.model.weights_checkpoint,
                     override_config_path=config_path,

@@ -35,6 +35,7 @@ from nemo.collections.common.tokenizers.pangu_jieba_detokenizer import PanguJieb
 from nemo.collections.common.tokenizers.sentencepiece_detokenizer import SentencePieceDetokenizer
 from nemo.collections.nlp.data.machine_translation import TarredOneSideTranslationDataset, TarredTranslationDataset
 from nemo.collections.nlp.models.machine_translation.mt_enc_dec_model import MTEncDecModel
+from nemo.utils.get_rank import is_global_rank_zero
 
 
 def get_args():
