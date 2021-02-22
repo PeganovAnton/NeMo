@@ -62,9 +62,9 @@ def main(cfg: MTEncDecConfig) -> None:
                     raise ValueError(f"Tokenizer model is not found. .nemo file contents are {names}")
                 if "exp_manager" in cfg and cfg.get("exp_manager") is not None and "exp_dir" in cfg.exp_manager \
                         and cfg.exp_manager.exp_dir is not None:
-                    working_dir = Path(cfg.exp_manager.exp_dir)
+                    working_dir = Path(cfg.exp_manager.exp_dir).resolve()
                 else:
-                    working_dir = Path('')
+                    working_dir = Path.cwd()
                 untarred_tokenizer_and_updated_config = working_dir / Path("tokenizer_dir")
                 if is_global_rank_zero() and untarred_tokenizer_and_updated_config.exists():
                     shutil.rmtree(untarred_tokenizer_and_updated_config)
