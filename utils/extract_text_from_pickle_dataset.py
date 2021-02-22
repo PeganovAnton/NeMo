@@ -45,7 +45,7 @@ def get_args():
     )
     args = parser.parse_args()
     args.input = args.input.expanduser()
-    args.model = args.model.expanduser()
+    args.tokenizer_model = args.tokenizer_model.expanduser()
     args.output_src = args.output_src.expanduser()
     args.output_tgt = args.output_tgt.expanduser()
     return args
@@ -57,7 +57,7 @@ def main():
         dataset = pickle.load(f)
     tokenizer = get_tokenizer(args.tokenizer_name, args.tokenizer_model, )
     with args.output_src.open('w') as out_s, args.output_tgt.open('w') as out_t:
-        for b_i, b in dataset.batches.items():
+        for b_i, b in (dataset['batches'].items() if isinstance(dataset, dict) else dataset.batches.items()):
             for s_tokens, t_tokens in zip(b['src'], b['tgt']):
                 out_s.write(tokenizer.ids_to_text(s_tokens))
                 out_s.write('\n')
