@@ -3,7 +3,7 @@
 #SBATCH -p backfill
 #SBATCH -N 1                    # number of nodes
 #SBATCH -t 8:00:00              # wall time
-#SBATCH -J "en_de_1_phase_with_back_translation"   # job name
+#SBATCH -J "from_scratch_back_translation"   # job name
 #SBATCH --exclusive             # exclusive node access
 #SBATCH --mem=0                 # all mem avail
 #SBATCH --mail-type=FAIL        # only send email on failure
@@ -59,7 +59,7 @@ mkdir -p ${RESULT_DIR}
 export NCCL_DEBUG=INFO
 export PYTHONFAULTHANDLER=1
 #export NCCL_SOCKET_IFNAME=^docker0,lo
-MOUNTS="--container-mounts=${DATA_DIR}:${data_dir}{,${RESULT_DIR}:${result_dir},${TOKENIZER_DIR}:${tokenizer_dir}"
+MOUNTS="--container-mounts=${DATA_DIR}:${data_dir},${RESULT_DIR}:${result_dir},${TOKENIZER_DIR}:${tokenizer_dir}"
 # Set up multinode if applicable
 if [[ -z ${SLURM_JOB_ID} ]]; then
   hosts=( `hostname` )

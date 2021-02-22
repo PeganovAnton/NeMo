@@ -3,7 +3,7 @@
 #SBATCH -p backfill
 #SBATCH -N 1                    # number of nodes
 #SBATCH -t 8:00:00              # wall time
-#SBATCH -J "en_de_1_phase_with_back_translation"   # job name
+#SBATCH -J "post_training_1_phase_with_back_translation"   # job name
 #SBATCH --exclusive             # exclusive node access
 #SBATCH --mem=0                 # all mem avail
 #SBATCH --mail-type=FAIL        # only send email on failure
@@ -25,6 +25,7 @@ if [ -z ${DATASET_NAME} ]; then
   DATASET_NAME=wmt20_en_de_with_back_translated
 fi
 DATA_DIR=${DATASETS_PATH}/${DATASET_NAME}
+echo "DATA_DIR=${DATA_DIR}"
 if [ -z ${LAUNCH_NAME} ]; then
   LAUNCH_NAME=wmt20_8M_plus_10M_back_translated
 fi
@@ -36,7 +37,6 @@ fi
 if [ -z ${MODEL_NAME} ]; then
   MODEL_NAME=TransformerLargeEn-De.nemo
 fi
-launch_name=${launch_prefix}${launch_number}
 pretrained_models=/pretrained
 EXP_NAME=news_back_translation_training_1_phase
 launch_prefix=${LAUNCH_NAME}_launch
@@ -46,13 +46,14 @@ if [ -z ${launch_number} ]; then
     ((++launch_number))
   done
 fi
+launch_name=${launch_prefix}${launch_number}
 RESULT_DIR=${HOME}/${EXP_NAME}/${launch_name}
 mkdir -p ${RESULT_DIR}
 
 export NCCL_DEBUG=INFO
 export PYTHONFAULTHANDLER=1
 #export NCCL_SOCKET_IFNAME=^docker0,lo
-MOUNTS="--container-mounts=$DATA_DIR:$data_dir,${RESULT_DIR}:${result_dir},${PRETRAINED_MODElS}:${pretrained_models}"
+MOUNTS="--container-mounts=${DATA_DIR}:${data_dir},${RESULT_DIR}:${result_dir},${PRETRAINED_MODElS}:${pretrained_models}"
 # Set up multinode if applicable
 if [[ -z ${SLURM_JOB_ID} ]]; then
   hosts=( `hostname` )
@@ -72,7 +73,7 @@ valid_src=${text_data}/newstest2013.en
 valid_ref=${text_data}/newstest2013.de
 test_src=${text_data}/newstest2014-en-de.en
 test_ref=${text_data}/newstest2014-en-de.de
-if [ -z lr ]; then
+if [ -z ${lr} ]; then
   base_lr=0.0005
   lr_num_nodes_factor=$(python3 -c "print(${SLURM_NNODES}**0.5)")
   echo "Learning rate number of nodes factor ${lr_num_nodes_factor}"
@@ -168,7 +169,7 @@ EOF
 
 set -e
 
-if [ ${resume} -eq false ];then
+if [ "${resume}" == "false" ];then
   pretrained_model="${pretrained_models}/${MODEL_NAME}"
   TEST_SRC_FILE=text/newstest2013.en
   TEST_SCORE=sacreBLEU-newstest2013-before
