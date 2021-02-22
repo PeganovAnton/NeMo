@@ -20,7 +20,7 @@ set -x -e
 WANDB_PROJECT=1_phase_post_training_on_sandeep_back_translated_data
 CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest"
 # Directories for manifests, data, etc.
-DATASETS_PATH=/lustre/fsw/swdl/swdl-langspeech/apeganov/datasets
+DATASETS_PATH=/gpfs/fs1/apeganov/datasets
 if [ -z ${DATASET_NAME} ]; then
   DATASET_NAME=wmt20_en_de_with_back_translated
 fi
@@ -32,7 +32,7 @@ fi
 data_dir=/data
 result_dir=/result
 if [ -z ${PRETRAINED_MODElS} ]; then
-  PRETRAINED_MODElS=/lustre/fsw/swdl/swdl-langspeech/apeganov/models/wmt_translate_models/rc1
+  PRETRAINED_MODElS=/gpfs/fs1/apeganov/models/mt/wmt_translate_models/rc1
 fi
 if [ -z ${MODEL_NAME} ]; then
   MODEL_NAME=TransformerLargeEn-De.nemo
@@ -136,7 +136,7 @@ python train.py --config-name=aayn_big \
   model.test_ds.src_file_name=${test_src} \
   model.test_ds.tgt_file_name=${test_ref} \
   model.optim.lr=${lr}  \
-  exp_manager.wandb_logger_kwargs.name=selene_${launch_name} \
+  exp_manager.wandb_logger_kwargs.name=circe_${launch_name} \
   exp_manager.wandb_logger_kwargs.project=${WANDB_PROJECT} \
   +exp_manager.exp_dir=${result_dir} \
   +exp_manager.resume_if_exists=${resume} \

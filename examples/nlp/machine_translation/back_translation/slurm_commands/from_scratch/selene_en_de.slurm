@@ -69,7 +69,7 @@ fi
 
 BATCH_SIZE=11000
 
-max_epochs=100000
+max_epochs=250
 text_data=${data_dir}/text
 TARRED_DIR=tarred_8k
 tarred_data=${data_dir}/${TARRED_DIR}
@@ -88,8 +88,6 @@ fi
 echo "Initial learning rate is ${lr}"
 encoder_bpe_dropout=0.1
 decoder_bpe_dropout=0.1
-
-max_steps=200000
 
 wmt13_translated=${result_dir}/newstest2013_en_translated.txt
 wmt14_translated=${result_dir}/newstest2014_en_translated.txt
@@ -125,8 +123,7 @@ num_gpus=\$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
 python train.py --config-name=aayn_big \
   trainer.num_nodes=${SLURM_JOB_NUM_NODES} \
   trainer.gpus=\${num_gpus} \
-  ~trainer.max_epochs \
-  +trainer.max_steps=${max_steps}  \
+  trainer.max_epochs=${max_epochs} \
   +trainer.progress_bar_refresh_rate=0 \
   ~trainer.check_val_every_n_epoch \
   +trainer.val_check_interval=${val_check_interval} \

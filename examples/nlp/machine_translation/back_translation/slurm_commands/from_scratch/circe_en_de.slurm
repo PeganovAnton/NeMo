@@ -3,7 +3,7 @@
 #SBATCH -p backfill
 #SBATCH -N 1                    # number of nodes
 #SBATCH -t 8:00:00              # wall time
-#SBATCH -J "post_training_1_phase_with_back_translation"   # job name
+#SBATCH -J "from_scratch_back_translation"   # job name
 #SBATCH --exclusive             # exclusive node access
 #SBATCH --mem=0                 # all mem avail
 #SBATCH --mail-type=FAIL        # only send email on failure
@@ -12,33 +12,39 @@
 #SBATCH --threads-per-core 2    # hyperthreading on
 #SBATCH --sockets-per-node 2
 #SBATCH --signal=SIGUSR1@90
-# --overcommit option was removed
-# Hyper params
-# Env Variable Setup
+
+# Arguments:
+# WANDB_TOKEN -- a token for logging into wandb
+# DATASET_NAME -- is a name of a directory with data in /gpfs/fs1/apeganov/datasets
+# LAUNCH_NAME -- experiment. It may contain dataset description, number of iterations etc. It is used as name for
+#   wandb logging
+# TOKENIZER_DIR -- a path to a folder with tokenizer model
+# TOKENIZER_NAME -- a name of a file with tokenizer model
+# lr -- learning rate
+
 set -x -e
 
-WANDB_PROJECT=1_phase_post_training_on_sandeep_back_translated_data
+WANDB_PROJECT=from_scratch_on_back_translated_data
 CONTAINER="rumpelschtilzchen/pytorch-20.11-py3-nemo-nmt:latest"
 # Directories for manifests, data, etc.
-DATASETS_PATH=/lustre/fsw/swdl/swdl-langspeech/apeganov/datasets
+DATASETS_PATH=/gpfs/fs1/apeganov/datasets
 if [ -z ${DATASET_NAME} ]; then
   DATASET_NAME=wmt20_en_de_with_back_translated
 fi
-DATA_DIR=${DATASETS_PATH}/${DATASET_NAME}
-echo "DATA_DIR=${DATA_DIR}"
 if [ -z ${LAUNCH_NAME} ]; then
   LAUNCH_NAME=wmt20_8M_plus_10M_back_translated
 fi
+DATA_DIR=${DATASETS_PATH}/${DATASET_NAME}
 data_dir=/data
 result_dir=/result
-if [ -z ${PRETRAINED_MODElS} ]; then
-  PRETRAINED_MODElS=/lustre/fsw/swdl/swdl-langspeech/apeganov/models/wmt_translate_models/rc1
+if [ -z ${TOKENIZER_DIR} ]; then
+  TOKENIZER_DIR=/gpfs/fs1/apeganov/models/mt/translation_pretrained_weights/large_en_de
 fi
-if [ -z ${MODEL_NAME} ]; then
-  MODEL_NAME=TransformerLargeEn-De.nemo
+if [ -z ${TOKENIZER_NAME} ]; then
+  TOKENIZER_NAME=tokenizer.latest.60.32000.BPE.model
 fi
-pretrained_models=/pretrained
-EXP_NAME=news_back_translation_training_1_phase
+tokenizer_dir=/tokenizer_directory
+EXP_NAME=${WANDB_PROJECT}
 launch_prefix=${LAUNCH_NAME}_launch
 if [ -z ${launch_number} ]; then
   launch_number=0
@@ -53,7 +59,7 @@ mkdir -p ${RESULT_DIR}
 export NCCL_DEBUG=INFO
 export PYTHONFAULTHANDLER=1
 #export NCCL_SOCKET_IFNAME=^docker0,lo
-MOUNTS="--container-mounts=${DATA_DIR}:${data_dir},${RESULT_DIR}:${result_dir},${PRETRAINED_MODElS}:${pretrained_models}"
+MOUNTS="--container-mounts=${DATA_DIR}:${data_dir},${RESULT_DIR}:${result_dir},${TOKENIZER_DIR}:${tokenizer_dir}"
 # Set up multinode if applicable
 if [[ -z ${SLURM_JOB_ID} ]]; then
   hosts=( `hostname` )
@@ -83,7 +89,7 @@ echo "Initial learning rate is ${lr}"
 encoder_bpe_dropout=0.1
 decoder_bpe_dropout=0.1
 
-# max_steps=100000
+# max_steps=200000
 
 wmt13_translated=${result_dir}/newstest2013_en_translated.txt
 wmt14_translated=${result_dir}/newstest2014_en_translated.txt
@@ -123,10 +129,9 @@ python train.py --config-name=aayn_big \
   +trainer.progress_bar_refresh_rate=0 \
   ~trainer.check_val_every_n_epoch \
   +trainer.val_check_interval=${val_check_interval} \
-  +model.weights_checkpoint=${pretrained_models}/${MODEL_NAME} \
-  model.encoder_tokenizer.tokenizer_model=null  \
+  model.encoder_tokenizer.tokenizer_model=${tokenizer_dir}/${TOKENIZER_NAME}  \
   model.encoder_tokenizer.bpe_dropout=${encoder_bpe_dropout} \
-  model.decoder_tokenizer.tokenizer_model=null  \
+  model.decoder_tokenizer.tokenizer_model=${tokenizer_dir}/${TOKENIZER_NAME}  \
   model.decoder_tokenizer.bpe_dropout=${decoder_bpe_dropout} \
   +model.train_ds.tar_files=${train_tar_files} \
   +model.train_ds.use_tarred_dataset=true \
@@ -136,7 +141,7 @@ python train.py --config-name=aayn_big \
   model.test_ds.src_file_name=${test_src} \
   model.test_ds.tgt_file_name=${test_ref} \
   model.optim.lr=${lr}  \
-  exp_manager.wandb_logger_kwargs.name=selene_${launch_name} \
+  exp_manager.wandb_logger_kwargs.name=circe_${launch_name} \
   exp_manager.wandb_logger_kwargs.project=${WANDB_PROJECT} \
   +exp_manager.exp_dir=${result_dir} \
   +exp_manager.resume_if_exists=${resume} \
@@ -168,51 +173,11 @@ EOF
 
 set -e
 
-if [ "${resume}" == "false" ];then
-  pretrained_model="${pretrained_models}/${MODEL_NAME}"
-  TEST_SRC_FILE=text/newstest2013.en
-  TEST_SCORE=sacreBLEU-newstest2013-before
-  TEST_TRANSLATED_PATH=newstest2013-translated-before.txt
-  printf -v test_cmd_run "${test_cmd}" \
-    "${TEST_SRC_FILE}" \
-    "${TEST_TRANSLATED_PATH}" \
-    "${pretrained_model}" \
-    "${TEST_SRC_FILE}" \
-    wmt13 \
-    "${TEST_SCORE}" \
-    "${TEST_SRC_FILE}"
-  echo ${test_cmd_run}
-  srun -o ${RESULT_DIR}/slurm-newstest2013-before-training-%j-%n.out \
-    -e ${RESULT_DIR}/error-newstest2013-before-training-%j-%n.out \
-    --container-image="$CONTAINER" \
-    -N 1-1 \
-    $MOUNTS \
-    bash -c "${test_cmd_run}"
-
-  TEST_SRC_FILE=text/newstest2014-en-de.en
-  TEST_SCORE=sacreBLEU-newstest2014-before
-  TEST_TRANSLATED_PATH=newstest2014-translated-before.txt
-  printf -v test_cmd_run "${test_cmd}" \
-    "${TEST_SRC_FILE}" \
-    "${TEST_TRANSLATED_PATH}" \
-    "${pretrained_model}" \
-    "${TEST_SRC_FILE}" \
-    wmt14 \
-    "${TEST_SCORE}" \
-    "${TEST_SRC_FILE}"
-  echo ${test_cmd_run}
-  srun -o ${RESULT_DIR}/slurm-newstest2014-before-training-%j-%n.out \
-    -e ${RESULT_DIR}/error-newstest2014-before-training-%j-%n.out \
-    --container-image="$CONTAINER" \
-    -N 1-1 \
-    $MOUNTS \
-    bash -c "${test_cmd_run}"
-fi
-
 srun -o $OUTFILE -e $ERRFILE \
   --container-image="$CONTAINER" \
   $MOUNTS \
   bash -c "${cmd}"
+
 
 trained_model=${result_dir}/AAYNLarge/checkpoints/AAYNLarge.nemo
 TEST_SRC_FILE=text/newstest2013.en
@@ -254,3 +219,4 @@ srun -o ${RESULT_DIR}/slurm-newstest2014-after-training-%j-%n.out \
   $MOUNTS \
   bash -c "${test_cmd_run}"
 set +x +e
+
