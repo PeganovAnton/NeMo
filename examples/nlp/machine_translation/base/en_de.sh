@@ -94,7 +94,7 @@ set +e +x
 EOF
 
 ngc batch run \
-  --name big_en_de_attention_is_all_you_need_close_to_paper \
+  --name mem_tokens_in_transformer \
   --preempt RUNONCE \
   --image nvidia/pytorch:20.11-py3 \
   --ace nv-us-west-2 \
