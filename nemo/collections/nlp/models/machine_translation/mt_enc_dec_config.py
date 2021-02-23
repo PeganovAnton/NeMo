@@ -97,8 +97,6 @@ class AAYNBaseConfig(MTEncDecModelConfig):
 
     # dataset configurations
     train_ds: Optional[TranslationDataConfig] = TranslationDataConfig(
-        src_file_name=MISSING,
-        tgt_file_name=MISSING,
         tokens_in_batch=512,
         clean=True,
         shuffle=True,
