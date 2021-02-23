@@ -160,6 +160,7 @@ class MTEncDecModel(EncDecNLPModel):
         self.eval_loss = GlobalAverageLossMetric(dist_sync_on_step=False, take_avg_loss=True)
         # self.training_perplexity = Perplexity(dist_sync_on_step=True)
         # self.eval_perplexity = Perplexity(compute_on_step=False)
+        self.num_mem_tokens = cfg.machine_translation.num_mem_tokens
 
     def filter_predicted_ids(self, ids):
         ids[ids >= self.decoder_tokenizer.vocab_size] = self.decoder_tokenizer.unk_id
@@ -178,6 +179,11 @@ class MTEncDecModel(EncDecNLPModel):
         Returns:
 
         """
+        bsz = src.shape[0]
+        mem_tokens = src.new_tensor(np.full((bsz, self.num_mem_tokens), self.src_tokenizer.mem_id))
+        mem_mask = src_mask.new_tensor(np.full((bsz, self.num_mem_tokens), False))
+        src_mask = torch.cat((mem_mask, src_mask), dim=1)
+        src = torch.cat((mem_tokens, src), dim=1)
         src_hiddens = self.encoder(src, src_mask)
         if tgt is None:
             beam_results = self.beam_search(encoder_hidden_states=src_hiddens, encoder_input_mask=src_mask)
