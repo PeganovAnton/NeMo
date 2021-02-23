@@ -66,7 +66,6 @@ python train.py --config-name=aayn_base \
   +model.train_ds.tar_files=${TRAIN_TAR_FILES} \
   +model.train_ds.use_tarred_dataset=true \
   +model.train_ds.metadata_file=${TRAIN_METADATA} \
-  +model.num_mem_tokens=32 \
   model.validation_ds.src_file_name=${VALID_SRC} \
   model.validation_ds.tgt_file_name=${VALID_REF} \
   model.test_ds.src_file_name=${TEST_SRC} \
