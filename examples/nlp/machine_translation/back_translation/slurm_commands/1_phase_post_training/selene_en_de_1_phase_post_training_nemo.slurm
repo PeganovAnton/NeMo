@@ -186,7 +186,6 @@ if [ "${resume}" == "false" ];then
   srun -o ${RESULT_DIR}/slurm-newstest2013-before-training-%j-%n.out \
     -e ${RESULT_DIR}/error-newstest2013-before-training-%j-%n.out \
     --container-image="$CONTAINER" \
-    -N 1-1 \
     $MOUNTS \
     bash -c "${test_cmd_run}"
 
@@ -205,7 +204,6 @@ if [ "${resume}" == "false" ];then
   srun -o ${RESULT_DIR}/slurm-newstest2014-before-training-%j-%n.out \
     -e ${RESULT_DIR}/error-newstest2014-before-training-%j-%n.out \
     --container-image="$CONTAINER" \
-    -N 1-1 \
     $MOUNTS \
     bash -c "${test_cmd_run}"
 fi
@@ -231,7 +229,6 @@ echo ${test_cmd_run}
 srun -o ${RESULT_DIR}/slurm-newstest2013-after-training-%j-%n.out \
   -e ${RESULT_DIR}/error-newstest2013-after-training-%j-%n.out \
   --container-image="$CONTAINER" \
-  -N 1-1 \
   $MOUNTS \
   bash -c "${test_cmd_run}"
 
@@ -251,7 +248,6 @@ echo ${test_cmd_run}
 srun -o ${RESULT_DIR}/slurm-newstest2014-after-training-%j-%n.out \
   -e ${RESULT_DIR}/error-newstest2014-after-training-%j-%n.out \
   --container-image="$CONTAINER" \
-  -N 1-1 \
   $MOUNTS \
   bash -c "${test_cmd_run}"
 set +x +e

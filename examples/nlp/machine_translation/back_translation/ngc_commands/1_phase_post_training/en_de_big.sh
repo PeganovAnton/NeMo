@@ -18,8 +18,8 @@ echo ${TRAIN_TAR_FILES}
 TRAIN_METADATA=${RAID_TRAIN_PATH}/metadata.json
 VALID_SRC=${RAID}/newstest2013.en
 VALID_REF=${RAID}/newstest2013.de
-TEST_SRC=${RAID}/newstest2014.en
-TEST_REF=${RAID}/newstest2014.de
+TEST_SRC=${RAID}/newstest2014-en-de.en
+TEST_REF=${RAID}/newstest2014-en-de.de
 RESULT_DIR=/result
 PRETRAINED_PATH=${TRANSLATE_MODELS_PATH}/large_en_de
 TOK_MODEL=${PRETRAINED_PATH}/tokenizer.latest.60.32000.BPE.model
