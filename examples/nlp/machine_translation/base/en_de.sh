@@ -1,7 +1,7 @@
 #!/bin/bash
 # The only argument is wandb token.
 
-WANDB_PROJECT=1_phase_post_training_on_sandeep_back_translated_data
+WANDB_PROJECT=mem_tokens_project
 LAUNCH_NAME=$2
 TRANSLATE_MODELS_WS=trainslation_pretrained_weights
 TRANSLATE_MODELS_PATH=/wmt_translate_models
