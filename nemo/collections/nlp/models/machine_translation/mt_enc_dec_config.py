@@ -67,6 +67,7 @@ class AAYNBaseConfig(MTEncDecModelConfig):
     len_pen: float = 0.0
     max_generation_delta: int = 10
     label_smoothing: Optional[float] = 0.0
+    num_mem_tokens: Optional[int] = 32
 
     # Attention is All You Need Base Configuration
     encoder_tokenizer: TokenizerConfig = TokenizerConfig(tokenizer_name='yttm')
