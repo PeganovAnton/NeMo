@@ -7,7 +7,7 @@
 #SBATCH --exclusive             # exclusive node access
 #SBATCH --mem=0                 # all mem avail
 #SBATCH --mail-type=FAIL        # only send email on failure
-#SBATCH --ntasks-per-node 8     # n tasks per machine (one task per GPU)
+#SBATCH --ntasks-per-node 16     # n tasks per machine (one task per GPU)
 #SBATCH --cores-per-socket 24   # 24 cores per socket
 #SBATCH --threads-per-core 2    # hyperthreading on
 #SBATCH --sockets-per-node 2
