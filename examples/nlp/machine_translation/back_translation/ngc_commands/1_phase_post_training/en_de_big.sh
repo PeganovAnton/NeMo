@@ -50,7 +50,7 @@ num_gpus=\$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
 cp -rv ${TEXT_PATH}/newstest* ${RAID}/
 mkdir -p ${RAID_TRAIN_PATH}
 cp -rv ${TARRED_PATH}/* ${RAID}/
-mkdir -p EXP_DIR
+mkdir -p ${EXP_DIR}
 python train.py --config-name=aayn_big \
   trainer.gpus=\${num_gpus} \
   ~trainer.max_epochs \
