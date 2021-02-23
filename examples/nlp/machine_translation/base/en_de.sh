@@ -2,6 +2,7 @@
 # The only argument is wandb token.
 
 WANDB_PROJECT=1_phase_post_training_on_sandeep_back_translated_data
+LAUNCH_NAME=$2
 TRANSLATE_MODELS_WS=trainslation_pretrained_weights
 TRANSLATE_MODELS_PATH=/wmt_translate_models
 DS_ID=74702
@@ -72,7 +73,7 @@ python train.py --config-name=aayn_base \
   model.test_ds.tgt_file_name=${TEST_REF} \
   model.optim.lr=${BASE_LR}  \
   +model.find_unused_parameters=true \
-  exp_manager.wandb_logger_kwargs.name=1st_trial \
+  exp_manager.wandb_logger_kwargs.name=${LAUNCH_NAME} \
   exp_manager.wandb_logger_kwargs.project=${WANDB_PROJECT} \
   +exp_manager.exp_dir=${EXP_DIR}
 
