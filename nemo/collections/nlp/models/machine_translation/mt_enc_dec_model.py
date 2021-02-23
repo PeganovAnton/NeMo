@@ -180,7 +180,7 @@ class MTEncDecModel(EncDecNLPModel):
 
         """
         bsz = src.shape[0]
-        mem_tokens = src.new_tensor(np.full((bsz, self.num_mem_tokens), self.src_tokenizer.mem_id))
+        mem_tokens = src.new_tensor(np.full((bsz, self.num_mem_tokens), self.encoder_tokenizer.mem_id))
         mem_mask = src_mask.new_tensor(np.full((bsz, self.num_mem_tokens), False))
         src_mask = torch.cat((mem_mask, src_mask), dim=1)
         src = torch.cat((mem_tokens, src), dim=1)
