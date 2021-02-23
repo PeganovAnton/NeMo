@@ -91,9 +91,15 @@ def main(cfg: MTEncDecConfig) -> None:
                 transformer_mt = MTEncDecModel.restore_from(
                     cfg.model.weights_checkpoint,
                     override_config_path=config_path,
-                    map_location=torch.device('cpu')
+                    map_location=torch.device('cpu'),
+                    trainer=trainer
                 )
-                transformer_mt._trainer = trainer
+                if transformer_mt._trainer is None:
+                    logging.info(f"`_trainer attribute` of `transformer_mt` is expected to be set in `restore_from`. "
+                                 f"Setting it manually.")
+                    transformer_mt._trainer = trainer
+                else:
+                    logging.info(f"`_trainer` attribute of `transformer_mt` is set in `restore_from` as expected")
                 transformer_mt.setup_training_data(cfg.model.train_ds)
                 transformer_mt.setup_multiple_validation_data(None)
                 transformer_mt.setup_multiple_test_data(None)

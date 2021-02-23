@@ -347,6 +347,7 @@ class ModelPT(LightningModule, Model):
         map_location: Optional[torch.device] = None,
         strict: bool = False,
         return_config: bool = False,
+        trainer: Optional[Trainer] = None,
     ):
         """
         Restores model instance (weights and configuration) into .nemo file
@@ -406,7 +407,7 @@ class ModelPT(LightningModule, Model):
                 else:
                     model_weights = path.join(tmpdir, _MODEL_WEIGHTS)
                     OmegaConf.set_struct(conf, True)
-                    instance = cls.from_config_dict(config=conf)
+                    instance = cls.from_config_dict(config=conf, trainer=trainer)
                     instance = instance.to(map_location)
                     instance.load_state_dict(torch.load(model_weights, map_location=map_location), strict=strict)
 
@@ -462,6 +463,7 @@ class ModelPT(LightningModule, Model):
         map_location: Optional[torch.device] = None,
         strict: bool = False,
         return_config: bool = False,
+        trainer: Optional[Trainer] = None,
     ):
         """
         Restores model instance (weights and configuration) from file.
@@ -502,11 +504,13 @@ class ModelPT(LightningModule, Model):
             except (FileNotFoundError, TypeError):
                 # Default to the old .nemo tar archive restore method.
                 return cls._default_restore_from(
-                    restore_path, override_config_path, map_location, strict, return_config
+                    restore_path, override_config_path, map_location, strict, return_config, trainer
                 )
         else:
             # Load .nemo tar archive using the old restore method.
-            return cls._default_restore_from(restore_path, override_config_path, map_location, strict, return_config)
+            return cls._default_restore_from(
+                restore_path, override_config_path, map_location, strict, return_config, trainer
+            )
 
     @classmethod
     def load_from_checkpoint(

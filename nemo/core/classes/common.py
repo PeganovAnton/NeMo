@@ -25,6 +25,7 @@ from typing import Dict, List, Optional, Union
 import hydra
 import wrapt
 from omegaconf import DictConfig, OmegaConf
+from pytorch_lightning import Trainer
 
 import nemo
 from nemo.core.neural_types import NeuralType, NeuralTypeComparisonResult
@@ -414,7 +415,7 @@ class Typing(ABC):
 
 class Serialization(ABC):
     @classmethod
-    def from_config_dict(cls, config: DictConfig):
+    def from_config_dict(cls, config: DictConfig, trainer: Optional[Trainer] = None):
         """Instantiates object using DictConfig-based configuration"""
         # Resolve the config dict
         if isinstance(config, DictConfig):
@@ -432,7 +433,11 @@ class Serialization(ABC):
             instance = hydra.utils.instantiate(config=config)
         else:
             # models are handled differently for now
-            instance = cls(cfg=config)
+            if "trainer" in cls.__init__.__code__.co_varnames:
+                logging.info(f"Instantiating {cls} from config using trainer")
+                instance = cls(cfg=config, trainer=trainer)
+            else:
+                instance = cls(cfg=config)
 
         if not hasattr(instance, '_cfg'):
             instance._cfg = config
