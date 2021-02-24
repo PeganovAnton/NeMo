@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Optional
 
 import torch
+from pytorch_lightning import Trainer
 from hydra.utils import instantiate
 
 from nemo.collections.nlp.models.machine_translation.mt_enc_dec_config import AAYNBaseConfig
@@ -44,7 +45,7 @@ class MTEncDecConfig(NemoConfig):
 @hydra_runner(config_path="conf", config_name="en_de_8gpu")
 def main(cfg: MTEncDecConfig) -> None:
     logging.info(f'Config: {cfg.pretty()}')
-    trainer = instantiate(cfg.trainer)
+    trainer = Trainer(**cfg.trainer)
     if "exp_manager" in cfg and cfg.get("exp_manager") is not None:
         exp_manager(trainer, cfg.get("exp_manager", None))
     if "weights_checkpoint" in cfg.model and cfg.model.weights_checkpoint is not None:
