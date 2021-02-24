@@ -1,7 +1,8 @@
 #!/bin/bash
 # The only argument is wandb token.
 
-WANDB_PROJECT=1_phase_post_training_on_sandeep_back_translated_data
+WANDB_PROJECT=mem_tokens
+LAUNCH_NAME=$2
 TRANSLATE_MODELS_WS=trainslation_pretrained_weights
 TRANSLATE_MODELS_PATH=/wmt_translate_models
 DS_ID=74702
@@ -35,7 +36,7 @@ read -r -d '' cmd <<EOF
 set -e -x
 git clone https://github.com/PeganovAnton/NeMo.git
 cd NeMo
-git checkout sacreBLEU_pl_metric
+git checkout mem_tokens_new
 pip3 install -r requirements/requirements.txt
 pip3 install -r requirements/requirements_nlp.txt
 pip3 install --upgrade wandb
@@ -52,19 +53,18 @@ cp -rv ${TEXT_PATH}/newstest* ${RAID}/
 mkdir -p ${RAID_TRAIN_PATH}
 cp -rv ${TARRED_PATH}/* ${RAID}/
 mkdir -p ${EXP_DIR}
-python train.py --config-name=aayn_big \
+python train.py --config-name=aayn_base \
   trainer.gpus=\${num_gpus} \
   ~trainer.max_epochs \
   +trainer.max_steps=${MAX_STEPS}  \
   +trainer.progress_bar_refresh_rate=0 \
   +trainer.val_check_interval=200 \
-  +model.weights_checkpoint=${PRETRAINED_PATH}/model_weights.ckpt \
   model.encoder_tokenizer.tokenizer_model=${TOK_MODEL}  \
   model.encoder_tokenizer.bpe_dropout=${ENCODER_BPE_DROPOUT} \
   model.decoder_tokenizer.tokenizer_model=${TOK_MODEL}  \
   model.decoder_tokenizer.bpe_dropout=${DECODER_BPE_DROPOUT} \
   +model.train_ds.tar_files=${TRAIN_TAR_FILES} \
-  +model.train_ds.use_tarred_dataset=true \
+  model.train_ds.use_tarred_dataset=true \
   +model.train_ds.metadata_file=${TRAIN_METADATA} \
   model.validation_ds.src_file_name=${VALID_SRC} \
   model.validation_ds.tgt_file_name=${VALID_REF} \
@@ -72,7 +72,7 @@ python train.py --config-name=aayn_big \
   model.test_ds.tgt_file_name=${TEST_REF} \
   model.optim.lr=${BASE_LR}  \
   +model.find_unused_parameters=true \
-  exp_manager.wandb_logger_kwargs.name=1st_trial \
+  exp_manager.wandb_logger_kwargs.name=${LAUNCH_NAME} \
   exp_manager.wandb_logger_kwargs.project=${WANDB_PROJECT} \
   +exp_manager.exp_dir=${EXP_DIR}
 
@@ -93,11 +93,11 @@ set +e +x
 EOF
 
 ngc batch run \
-  --name big_en_de_attention_is_all_you_need_close_to_paper \
+  --name mem_tokens_in_transformer \
   --preempt RUNONCE \
   --image nvidia/pytorch:20.11-py3 \
   --ace nv-us-west-2 \
-  --instance dgx1v.32g.8.norm \
+  --instance dgx1v.16g.8.norm \
   --commandline "${cmd}" \
   --result /result \
   --org nvidian \
