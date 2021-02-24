@@ -80,7 +80,7 @@ valid_ref=${text_data}/newstest2013.de
 test_src=${text_data}/newstest2014-en-de.en
 test_ref=${text_data}/newstest2014-en-de.de
 if [ -z ${lr} ]; then
-  base_lr=0.0005
+  base_lr=0.00015
   lr_num_nodes_factor=$(python3 -c "print(${SLURM_NNODES}**0.5)")
   echo "Learning rate number of nodes factor ${lr_num_nodes_factor}"
   lr=$(python3 -c "print(${base_lr} * ${lr_num_nodes_factor})")
@@ -89,7 +89,7 @@ echo "Initial learning rate is ${lr}"
 encoder_bpe_dropout=0.1
 decoder_bpe_dropout=0.1
 
-max_steps=100000
+max_steps=120000
 
 wmt13_translated=${result_dir}/newstest2013_en_translated.txt
 wmt14_translated=${result_dir}/newstest2014_en_translated.txt
@@ -145,7 +145,7 @@ python train.py --config-name=aayn_base \
   model.optim.lr=${lr}  \
   exp_manager.wandb_logger_kwargs.name=circe_${launch_name} \
   exp_manager.wandb_logger_kwargs.project=${WANDB_PROJECT} \
-  +exp_manager.exp_dir=${result_dir} \
+  +exp_manager.explicit_log_dir=${result_dir} \
   +exp_manager.resume_if_exists=${resume} \
   +model.find_unused_parameters=true
 echo  "*******FINISHING TRAINING********"
@@ -181,7 +181,7 @@ srun -o $OUTFILE -e $ERRFILE \
   bash -c "${cmd}"
 
 
-trained_model=${result_dir}/AAYNLarge/checkpoints/AAYNLarge.nemo
+trained_model=${result_dir}/checkpoints/AAYNLarge.nemo
 TEST_SRC_FILE=text/newstest2013.en
 TEST_SCORE=sacreBLEU-newstest2013-after
 TEST_TRANSLATED_PATH=newstest2013-translated-after.txt
