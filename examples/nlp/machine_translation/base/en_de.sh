@@ -36,7 +36,7 @@ read -r -d '' cmd <<EOF
 set -e -x
 git clone https://github.com/PeganovAnton/NeMo.git
 cd NeMo
-git checkout mem_tokens_new
+git checkout sacreBLEU_pl_metric
 pip3 install -r requirements/requirements.txt
 pip3 install -r requirements/requirements_nlp.txt
 pip3 install --upgrade wandb
@@ -58,7 +58,7 @@ python train.py --config-name=aayn_base \
   ~trainer.max_epochs \
   +trainer.max_steps=${MAX_STEPS}  \
   +trainer.progress_bar_refresh_rate=0 \
-  +trainer.val_check_interval=200 \
+  +trainer.val_check_interval=1000 \
   model.encoder_tokenizer.tokenizer_model=${TOK_MODEL}  \
   model.encoder_tokenizer.bpe_dropout=${ENCODER_BPE_DROPOUT} \
   model.decoder_tokenizer.tokenizer_model=${TOK_MODEL}  \
