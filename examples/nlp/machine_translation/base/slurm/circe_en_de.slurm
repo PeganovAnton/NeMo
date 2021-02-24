@@ -126,7 +126,7 @@ python train.py --config-name=aayn_base \
   trainer.num_nodes=${SLURM_JOB_NUM_NODES} \
   trainer.gpus=\${num_gpus} \
   ~trainer.max_epochs \
-  trainer.max_steps=${max_steps} \
+  +trainer.max_steps=${max_steps} \
   +trainer.progress_bar_refresh_rate=0 \
   ~trainer.check_val_every_n_epoch \
   +trainer.val_check_interval=${val_check_interval} \
@@ -134,10 +134,10 @@ python train.py --config-name=aayn_base \
   model.encoder_tokenizer.bpe_dropout=${encoder_bpe_dropout} \
   model.decoder_tokenizer.tokenizer_model=${tokenizer_dir}/${TOKENIZER_NAME}  \
   model.decoder_tokenizer.bpe_dropout=${decoder_bpe_dropout} \
-  model.num_mem_tokens=32 \
-  +model.train_ds.tar_files=${train_tar_files} \
-  +model.train_ds.use_tarred_dataset=true \
-  +model.train_ds.metadata_file=${train_metadata} \
+  +model.num_mem_tokens=32 \
+  model.train_ds.tar_files=${train_tar_files} \
+  model.train_ds.use_tarred_dataset=true \
+  model.train_ds.metadata_file=${train_metadata} \
   model.validation_ds.src_file_name=${valid_src} \
   model.validation_ds.tgt_file_name=${valid_ref} \
   model.test_ds.src_file_name=${test_src} \
