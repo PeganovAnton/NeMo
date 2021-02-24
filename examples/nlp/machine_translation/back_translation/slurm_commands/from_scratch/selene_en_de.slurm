@@ -21,6 +21,8 @@
 # TOKENIZER_DIR -- a path to a folder with tokenizer model
 # TOKENIZER_NAME -- a name of a file with tokenizer model
 # lr -- learning rate
+# max_epochs
+# warmup_ratio
 
 set -x -e
 
@@ -70,7 +72,12 @@ fi
 
 BATCH_SIZE=11000
 
-max_epochs=250
+if [ -z ${max_epochs} ]; then
+    max_epochs=50
+fi
+if [ -z ${warmup_ratio} ]; then
+    warmup_ratio=0.5
+fi
 text_data=${data_dir}/text
 TARRED_DIR=tarred_8k
 tarred_data=${data_dir}/${TARRED_DIR}
@@ -89,6 +96,8 @@ fi
 echo "Initial learning rate is ${lr}"
 encoder_bpe_dropout=0.1
 decoder_bpe_dropout=0.1
+
+# max_steps=200000
 
 wmt13_translated=${result_dir}/newstest2013_en_translated.txt
 wmt14_translated=${result_dir}/newstest2014_en_translated.txt
@@ -140,6 +149,7 @@ python train.py --config-name=aayn_big \
   model.test_ds.src_file_name=${test_src} \
   model.test_ds.tgt_file_name=${test_ref} \
   model.optim.lr=${lr}  \
+  model.optim.sched.warmup_ratio=${warmup_ratio} \
   exp_manager.wandb_logger_kwargs.name=selene_${launch_name} \
   exp_manager.wandb_logger_kwargs.project=${WANDB_PROJECT} \
   +exp_manager.exp_dir=${result_dir} \
