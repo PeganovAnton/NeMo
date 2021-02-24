@@ -14,7 +14,7 @@ TEXT_PATH=${DATA_PATH}/text
 TARRED_PATH=${DATA_PATH}/tarred_8k
 RAID=/raid
 RAID_TRAIN_PATH=${RAID}/train
-TRAIN_TAR_FILES="${RAID_TRAIN_PATH}/batches.tokens.16000._OP_1..\$(ls ${TARRED_PATH}/train/*.tar | wc -l)_CL_.tar"
+TRAIN_TAR_FILES="${RAID_TRAIN_PATH}/batches.tokens.8000._OP_1..\$(ls ${TARRED_PATH}/train/*.tar | wc -l)_CL_.tar"
 echo ${TRAIN_TAR_FILES}
 TRAIN_METADATA=${RAID_TRAIN_PATH}/metadata.json
 VALID_SRC=${RAID}/newstest2013.en
