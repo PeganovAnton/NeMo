@@ -9,7 +9,7 @@ DS_ID=74702
 DATA_PATH=/data
 
 MAX_EPOCHS=100000
-MAX_STEPS=100000
+MAX_STEPS=200000
 TEXT_PATH=${DATA_PATH}/text
 TARRED_PATH=${DATA_PATH}/tarred_8k
 RAID=/raid
@@ -24,7 +24,7 @@ TEST_REF=${RAID}/newstest2014-en-de.de
 RESULT_DIR=/result
 PRETRAINED_PATH=${TRANSLATE_MODELS_PATH}/large_en_de
 TOK_MODEL=${PRETRAINED_PATH}/tokenizer.latest.60.32000.BPE.model
-BASE_LR=0.0005
+BASE_LR=0.0002
 ENCODER_BPE_DROPOUT=0.1
 DECODER_BPE_DROPOUT=0.1
 EXP_DIR=${RESULT_DIR}/exp_dir
@@ -66,7 +66,7 @@ python train.py --config-name=aayn_base \
   +model.train_ds.tar_files=${TRAIN_TAR_FILES} \
   model.train_ds.use_tarred_dataset=true \
   +model.train_ds.metadata_file=${TRAIN_METADATA} \
-  +model.num_mem_tokens=32 \
+  +model.num_mem_tokens=8 \
   model.validation_ds.src_file_name=${VALID_SRC} \
   model.validation_ds.tgt_file_name=${VALID_REF} \
   model.test_ds.src_file_name=${TEST_SRC} \
@@ -75,17 +75,17 @@ python train.py --config-name=aayn_base \
   +model.find_unused_parameters=true \
   exp_manager.wandb_logger_kwargs.name=${LAUNCH_NAME} \
   exp_manager.wandb_logger_kwargs.project=${WANDB_PROJECT} \
-  +exp_manager.exp_dir=${EXP_DIR}
+  +exp_manager.explicit_log_dir=${EXP_DIR}
 
 python3 nmt_transformer_infer.py \
-  --model ${EXP_DIR}/AAYNLarge/checkpoints/AAYNLarge.nemo \
+  --model ${EXP_DIR}/checkpoints/AAYNLarge.nemo \
   --srctext /data/wmt13_en_de.src \
   --tgtout "${WMT13_TRANSLATED}" \
   --target_lang de
 cat "${WMT13_TRANSLATED}" | sacrebleu -t wmt13 -l en-de
 
 python3 nmt_transformer_infer.py \
-  --model ${EXP_DIR}/AAYNLarge/checkpoints/AAYNLarge.nemo \
+  --model ${EXP_DIR}/checkpoints/AAYNLarge.nemo \
   --srctext /data/wmt14_en_de.src \
   --tgtout "${WMT14_TRANSLATED}" \
   --target_lang de
