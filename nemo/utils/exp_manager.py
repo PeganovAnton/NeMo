@@ -604,7 +604,7 @@ def configure_checkpointing(
         params.filepath = Path(log_dir / 'checkpoints' / f'--{{{params.monitor}:.2f}}-{{epoch}}')
     if params.prefix is None:
         params.prefix = name
-    params.filepath.parent.mkdir(parents=True, exist_ok=True)
+    Path(params.filepath).parent.mkdir(parents=True, exist_ok=True)
     if "val" in params.monitor and trainer.max_epochs != -1 and trainer.max_epochs < trainer.check_val_every_n_epoch:
         logging.error(
             "The checkpoint callback was told to monitor a validation value but trainer.max_epochs("
