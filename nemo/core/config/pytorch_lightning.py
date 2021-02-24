@@ -85,7 +85,6 @@ class TrainerConfig:
     enable_pl_optimizer: Optional[bool] = None
     plugins: Optional[Any] = None  # Optional[Union[str, list]]
     move_metrics_to_cpu: bool = False
-    _target_: Optional[str] = None
 
 
 # Register the trainer config.
