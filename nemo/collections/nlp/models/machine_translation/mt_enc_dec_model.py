@@ -55,6 +55,7 @@ class MTEncDecModel(EncDecNLPModel):
     """
 
     def __init__(self, cfg: MTEncDecModelConfig, trainer: Trainer = None):
+        self.num_mem_tokens = cfg.get("num_mem_tokens", 0)
         cfg = model_utils.convert_model_config_to_dict_config(cfg)
         # Get global rank and total number of GPU workers for IterableDataset partitioning, if applicable
         self.global_rank = 0
@@ -86,13 +87,13 @@ class MTEncDecModel(EncDecNLPModel):
             hidden_size=cfg.encoder.hidden_size,
             num_layers=cfg.encoder.num_layers,
             inner_size=cfg.encoder.inner_size,
-            max_sequence_length=cfg.encoder.max_sequence_length + self.num_mem_tokens,
-            if hasattr(cfg.encoder, 'max_sequence_length')
-            else 512,
+            max_sequence_length=cfg.encoder.max_sequence_length + self.num_mem_tokens
+                if hasattr(cfg.encoder, 'max_sequence_length')
+                else 512 + self.num_mem_tokens,
             embedding_dropout=cfg.encoder.embedding_dropout if hasattr(cfg.encoder, 'embedding_dropout') else 0.0,
             learn_positional_encodings=cfg.encoder.learn_positional_encodings
-            if hasattr(cfg.encoder, 'learn_positional_encodings')
-            else False,
+                if hasattr(cfg.encoder, 'learn_positional_encodings')
+                else False,
             num_attention_heads=cfg.encoder.num_attention_heads,
             ffn_dropout=cfg.encoder.ffn_dropout,
             attn_score_dropout=cfg.encoder.attn_score_dropout,
@@ -160,7 +161,6 @@ class MTEncDecModel(EncDecNLPModel):
         self.eval_loss = GlobalAverageLossMetric(dist_sync_on_step=False, take_avg_loss=True)
         # self.training_perplexity = Perplexity(dist_sync_on_step=True)
         # self.eval_perplexity = Perplexity(compute_on_step=False)
-        self.num_mem_tokens = cfg.num_mem_tokens
 
     def filter_predicted_ids(self, ids):
         ids[ids >= self.decoder_tokenizer.vocab_size] = self.decoder_tokenizer.unk_id
