@@ -86,7 +86,7 @@ class MTEncDecModel(EncDecNLPModel):
             hidden_size=cfg.encoder.hidden_size,
             num_layers=cfg.encoder.num_layers,
             inner_size=cfg.encoder.inner_size,
-            max_sequence_length=cfg.encoder.max_sequence_length
+            max_sequence_length=cfg.encoder.max_sequence_length + self.num_mem_tokens,
             if hasattr(cfg.encoder, 'max_sequence_length')
             else 512,
             embedding_dropout=cfg.encoder.embedding_dropout if hasattr(cfg.encoder, 'embedding_dropout') else 0.0,
